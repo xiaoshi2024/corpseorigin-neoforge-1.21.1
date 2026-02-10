@@ -1,0 +1,13 @@
+{
+  "itemGroup.corpseorigin": "Example Mod Tab",
+  "block.corpseorigin.example_block": "Example Block",
+  "item.corpseorigin.example_item": "Example Item",
+
+  "corpseorigin.configuration.title": " CorpseOrigin Configs",
+  "corpseorigin.configuration.section.corpseorigin.common.toml": " CorpseOrigin Configs",
+  "corpseorigin.configuration.section.corpseorigin.common.toml.title": " CorpseOrigin Configs",
+  "corpseorigin.configuration.items": "Item List",
+  "corpseorigin.configuration.logDirtBlock": "Log Dirt Block",
+  "corpseorigin.configuration.magicNumberIntroduction": "Magic Number Text",
+  "corpseorigin.configuration.magicNumber": "Magic Number"
+}
