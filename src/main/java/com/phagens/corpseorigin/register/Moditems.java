@@ -1,0 +1,65 @@
+package com.phagens.corpseorigin.register;
+
+import com.phagens.corpseorigin.CorpseOrigin;
+import com.phagens.corpseorigin.Item.JuQue;
+import com.phagens.corpseorigin.Item.tier.Modtiers;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.SwordItem;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.registries.DeferredItem;
+import net.neoforged.neoforge.registries.DeferredRegister;
+
+public class Moditems {
+    public static final ResourceLocation BASE_ATTACK_GRA_ID = ResourceLocation.withDefaultNamespace("base_attack_gra");
+    public static final DeferredRegister.Items ITEMS =
+            DeferredRegister.createItems(CorpseOrigin.MODID);
+    public static final DeferredItem<Item> MING_JUQUE =
+            ITEMS.register("ming_juque", () -> new JuQue(Modtiers.MingJian,3,-2.4f, new Item.Properties()));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static void register(IEventBus bus) {
+        ITEMS.register(bus);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

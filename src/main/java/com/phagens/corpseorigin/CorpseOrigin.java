@@ -1,5 +1,6 @@
 package com.phagens.corpseorigin;
 
+import com.phagens.corpseorigin.register.Moditems;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -73,6 +74,7 @@ public class CorpseOrigin {
         BLOCKS.register(modEventBus);
         // Register the Deferred Register to the mod event bus so items get registered
         ITEMS.register(modEventBus);
+        Moditems.register(modEventBus);
         // Register the Deferred Register to the mod event bus so tabs get registered
         CREATIVE_MODE_TABS.register(modEventBus);
 
