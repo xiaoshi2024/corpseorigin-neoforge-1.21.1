@@ -25,7 +25,7 @@ public class JuQue extends SwordItem {
 
     @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        // 存活                  //最高生命              //最低生命1
+        // 存活                  //最高生命              //最低生命
         if (target.isAlive() && target.getHealth() / target.getMaxHealth() <= 0.3F) {
             target.setHealth(0.0F);
         }
