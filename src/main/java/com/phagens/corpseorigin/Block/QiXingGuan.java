@@ -40,7 +40,7 @@ public class QiXingGuan extends Block {
     public static final BooleanProperty SUMMONED = BooleanProperty.create("summoned");
     private final Set<BlockPos> infectedPositions = new HashSet<>();
 
-    public QiXingGuan(Item item, EntityType<?> entity) {
+    public QiXingGuan(EntityType<?> entity) {
         super(BlockBehaviour.Properties.of());
         ENTITY = entity;
         this.registerDefaultState(this.stateDefinition.any()
@@ -62,8 +62,10 @@ public class QiXingGuan extends Block {
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         super.onPlace(state, level, pos, oldState, movedByPiston);
         if (isInWater(level, pos)) {
+            System.out.println("w zai  shui zhong " + pos);
             spreadWaterInfection(level, pos); // 感染周围水源
         }
+        System.out.println("QiXingGuan placed at: " + pos);
     }
     //感染逻辑
     private void spreadWaterInfection(Level level, BlockPos pos) {
@@ -78,47 +80,39 @@ public class QiXingGuan extends Block {
             BlockPos current = queue.poll();
             for (Direction direction : Direction.values()) {
                 BlockPos neighbor = current.relative(direction);
+                if (neighbor.equals(pos)) {
+                    continue;
+                }
                 if (!visited.contains(neighbor) && level.getBlockState(neighbor).getFluidState().is(FluidTags.WATER)) {
-                    markInfected(level, neighbor);
-                    visited.add(neighbor);
-                    queue.offer(neighbor);
+                    level.getServer().tell(new TickTask(level.getServer().getTickCount() + 20, () -> { markInfected(level, neighbor);
+                        visited.add(neighbor);
+                        queue.offer(neighbor);}));
+                    System.out.println("my kaishi ganran le " + neighbor);
+
                 }
             }
         }
     }
     //更换感染水方块  暂定
     private void markInfected(Level level, BlockPos neighbor) {
-        // 示例：在这里可以添加感染标记逻辑，比如替换水源方块或存储感染状态
 
+        level.setBlock(neighbor, Blocks.DIRT.defaultBlockState(), 3);
     }
     //判断是否未感染水
     private boolean isInWater(Level level, BlockPos pos) {
-        return level.getBlockState(pos).getFluidState().is(FluidTags.WATER);
-    }
-
-    //延迟生成
-    private void scheduleMonsterSpawning(ServerLevel level, BlockPos pos) {
-        level.getServer().tell(new TickTask(level.getServer().getTickCount() + 3000, () -> {
-            spawnMonstersAroundInfectedWater(level, pos);
-        }));
-    }
-    //感染随机位生成生物
-    private void spawnMonstersAroundInfectedWater(ServerLevel level, BlockPos center) {
-        for (int i = 0; i < 5; i++) {
-            BlockPos spawnPos = center.offset(
-                    level.random.nextInt(10) - 5,
-                    0,
-                    level.random.nextInt(10) - 5
-            );
-            if (isInfectedWater(level, spawnPos)) {
-                ENTITY.spawn(level, null, null, spawnPos, MobSpawnType.NATURAL, false, false);
+        // 检查当前方块及其周围一圈是否有水
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                if (dx == 0 && dz == 0) continue;
+                BlockPos neighbor = pos.offset(dx, 0, dz);
+                if (level.getBlockState(neighbor).getFluidState().is(FluidTags.WATER)) {
+                    return true;
+                }
             }
         }
+        return false;
     }
-    // 检查该位置是否被感染（
-    private boolean isInfectedWater(Level level, BlockPos pos) {
-        return level.getBlockState(pos).getFluidState().is(FluidTags.WATER);
-    }
+
 
     //召唤逻辑
     private void detectEntitiesInInfectedArea(Level level, BlockPos posE) {
