@@ -1,5 +1,8 @@
 package com.phagens.corpseorigin;
 
+import com.phagens.corpseorigin.client.Renderer.block.QiXingGuanRenderer;
+import com.phagens.corpseorigin.register.BlockEntityRegistry;
+import com.phagens.corpseorigin.register.BlockRegistry;
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -7,6 +10,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 
@@ -27,5 +31,10 @@ public class CorpseOriginClient {
         // Some client setup code
         CorpseOrigin.LOGGER.info("HELLO FROM CLIENT SETUP");
         CorpseOrigin.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
+    }
+
+    @SubscribeEvent
+    public static void registerRenderers(final EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(BlockEntityRegistry.QI_XING_GUANS.get(), QiXingGuanRenderer::new);
     }
 }

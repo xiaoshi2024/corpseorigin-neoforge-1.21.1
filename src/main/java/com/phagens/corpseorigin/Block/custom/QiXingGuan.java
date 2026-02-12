@@ -1,38 +1,34 @@
-package com.phagens.corpseorigin.Block;
+package com.phagens.corpseorigin.Block.custom;
 
 
+import com.phagens.corpseorigin.Block.entity.QiXingGuanBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.monster.Zombie;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.apache.commons.compress.compressors.lz77support.LZ77Compressor;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
-public class QiXingGuan extends Block {
+public class QiXingGuan extends Block implements EntityBlock {
     //召唤的小怪
     private final EntityType<?> ENTITY;
 
@@ -128,6 +124,17 @@ public class QiXingGuan extends Block {
             level.setBlock(posE, this.stateDefinition.any().setValue(SUMMONED, true), 3);
         }
 
+    }
+
+    @Override
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.ENTITYBLOCK_ANIMATED;
+    }
+
+    // 实现 EntityBlock 接口的方法
+    @Override
+    public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new QiXingGuanBlockEntity(pos, state);
     }
 
     private void triggerAction(ServerLevel level,BlockPos pos) {

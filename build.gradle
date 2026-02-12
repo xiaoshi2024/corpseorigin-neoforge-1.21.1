@@ -38,6 +38,10 @@ repositories {
         url = "https://neoforged.forgecdn.net/mojang-meta"
 
     }
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+    }
 }
 
 base {
@@ -131,6 +135,9 @@ configurations {
 }
 
 dependencies {
+
+    implementation "maven.modrinth:geckolib:lWsXauBN"
+
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
