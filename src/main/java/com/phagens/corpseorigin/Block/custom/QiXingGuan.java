@@ -2,6 +2,7 @@ package com.phagens.corpseorigin.Block.custom;
 
 
 import com.phagens.corpseorigin.Block.entity.QiXingGuanBlockEntity;
+import com.phagens.corpseorigin.register.BlockRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.TickTask;
@@ -12,15 +13,13 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.EntityBlock;
-import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -37,7 +36,13 @@ public class QiXingGuan extends Block implements EntityBlock {
     private final Set<BlockPos> infectedPositions = new HashSet<>();
 
     public QiXingGuan(EntityType<?> entity) {
-        super(BlockBehaviour.Properties.of());
+        super(BlockBehaviour.Properties.of()
+                .strength(1.5f,6.0f).//硬度抗性
+                sound(SoundType.WOOD)//声音
+                .mapColor(MapColor.WOOD)//地图颜色
+                .noOcclusion()//如有透明
+        );//shengy
+
         ENTITY = entity;
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(SUMMONED,false ));
@@ -92,7 +97,7 @@ public class QiXingGuan extends Block implements EntityBlock {
     //更换感染水方块  暂定
     private void markInfected(Level level, BlockPos neighbor) {
 
-        level.setBlock(neighbor, Blocks.DIRT.defaultBlockState(), 3);
+        level.setBlock(neighbor, BlockRegistry.BYWATER_BLOCK.get().defaultBlockState(), 3);
     }
     //判断是否未感染水
     private boolean isInWater(Level level, BlockPos pos) {
@@ -113,7 +118,7 @@ public class QiXingGuan extends Block implements EntityBlock {
     //召唤逻辑
     private void detectEntitiesInInfectedArea(Level level, BlockPos posE) {
         int entityCount = 0;
-        int requiredCount = 30;
+        int requiredCount = 1;
         for (BlockPos pos :infectedPositions ) {            //这里填boss生物类
             List<Entity> entities = level.getEntitiesOfClass(Entity.class,new AABB(pos).inflate(5)); // 检测范围可调整
             entityCount += entities.size();

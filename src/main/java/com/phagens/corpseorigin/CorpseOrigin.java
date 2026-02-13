@@ -1,5 +1,6 @@
 package com.phagens.corpseorigin;
 
+import com.phagens.corpseorigin.Block.ModFluids.Modfluid;
 import com.phagens.corpseorigin.register.BlockEntityRegistry;
 import com.phagens.corpseorigin.register.BlockRegistry;
 import com.phagens.corpseorigin.register.Moditems;
@@ -76,7 +77,7 @@ public class CorpseOrigin {
     public CorpseOrigin(IEventBus modEventBus, ModContainer modContainer) {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
-
+        Modfluid.FLUIDS.register(modEventBus);
         Moditems.ITEMS.register(modEventBus);
         BlockRegistry.Blocks.register(modEventBus);
         BlockEntityRegistry.BLOCK_ENTITIES.register(modEventBus);

@@ -1,5 +1,6 @@
 package com.phagens.corpseorigin.Block.entity;
 
+import com.phagens.corpseorigin.Block.custom.QiXingGuan;
 import com.phagens.corpseorigin.register.BlockEntityRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -24,7 +25,12 @@ public class QiXingGuanBlockEntity extends BlockEntity implements GeoBlockEntity
     }
 
     protected <E extends QiXingGuanBlockEntity> PlayState OPENAnimController(final AnimationState<E> state) {
-        return state.setAndContinue(OPEN);
+        BlockState blockstate = getBlockState();
+        if (blockstate.getValue(QiXingGuan.SUMMONED)) {
+            return state.setAndContinue(OPEN); // 执行动画
+        } else {
+            return PlayState.STOP; // 停止动画
+        }
     }
 
     @Override
