@@ -77,7 +77,7 @@ public class CorpseOrigin {
     public CorpseOrigin(IEventBus modEventBus, ModContainer modContainer) {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
-        Modfluid.FLUIDS.register(modEventBus);
+        Modfluid.init(modEventBus);
         Moditems.ITEMS.register(modEventBus);
         BlockRegistry.Blocks.register(modEventBus);
         BlockEntityRegistry.BLOCK_ENTITIES.register(modEventBus);
@@ -88,6 +88,7 @@ public class CorpseOrigin {
         // Note that this is necessary if and only if we want *this* class (CorpseOrigin) to respond directly to events.
         // Do not add this line if there are no @SubscribeEvent-annotated functions in this class, like onServerStarting() below.
         NeoForge.EVENT_BUS.register(this);
+
 
       /*  // 将该物品注册到创意标签页
         modEventBus.addListener(this::addCreative);*/
@@ -107,7 +108,36 @@ public class CorpseOrigin {
         LOGGER.info("{}{}", Config.MAGIC_NUMBER_INTRODUCTION.get(), Config.MAGIC_NUMBER.getAsInt());
 
         Config.ITEM_STRINGS.get().forEach((item) -> LOGGER.info("ITEM >> {}", item));
+
+
+        // 验证液体注册
+        if (Modfluid.FLOWING_BYWATER.get() == null) {
+            LOGGER.error("FLOWING_BYWATER is null!");
+        } else {
+            LOGGER.info("FLOWING_BYWATER registered successfully.");
+        }
+
+        if (Modfluid.SOUREC_BYWATER.get() == null) {
+            LOGGER.error("SOUREC_BYWATER is null!");
+        } else {
+            LOGGER.info("SOUREC_BYWATER registered successfully.");
+        }
+
+        // 验证方块注册
+        if (BlockRegistry.BYWATER_BLOCK.get() == null) {
+            LOGGER.error("BYWATER_BLOCK is null!");
+        } else {
+            LOGGER.info("BYWATER_BLOCK registered successfully.");
+        }
+
+        // 验证物品注册
+        if (Moditems.BYWATER_BUCKET.get() == null) {
+            LOGGER.error("BYWATER_BUCKET is null!");
+        } else {
+            LOGGER.info("BYWATER_BUCKET registered successfully.");
+        }
     }
+
 
 //    // 将示例块项添加到构建块标签页中
 //    private void addCreative(BuildCreativeModeTabContentsEvent event) {

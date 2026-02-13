@@ -1,9 +1,11 @@
 package com.phagens.corpseorigin.Block.ModFluids;
 
+import com.phagens.corpseorigin.CorpseOrigin;
 import com.phagens.corpseorigin.register.BlockRegistry;
 import com.phagens.corpseorigin.register.Moditems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -14,24 +16,47 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.FlowingFluid;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
+import net.neoforged.neoforge.common.SoundActions;
 import net.neoforged.neoforge.fluids.FluidType;
 
 public abstract class ByWaterZL extends FlowingFluid {
-
+    public static final FluidType BLUE_WATER_FLUID_TYPE = new FluidType(
+            FluidType.Properties.create()
+                    .density(1000)          // 密度，水=1000
+                    .viscosity(1000)        // 粘度，水=1000
+                    .lightLevel(0)          // 发光亮度 0
+                    .temperature(300)       // 温度，水=300
+                    .sound(SoundActions.BUCKET_FILL, SoundEvents.BUCKET_FILL)
+                    .sound(SoundActions.BUCKET_EMPTY, SoundEvents.BUCKET_EMPTY)
+                    .canSwim(true)
+                    .canDrown(true)
+                    .canExtinguish(true)    // 能灭火（类似水）
+                    .supportsBoating(true)  // 能行船
+                    .fallDistanceModifier(0.5F)
+    );
 
     @Override//返回流动水
     public Fluid getFlowing() {
-        return Modfluid.FLOWING_BYWATER.get();
+        Fluid flowing = Modfluid.FLOWING_BYWATER.get();
+        if (flowing == null) {
+            CorpseOrigin.LOGGER.error("FLOWING_BYWATER is null!");
+        }
+        return flowing;
     }
 
     @Override//返回静态水
     public Fluid getSource() {
-        return Modfluid.SOUREC_BYWATER.get();
+        Fluid source = Modfluid.SOUREC_BYWATER.get();
+        if (source == null) {
+            CorpseOrigin.LOGGER.error("SOUREC_BYWATER is null!");
+        }
+        return source;
     }
 
     @Override
     public FluidType getFluidType() {
-        return BYWATERFLULDTYPE.BYWATERFLULDTYPE;
+
+        return BLUE_WATER_FLUID_TYPE;
     }
 
     @Override//返回桶装物品
@@ -39,6 +64,10 @@ public abstract class ByWaterZL extends FlowingFluid {
         return Moditems.BYWATER_BUCKET.get();
     }
 
+    @Override
+    protected BlockState createLegacyBlock(FluidState fluidState) {
+        return BlockRegistry.BYWATER_BLOCK.get().defaultBlockState();
+    }
 
     public static class FlowingBY extends ByWaterZL {
         @Override//状态注册
@@ -148,17 +177,8 @@ public abstract class ByWaterZL extends FlowingFluid {
             return 8;
         }
     }
-    public static class BYWATERFLULDTYPE extends FluidType {
-        public static final BYWATERFLULDTYPE BYWATERFLULDTYPE = new BYWATERFLULDTYPE();
-        public BYWATERFLULDTYPE() {
-            super(Properties.create() .density(1000)
-                    .viscosity(1000)
-                    .lightLevel(0)
 
-
-
-            );
 
 }
-        }}
+
 
