@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "level": {
+      "0": { "model": "corpseorigin:block/bywater_block" },
+      "1": { "model": "corpseorigin:block/bywater_block" },
+      "2": { "model": "corpseorigin:block/bywater_block" },
+      "3": { "model": "corpseorigin:block/bywater_block" },
+      "4": { "model": "corpseorigin:block/bywater_block" },
+      "5": { "model": "corpseorigin:block/bywater_block" },
+      "6": { "model": "corpseorigin:block/bywater_block" },
+      "7": { "model": "corpseorigin:block/bywater_block" },
+      "8": { "model": "corpseorigin:block/bywater_block" },
+      "9": { "model": "corpseorigin:block/bywater_block" },
+      "10": { "model": "corpseorigin:block/bywater_block" },
+      "11": { "model": "corpseorigin:block/bywater_block" },
+      "12": { "model": "corpseorigin:block/bywater_block" },
+      "13": { "model": "corpseorigin:block/bywater_block" },
+      "14": { "model": "corpseorigin:block/bywater_block" },
+      "15": { "model": "corpseorigin:block/bywater_block" }
+    }
+  }
+}

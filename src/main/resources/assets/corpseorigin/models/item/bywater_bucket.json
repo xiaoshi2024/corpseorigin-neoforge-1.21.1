@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/bucket",
+  "textures": {
+    "layer0": "minecraft:item/bucket",
+    "layer1": "corpseorigin:block/source_bywater_still"
+  }
+}

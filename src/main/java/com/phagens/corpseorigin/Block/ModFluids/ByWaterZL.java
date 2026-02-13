@@ -6,11 +6,13 @@ import com.phagens.corpseorigin.register.Moditems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.FlowingFluid;
@@ -20,20 +22,7 @@ import net.neoforged.neoforge.common.SoundActions;
 import net.neoforged.neoforge.fluids.FluidType;
 
 public abstract class ByWaterZL extends FlowingFluid {
-    public static final FluidType BLUE_WATER_FLUID_TYPE = new FluidType(
-            FluidType.Properties.create()
-                    .density(1000)          // 密度，水=1000
-                    .viscosity(1000)        // 粘度，水=1000
-                    .lightLevel(0)          // 发光亮度 0
-                    .temperature(300)       // 温度，水=300
-                    .sound(SoundActions.BUCKET_FILL, SoundEvents.BUCKET_FILL)
-                    .sound(SoundActions.BUCKET_EMPTY, SoundEvents.BUCKET_EMPTY)
-                    .canSwim(true)
-                    .canDrown(true)
-                    .canExtinguish(true)    // 能灭火（类似水）
-                    .supportsBoating(true)  // 能行船
-                    .fallDistanceModifier(0.5F)
-    );
+
 
     @Override//返回流动水
     public Fluid getFlowing() {
@@ -56,7 +45,7 @@ public abstract class ByWaterZL extends FlowingFluid {
     @Override
     public FluidType getFluidType() {
 
-        return BLUE_WATER_FLUID_TYPE;
+        return ModFluidType.SOUREC_BYWATER.get();
     }
 
     @Override//返回桶装物品
@@ -70,6 +59,7 @@ public abstract class ByWaterZL extends FlowingFluid {
     }
 
     public static class FlowingBY extends ByWaterZL {
+
         @Override//状态注册
         protected void createFluidStateDefinition(StateDefinition.Builder<Fluid, FluidState> builder) {
             super.createFluidStateDefinition(builder);
@@ -88,12 +78,12 @@ public abstract class ByWaterZL extends FlowingFluid {
 
         @Override//流体水平上方流动距离
         protected int getSlopeFindDistance(LevelReader levelReader) {
-            return 4;
+            return 1;
         }
 
         @Override//流体每格下降等级
         protected int getDropOff(LevelReader levelReader) {
-            return 1;
+            return 8;
         }
 
         @Override//流体是否被其他流体替换
@@ -108,13 +98,10 @@ public abstract class ByWaterZL extends FlowingFluid {
 
         @Override//爆炸抗性
         protected float getExplosionResistance() {
-            return 0;
+            return 100;
         }
 
-        @Override//流体转化为对应方块状态
-        protected BlockState createLegacyBlock(FluidState fluidState) {
-            return BlockRegistry.BYWATER_BLOCK.get().defaultBlockState();
-        }
+
 
         @Override//判断流体是不是源头
         public boolean isSource(FluidState fluidState) {
@@ -126,7 +113,30 @@ public abstract class ByWaterZL extends FlowingFluid {
             return fluidState.getValue(LEVEL);
         }
     }
+
+
+
     public static class SourceBY extends ByWaterZL {
+        private static final int INFECTION_INTERVAL = 20; // 每 20 tick 执行一次
+        private static int tickCounter = 0;
+        @Override
+        public void tick(Level level, BlockPos pos, FluidState state) {
+            super.tick(level, pos, state);
+            if (level.getRandom().nextInt(INFECTION_INTERVAL)>5){
+                infectNeighbors(level, pos);
+            }
+        }
+
+        private void infectNeighbors(Level level, BlockPos center) {
+            for (Direction dir : Direction.values()) {
+                BlockPos neighbor = center.relative(dir);
+                BlockState neighborState = level.getBlockState(neighbor);
+                // 检查是否为原版水方块
+                if (neighborState.is(Blocks.WATER)) {
+                    level.setBlock(neighbor, BlockRegistry.BYWATER_BLOCK.get().defaultBlockState(), 3);
+                }
+            }}
+
         @Override
         protected boolean canConvertToSource(Level level) {
             return false;
@@ -139,12 +149,12 @@ public abstract class ByWaterZL extends FlowingFluid {
 
         @Override
         protected int getSlopeFindDistance(LevelReader levelReader) {
-            return 4;
+            return 1;
         }
 
         @Override
         protected int getDropOff(LevelReader levelReader) {
-            return 1;
+            return 8;
         }
 
         @Override
@@ -159,13 +169,10 @@ public abstract class ByWaterZL extends FlowingFluid {
 
         @Override
         protected float getExplosionResistance() {
-            return 0;
+            return 100;
         }
 
-        @Override
-        protected BlockState createLegacyBlock(FluidState fluidState) {
-            return BlockRegistry.BYWATER_BLOCK.get().defaultBlockState();
-        }
+
 
         @Override
         public boolean isSource(FluidState fluidState) {
@@ -176,7 +183,14 @@ public abstract class ByWaterZL extends FlowingFluid {
         public int getAmount(FluidState fluidState) {
             return 8;
         }
+
+
+
+
+        //特殊
+
     }
+
 
 
 }

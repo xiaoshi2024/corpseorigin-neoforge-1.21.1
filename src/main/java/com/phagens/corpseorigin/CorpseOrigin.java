@@ -1,5 +1,6 @@
 package com.phagens.corpseorigin;
 
+import com.phagens.corpseorigin.Block.ModFluids.ModFluidType;
 import com.phagens.corpseorigin.Block.ModFluids.Modfluid;
 import com.phagens.corpseorigin.register.BlockEntityRegistry;
 import com.phagens.corpseorigin.register.BlockRegistry;
@@ -77,7 +78,11 @@ public class CorpseOrigin {
     public CorpseOrigin(IEventBus modEventBus, ModContainer modContainer) {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
+        ModFluidType.FLUID_TYPES.register(modEventBus);
         Modfluid.init(modEventBus);
+
+
+
         Moditems.ITEMS.register(modEventBus);
         BlockRegistry.Blocks.register(modEventBus);
         BlockEntityRegistry.BLOCK_ENTITIES.register(modEventBus);
@@ -110,32 +115,6 @@ public class CorpseOrigin {
         Config.ITEM_STRINGS.get().forEach((item) -> LOGGER.info("ITEM >> {}", item));
 
 
-        // 验证液体注册
-        if (Modfluid.FLOWING_BYWATER.get() == null) {
-            LOGGER.error("FLOWING_BYWATER is null!");
-        } else {
-            LOGGER.info("FLOWING_BYWATER registered successfully.");
-        }
-
-        if (Modfluid.SOUREC_BYWATER.get() == null) {
-            LOGGER.error("SOUREC_BYWATER is null!");
-        } else {
-            LOGGER.info("SOUREC_BYWATER registered successfully.");
-        }
-
-        // 验证方块注册
-        if (BlockRegistry.BYWATER_BLOCK.get() == null) {
-            LOGGER.error("BYWATER_BLOCK is null!");
-        } else {
-            LOGGER.info("BYWATER_BLOCK registered successfully.");
-        }
-
-        // 验证物品注册
-        if (Moditems.BYWATER_BUCKET.get() == null) {
-            LOGGER.error("BYWATER_BUCKET is null!");
-        } else {
-            LOGGER.info("BYWATER_BUCKET registered successfully.");
-        }
     }
 
 

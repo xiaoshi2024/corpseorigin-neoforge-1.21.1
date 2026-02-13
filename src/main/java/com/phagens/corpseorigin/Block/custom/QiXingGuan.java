@@ -88,7 +88,6 @@ public class QiXingGuan extends Block implements EntityBlock {
                     level.getServer().tell(new TickTask(level.getServer().getTickCount() + 20, () -> { markInfected(level, neighbor);
                         visited.add(neighbor);
                         queue.offer(neighbor);}));
-                    System.out.println("my kaishi ganran le " + neighbor);
 
                 }
             }
