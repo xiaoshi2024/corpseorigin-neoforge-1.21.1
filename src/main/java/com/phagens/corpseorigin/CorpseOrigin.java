@@ -1,7 +1,5 @@
 package com.phagens.corpseorigin;
 
-import com.phagens.corpseorigin.Block.ModFluids.ModFluidType;
-import com.phagens.corpseorigin.Block.ModFluids.Modfluid;
 import com.phagens.corpseorigin.register.BlockEntityRegistry;
 import com.phagens.corpseorigin.register.BlockRegistry;
 import com.phagens.corpseorigin.register.Moditems;
@@ -66,11 +64,13 @@ public class CorpseOrigin {
 
     // Creates a creative tab with the id "corpseorigin:example_tab" for the example item, that is placed after the combat tab
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> CORPSE_ORIGIN_TAB = CREATIVE_MODE_TABS.register("corpse_origin_tab", () -> CreativeModeTab.builder()
-            .title(Component.translatable("itemGroup.corpseorigin")) //The language key for the title of your CreativeModeTab
+            .title(Component.translatable("itemGroup.corpseorigin")) //The language key for title of your CreativeModeTab
             .withTabsBefore(CreativeModeTabs.COMBAT)
             .icon(() -> QI_XING_GUAN_ITEM.get().getDefaultInstance())
             .displayItems((parameters, output) -> {
-                output.accept(QI_XING_GUAN_ITEM.get()); // Add the example item to the tab. For your own tabs, this method is preferred over the event
+                output.accept(QI_XING_GUAN_ITEM.get());
+                output.accept(Moditems.BYWATER_BUCKET.get());
+                output.accept(Moditems.BYWATER_BOTTLE.get());
             }).build());
 
     // The constructor for the mod class is the first code that is run when your mod is loaded.
@@ -78,10 +78,6 @@ public class CorpseOrigin {
     public CorpseOrigin(IEventBus modEventBus, ModContainer modContainer) {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
-        ModFluidType.FLUID_TYPES.register(modEventBus);
-        Modfluid.init(modEventBus);
-
-
 
         Moditems.ITEMS.register(modEventBus);
         BlockRegistry.Blocks.register(modEventBus);
@@ -93,10 +89,6 @@ public class CorpseOrigin {
         // Note that this is necessary if and only if we want *this* class (CorpseOrigin) to respond directly to events.
         // Do not add this line if there are no @SubscribeEvent-annotated functions in this class, like onServerStarting() below.
         NeoForge.EVENT_BUS.register(this);
-
-
-      /*  // 将该物品注册到创意标签页
-        modEventBus.addListener(this::addCreative);*/
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);

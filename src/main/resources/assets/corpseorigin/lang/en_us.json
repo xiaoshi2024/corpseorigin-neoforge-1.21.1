@@ -2,6 +2,8 @@
   "itemGroup.corpseorigin": "Example Mod Tab",
   "block.corpseorigin.example_block": "Example Block",
   "item.corpseorigin.example_item": "Example Item",
+  "item.corpseorigin.bywater_bucket": "Corpse Water Bucket",
+  "item.corpseorigin.bywater_bottle": "Corpse Water Bottle",
 
   "corpseorigin.configuration.title": " CorpseOrigin Configs",
   "corpseorigin.configuration.section.corpseorigin.common.toml": " CorpseOrigin Configs",

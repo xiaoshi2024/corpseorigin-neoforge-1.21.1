@@ -2,7 +2,8 @@ package com.phagens.corpseorigin.Block.custom;
 
 
 import com.phagens.corpseorigin.Block.entity.QiXingGuanBlockEntity;
-import com.phagens.corpseorigin.register.BlockRegistry;
+import com.phagens.corpseorigin.data.InfectionData;
+import com.phagens.corpseorigin.util.ModTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.TickTask;
@@ -29,12 +30,9 @@ import javax.annotation.Nullable;
 import java.util.*;
 
 public class QiXingGuan extends Block implements EntityBlock {
-    //召唤的小怪
     private final EntityType<?> ENTITY;
 
-    //瘫痪
     public static final BooleanProperty SUMMONED = BooleanProperty.create("summoned");
-    private final Set<BlockPos> infectedPositions = new HashSet<>();
 
     public QiXingGuan(EntityType<?> entity) {
         super(BlockBehaviour.Properties.of()
@@ -65,10 +63,17 @@ public class QiXingGuan extends Block implements EntityBlock {
     @Override
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         super.onPlace(state, level, pos, oldState, movedByPiston);
-        spreadWaterInfection(level, pos); // 感染周围水源
-        System.out.println("QiXingGuan placed at: " + pos);
+        if (!level.isClientSide) {
+            spreadWaterInfection(level, pos);
+        }
+    }
 
-
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        super.onRemove(state, level, pos, newState, movedByPiston);
+        if (!level.isClientSide && state.is(state.getBlock())) {
+            clearInfection(pos, level);
+        }
     }
 
 
@@ -85,18 +90,27 @@ public class QiXingGuan extends Block implements EntityBlock {
 
 
     }
-    //感染逻辑
+
+    private static final int MAX_ENERGY = 15; // 最大能量值（类似红石强度）
+    private static final int ENERGY_DECAY = 1; // 每格距离能量衰减值
+
     private void spreadWaterInfection(Level level, BlockPos pos) {
-        //未感染 已感染标记
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        
+        InfectionData data = InfectionData.get(serverLevel);
         Queue<BlockPos> queue = new LinkedList<>();
         Set<BlockPos> visited = new HashSet<>();
+        Set<BlockPos> infectedPositions = new HashSet<>();
         queue.offer(pos);
         visited.add(pos);
-        infectedPositions.add(pos);
-        final int MAX_DISTANCE = 128;
-        //寻路
+        data.setWaterEnergy(pos, MAX_ENERGY); // 棺材位置能量最高
+        final int MAX_DISTANCE = 32;
+
         while (!queue.isEmpty()) {
             BlockPos current = queue.poll();
+            int currentEnergy = data.getWaterEnergy(current);
             int distance = Math.max(
                     Math.abs(current.getX() - pos.getX()),
                     Math.max(
@@ -104,26 +118,76 @@ public class QiXingGuan extends Block implements EntityBlock {
                             Math.abs(current.getZ() - pos.getZ())
                     )
             );
-            if (distance >= MAX_DISTANCE) {
+            if (distance >= MAX_DISTANCE || currentEnergy <= 0) {
                 continue;
             }
 
             for (Direction direction : Direction.values()) {
                 BlockPos neighbor = current.relative(direction);
-                if (neighbor.equals(pos) || visited.contains(neighbor)) {
+                if (visited.contains(neighbor)) {
                     continue;
                 }
-                if (level.getBlockState(neighbor).getFluidState().is(FluidTags.WATER)){
-                        markInfected(level, neighbor);
-                        visited.add( neighbor);
+                BlockState neighborState = level.getBlockState(neighbor);
+                if (neighborState.getFluidState().is(FluidTags.WATER)) {
+                    int neighborEnergy = currentEnergy - ENERGY_DECAY;
+                    if (neighborEnergy > 0) {
+                        markInfectedWithEnergy(data, pos, neighbor, neighborEnergy, infectedPositions);
+                        visited.add(neighbor);
                         queue.offer(neighbor);
+                    }
                 }
             }
         }
     }
-    //更换感染水方块  暂定
-    private void markInfected(Level level, BlockPos neighbor) {
-        level.setBlock(neighbor, BlockRegistry.BYWATER_BLOCK.get().defaultBlockState(), 3);
+    
+    //标记感染的水位置并设置能量
+    private void markInfectedWithEnergy(InfectionData data, BlockPos coffinPos, BlockPos waterPos, int energy, Set<BlockPos> infectedPositions) {
+        infectedPositions.add(waterPos);
+        data.addInfectedWater(coffinPos, waterPos, energy);
+    }
+
+    //标记水为感染状态（静态方法，供外部调用）
+    public static void markWaterInfected(BlockPos pos) {
+        // 这个方法现在需要 ServerLevel，但由于是静态方法，我们暂时保留原逻辑
+        // 实际使用时会通过事件处理器传入 ServerLevel
+    }
+
+    //检查水是否被感染
+    public static boolean isWaterInfected(BlockPos pos) {
+        // 这个方法现在需要 ServerLevel，但由于是静态方法，我们暂时保留原逻辑
+        // 实际使用时会通过事件处理器传入 ServerLevel
+        return false;
+    }
+    
+    //清除棺材的感染
+    private void clearInfection(BlockPos coffinPos, Level level) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        
+        if (!isInOcean(level, coffinPos)) {
+            return;
+        }
+        
+        InfectionData data = InfectionData.get(serverLevel);
+        data.removeCoffinInfections(coffinPos);
+    }
+    
+    //检查棺材是否在海洋中（16x16范围内水方块数量超过阈值）
+    private boolean isInOcean(Level level, BlockPos pos) {
+        final int RANGE = 8; // 16x16范围，半径8格
+        final int WATER_THRESHOLD = 100; // 水方块数量阈值
+        
+        int waterCount = 0;
+        for (BlockPos checkPos : BlockPos.betweenClosed(pos.offset(-RANGE, -RANGE, -RANGE), pos.offset(RANGE, RANGE, RANGE))) {
+            if (level.getBlockState(checkPos).getFluidState().is(FluidTags.WATER)) {
+                waterCount++;
+                if (waterCount >= WATER_THRESHOLD) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     //召唤逻辑
