@@ -122,7 +122,7 @@ public abstract class ByWaterZL extends FlowingFluid {
         @Override
         public void tick(Level level, BlockPos pos, FluidState state) {
             super.tick(level, pos, state);
-            if (level.getRandom().nextInt(INFECTION_INTERVAL)>4){
+            if (level.getRandom().nextInt(INFECTION_INTERVAL)>5){
                 infectNeighbors(level, pos);
             }
         }
