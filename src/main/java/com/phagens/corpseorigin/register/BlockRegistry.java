@@ -1,5 +1,6 @@
 package com.phagens.corpseorigin.register;
 
+import com.phagens.corpseorigin.Block.ModFluids.FliuidBlock;
 import com.phagens.corpseorigin.Block.ModFluids.Modfluid;
 import com.phagens.corpseorigin.Block.custom.QiXingGuan;
 import com.phagens.corpseorigin.CorpseOrigin;
@@ -19,7 +20,7 @@ public class BlockRegistry {
     public static final DeferredBlock<QiXingGuan> QI_XING_GUAN = Blocks.register("qi_xing_guan",
             () -> new QiXingGuan(EntityType.ZOMBIE)); // 假设召唤的是僵尸
     //流体注册
-    public static final DeferredBlock<LiquidBlock> BYWATER_BLOCK = Blocks.register("bywater_block",()->new LiquidBlock(Modfluid.SOUREC_BYWATER.get(),BlockBehaviour.Properties.of()
+    public static final DeferredBlock<FliuidBlock> BYWATER_BLOCK = Blocks.register("bywater_block",()->new FliuidBlock(Modfluid.SOUREC_BYWATER.get(),BlockBehaviour.Properties.of()
             .replaceable()
             .noCollission()
             .strength(100.0F)

@@ -5,6 +5,9 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.GameEventTags;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.animal.AbstractFish;
+import net.minecraft.world.entity.animal.Squid;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -39,18 +42,36 @@ public class ModFluidType extends FluidType {
     public static final DeferredRegister<FluidType> FLUID_TYPES = DeferredRegister.create(NeoForgeRegistries.Keys.FLUID_TYPES, CorpseOrigin.MODID);
 
     public static final DeferredHolder<FluidType, FluidType> SOUREC_BYWATER = FLUID_TYPES.register("source_bywater",
-            () -> new ModFluidType(FluidType.Properties.create(),ResourceLocation.parse("minecraft:block/water_still"),
-                    ResourceLocation.parse("minecraft:block/water_flow"),0xFF0000,new Vector3f(0.5f,0.5f,0.5f)));
+            () -> new ModFluidType(FluidType.Properties.create()
+                    .density(1000)           // 密度
+                    .viscosity(1000)         // 粘度
+                    .temperature(300)        // 温度
+                    .lightLevel(2)           // 发光等级
+                    .fallDistanceModifier(0) // 跌落距离修正
+                    .canExtinguish(true)     // 是否能灭火
+                    .supportsBoating(true)   // 是否支持船只
+                    .canHydrate(true)        // 是否能水合
+                    .canSwim(true)           // 确保允许游泳
+                    .canDrown(false)
+                    ,ResourceLocation.parse("minecraft:block/water_still"),
+                    ResourceLocation.parse("minecraft:block/water_flow"),0xFF0000,
+                    new Vector3f(0.5f,0.5f,0.5f)));
+
+
+
 
     @Override
     public void setItemMovement(ItemEntity entity) {
         super.setItemMovement(entity);
     }
 
-
-
-
-
+    @Override
+    public double motionScale(Entity entity) {
+        if (entity instanceof AbstractFish || entity instanceof Squid) {
+            return 0.014D; // 给水生生物标准的水中移动速度
+        }
+        return super.motionScale(entity);
+    }
 
     @EventBusSubscriber(modid = CorpseOrigin.MODID, value = Dist.CLIENT)
     public static class ModJT {

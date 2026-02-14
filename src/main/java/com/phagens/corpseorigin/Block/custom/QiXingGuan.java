@@ -8,6 +8,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobSpawnType;
@@ -41,6 +42,8 @@ public class QiXingGuan extends Block implements EntityBlock {
                 sound(SoundType.WOOD)//声音
                 .mapColor(MapColor.WOOD)//地图颜色
                 .noOcclusion()//如有透明
+                .randomTicks()
+
         );//shengy
 
         ENTITY = entity;
@@ -62,11 +65,25 @@ public class QiXingGuan extends Block implements EntityBlock {
     @Override
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         super.onPlace(state, level, pos, oldState, movedByPiston);
-        if (isInWater(level, pos)) {
-            System.out.println("w zai  shui zhong " + pos);
-            spreadWaterInfection(level, pos); // 感染周围水源
-        }
+        spreadWaterInfection(level, pos); // 感染周围水源
         System.out.println("QiXingGuan placed at: " + pos);
+
+
+    }
+
+
+    @Override
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        super.tick(state, level, pos, random);
+
+        if (!state.getValue(SUMMONED)) {
+            // 检测实体
+            detectEntitiesInInfectedArea(level, pos);
+            // 重新安排下次检测
+            level.scheduleTick(pos, this, 20);
+        }
+
+
     }
     //感染逻辑
     private void spreadWaterInfection(Level level, BlockPos pos) {
@@ -76,54 +93,50 @@ public class QiXingGuan extends Block implements EntityBlock {
         queue.offer(pos);
         visited.add(pos);
         infectedPositions.add(pos);
+        final int MAX_DISTANCE = 128;
         //寻路
         while (!queue.isEmpty()) {
             BlockPos current = queue.poll();
+            int distance = Math.max(
+                    Math.abs(current.getX() - pos.getX()),
+                    Math.max(
+                            Math.abs(current.getY() - pos.getY()),
+                            Math.abs(current.getZ() - pos.getZ())
+                    )
+            );
+            if (distance >= MAX_DISTANCE) {
+                continue;
+            }
+
             for (Direction direction : Direction.values()) {
                 BlockPos neighbor = current.relative(direction);
-                if (neighbor.equals(pos)) {
+                if (neighbor.equals(pos) || visited.contains(neighbor)) {
                     continue;
                 }
-                if (!visited.contains(neighbor) && level.getBlockState(neighbor).getFluidState().is(FluidTags.WATER)) {
-                    level.getServer().tell(new TickTask(level.getServer().getTickCount() + 20, () -> { markInfected(level, neighbor);
-                        visited.add(neighbor);
-                        queue.offer(neighbor);}));
-
+                if (level.getBlockState(neighbor).getFluidState().is(FluidTags.WATER)){
+                        markInfected(level, neighbor);
+                        visited.add( neighbor);
+                        queue.offer(neighbor);
                 }
             }
         }
     }
     //更换感染水方块  暂定
     private void markInfected(Level level, BlockPos neighbor) {
-
         level.setBlock(neighbor, BlockRegistry.BYWATER_BLOCK.get().defaultBlockState(), 3);
     }
-    //判断是否未感染水
-    private boolean isInWater(Level level, BlockPos pos) {
-        // 检查当前方块及其周围一圈是否有水
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
-                if (dx == 0 && dz == 0) continue;
-                BlockPos neighbor = pos.offset(dx, 0, dz);
-                if (level.getBlockState(neighbor).getFluidState().is(FluidTags.WATER)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
 
     //召唤逻辑
     private void detectEntitiesInInfectedArea(Level level, BlockPos posE) {
-        int entityCount = 0;
-        int requiredCount = 1;
-        for (BlockPos pos :infectedPositions ) {            //这里填boss生物类
-            List<Entity> entities = level.getEntitiesOfClass(Entity.class,new AABB(pos).inflate(5)); // 检测范围可调整
-            entityCount += entities.size();
-        }
-        // 触发动作
-        if (entityCount >= requiredCount && !level.getBlockState(posE).getValue(SUMMONED)) {
+        final int DETECTION_RADIUS = 32;  // 检测半径32格
+        final int REQUIRED_ENTITY_COUNT = 30;
+        // 检测指定范围内的所有实体
+        List<Entity> entities = level.getEntitiesOfClass(
+                Entity.class,  // 可以改为特定生物类型
+                new AABB(posE).inflate(DETECTION_RADIUS)
+        );
+        // 如果达到所需数量且未召唤过
+        if (entities.size() >= REQUIRED_ENTITY_COUNT && !level.getBlockState(posE).getValue(SUMMONED)) {
             triggerAction((ServerLevel) level, posE);
             level.setBlock(posE, this.stateDefinition.any().setValue(SUMMONED, true), 3);
         }

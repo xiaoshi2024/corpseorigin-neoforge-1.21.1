@@ -78,12 +78,12 @@ public abstract class ByWaterZL extends FlowingFluid {
 
         @Override//流体水平上方流动距离
         protected int getSlopeFindDistance(LevelReader levelReader) {
-            return 1;
+            return 2;
         }
 
         @Override//流体每格下降等级
         protected int getDropOff(LevelReader levelReader) {
-            return 8;
+            return 4;
         }
 
         @Override//流体是否被其他流体替换
@@ -117,22 +117,18 @@ public abstract class ByWaterZL extends FlowingFluid {
 
 
     public static class SourceBY extends ByWaterZL {
-        private static final int INFECTION_INTERVAL = 20; // 每 20 tick 执行一次
-        private static int tickCounter = 0;
         @Override
         public void tick(Level level, BlockPos pos, FluidState state) {
             super.tick(level, pos, state);
-            if (level.getRandom().nextInt(INFECTION_INTERVAL)>5){
-                infectNeighbors(level, pos);
-            }
-        }
 
+        }
+        //血海
         private void infectNeighbors(Level level, BlockPos center) {
             for (Direction dir : Direction.values()) {
                 BlockPos neighbor = center.relative(dir);
                 BlockState neighborState = level.getBlockState(neighbor);
                 // 检查是否为原版水方块
-                if (neighborState.is(Blocks.WATER)) {
+                if (!neighborState.is(Blocks.WATER)&&neighborState.getFluidState().is(FluidTags.WATER)) {
                     level.setBlock(neighbor, BlockRegistry.BYWATER_BLOCK.get().defaultBlockState(), 3);
                 }
             }}
@@ -149,12 +145,12 @@ public abstract class ByWaterZL extends FlowingFluid {
 
         @Override
         protected int getSlopeFindDistance(LevelReader levelReader) {
-            return 1;
+            return 2;
         }
 
         @Override
         protected int getDropOff(LevelReader levelReader) {
-            return 8;
+            return 4;
         }
 
         @Override
