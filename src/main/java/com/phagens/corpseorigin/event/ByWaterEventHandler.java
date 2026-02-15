@@ -3,6 +3,7 @@ package com.phagens.corpseorigin.event;
 import com.phagens.corpseorigin.CorpseOrigin;
 import com.phagens.corpseorigin.Block.custom.QiXingGuan;
 import com.phagens.corpseorigin.data.InfectionData;
+import com.phagens.corpseorigin.register.EffectRegister;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -89,7 +90,7 @@ public class ByWaterEventHandler {
 
         if (lastPoisonTime == null || (currentTime - lastPoisonTime) >= POISON_COOLDOWN) {
             entity.addEffect(new MobEffectInstance(
-                    MobEffects.POISON,
+                    EffectRegister.QIANS,
                     POISON_DURATION,
                     POISON_AMPLIFIER
             ));

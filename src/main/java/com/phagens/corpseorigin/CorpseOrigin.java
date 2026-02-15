@@ -2,6 +2,7 @@ package com.phagens.corpseorigin;
 
 import com.phagens.corpseorigin.register.BlockEntityRegistry;
 import com.phagens.corpseorigin.register.BlockRegistry;
+import com.phagens.corpseorigin.register.EffectRegister;
 import com.phagens.corpseorigin.register.Moditems;
 import org.slf4j.Logger;
 
@@ -82,6 +83,7 @@ public class CorpseOrigin {
         Moditems.ITEMS.register(modEventBus);
         BlockRegistry.Blocks.register(modEventBus);
         BlockEntityRegistry.BLOCK_ENTITIES.register(modEventBus);
+        EffectRegister.MOB_EFFECTS.register(modEventBus);
         // Register the Deferred Register to the mod event bus so tabs get registered
         CREATIVE_MODE_TABS.register(modEventBus);
 
