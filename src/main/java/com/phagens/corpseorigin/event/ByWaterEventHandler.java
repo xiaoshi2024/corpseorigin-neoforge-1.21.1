@@ -65,6 +65,7 @@ public class ByWaterEventHandler {
             // 处理非玩家生物的逻辑
             handleLivingEntityInfection(entity, level);
         }
+
     }
 
     private static void handleLivingEntityInfection(LivingEntity entity, Level level) {
@@ -120,6 +121,7 @@ public class ByWaterEventHandler {
                 }
             }
         }
+
     }
 
     private static boolean isPlayerInInfectedWater(Level level, BlockPos pos) {
