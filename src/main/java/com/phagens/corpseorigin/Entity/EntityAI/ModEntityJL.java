@@ -8,7 +8,7 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.vibrations.VibrationSystem;
 
-public class ModEntityJL extends Monster implements VibrationSystem {
+public class ModEntityJL extends Monster  {
     protected ModEntityJL(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
     }
@@ -30,13 +30,5 @@ public class ModEntityJL extends Monster implements VibrationSystem {
                 .add(Attributes.ATTACK_DAMAGE, 3.0D);
     }
 
-    @Override
-    public Data getVibrationData() {
-        return null;
-    }
 
-    @Override
-    public User getVibrationUser() {
-        return null;
-    }
 }

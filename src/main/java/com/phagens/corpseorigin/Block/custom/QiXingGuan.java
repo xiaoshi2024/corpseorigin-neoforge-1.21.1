@@ -66,6 +66,7 @@ public class QiXingGuan extends Block implements EntityBlock {
         if (!level.isClientSide) {
             spreadWaterInfection(level, pos);
         }
+        level.scheduleTick(pos, this, 20);
     }
 
     @Override
@@ -74,6 +75,7 @@ public class QiXingGuan extends Block implements EntityBlock {
         if (!level.isClientSide && state.is(state.getBlock())) {
             clearInfection(pos, level);
         }
+
     }
 
 
@@ -86,8 +88,8 @@ public class QiXingGuan extends Block implements EntityBlock {
             // 检测实体
             detectEntitiesInInfectedArea(level, pos);
             // 重新安排下次检测
-            level.scheduleTick(pos, this, 20);
         }
+        level.scheduleTick(pos, this, 20);
 
 
     }
