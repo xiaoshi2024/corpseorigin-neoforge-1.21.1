@@ -5,6 +5,7 @@ import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.gameevent.vibrations.VibrationSystem;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
@@ -34,6 +35,20 @@ public class ModFollow extends Goal {
         this.spend = spend;//移动速度调节
         this.followingTarget = followingTarget;  //是否追踪看不见目标
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK)); //设置AI  允许移动 与观察
+    }
+
+    //判断目标还在不 还打不
+    public boolean canContinueToUse() {
+        LivingEntity livingentity = this.mob.getTarget();
+        if (livingentity == null) {
+            return false;
+        } else if (!livingentity.isAlive()) {
+            return false;
+        } else if (!this.followingTarget) {
+            return !this.mob.getNavigation().isDone();
+        } else {
+            return !this.mob.isWithinRestriction(livingentity.blockPosition()) ? false : !(livingentity instanceof Player) || !livingentity.isSpectator() && !((Player)livingentity).isCreative();
+        }
     }
 
     @Override
@@ -131,8 +146,30 @@ public class ModFollow extends Goal {
 
         }
     }
-
+    //动画应用需重写
     private void checkAndPerformAttack(LivingEntity livingentity) {
+      if(this.lenqueandfanweiandemubiao(livingentity)){
+          this.resetAttackTick();
+//          this.mob.swing(InteractionHand.MAIN_HAND);
+          this.mob.doHurtTarget(livingentity);//执行伤害
+      }
+}
 
+    private void resetAttackTick() {
+        //重置
+        this.ticksUntilNextAttack = this.adjustedTickDelay(this.attackInterval);
+    }
+
+    private boolean lenqueandfanweiandemubiao(LivingEntity livingentity) {
+        //冷却 and 距离 and 看的见吗
+        return this.istime()&&this.mob.isWithinMeleeAttackRange(livingentity)&&this.mob.getSensing().hasLineOfSight(livingentity);
+    }
+
+    private boolean istime() {
+        return this.ticksUntilNextAttack <= 0;
+    }
+
+    public int getTicksUntilNextAttack() {
+        return this.ticksUntilNextAttack;
     }
 }

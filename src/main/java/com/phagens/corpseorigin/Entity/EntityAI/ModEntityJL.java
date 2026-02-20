@@ -1,16 +1,32 @@
 package com.phagens.corpseorigin.Entity.EntityAI;
 
+import com.phagens.corpseorigin.Entity.EntityAI.Vibrationsys.ModVibrationUser;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gameevent.DynamicGameEventListener;
 import net.minecraft.world.level.gameevent.vibrations.VibrationSystem;
 
-public class ModEntityJL extends Monster  {
-    protected ModEntityJL(EntityType<? extends Monster> entityType, Level level) {
+public class ModEntityJL extends Monster implements VibrationSystem {
+    // 振动系统必需的字段
+    private final DynamicGameEventListener<Listener> dynamicGameEventListener;
+    private final VibrationSystem.User vibrationUser;
+    private VibrationSystem.Data vibrationData;
+
+
+
+
+
+
+    protected ModEntityJL(EntityType<? extends Monster> entityType, Level level, DynamicGameEventListener<Listener> dynamicGameEventListener, User vibrationUser) {
         super(entityType, level);
+        this.vibrationUser=vibrationUser;
+        this.vibrationData=new Data();
+        this.dynamicGameEventListener=new DynamicGameEventListener<>(new VibrationSystem.Listener(this));
     }
     @Override//和平是否消失
     protected boolean shouldDespawnInPeaceful() {
@@ -31,4 +47,13 @@ public class ModEntityJL extends Monster  {
     }
 
 
+    @Override//获取振动数据
+    public Data getVibrationData() {
+        return this.vibrationData;
+    }
+
+    @Override//获取振动用户
+    public User getVibrationUser() {
+        return this.vibrationUser;
+    }
 }
