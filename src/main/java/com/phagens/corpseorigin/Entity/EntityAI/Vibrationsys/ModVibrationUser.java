@@ -28,7 +28,7 @@ public class ModVibrationUser implements VibrationSystem.User {
 
 
     private static final ResourceLocation SPEED_BOOST_UUID =
-            ResourceLocation.parse("your_mod_id:a1b2c3d4-e5f6-7890-abcd-ef1234567890");
+            ResourceLocation.parse("copymod:a1b2c3d4-e5f6-7890-abcd-ef1234567890");
 
 
     public ModVibrationUser(ModEntityJL entity) {
@@ -218,10 +218,5 @@ public class ModVibrationUser implements VibrationSystem.User {
                 break;
         }
 
-//        // UUID用于标识速度提升修饰符
-//        private static final UUID SPEED_BOOST_UUID = UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
-
-// 在实体类中添加必要的getter/setter
-// （这部分需要在您的ModEntityJL类中实现）
     }
 }
