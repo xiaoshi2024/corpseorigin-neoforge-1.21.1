@@ -1,9 +1,12 @@
 package com.phagens.corpseorigin;
 
 import com.phagens.corpseorigin.client.Renderer.block.QiXingGuanRenderer;
+import com.phagens.corpseorigin.client.Renderer.entity.ZbrFishRenderer;
 import com.phagens.corpseorigin.register.BlockEntityRegistry;
 import com.phagens.corpseorigin.register.BlockRegistry;
+import com.phagens.corpseorigin.register.EntityRegistry;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.EntityType;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -36,5 +39,6 @@ public class CorpseOriginClient {
     @SubscribeEvent
     public static void registerRenderers(final EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(BlockEntityRegistry.QI_XING_GUANS.get(), QiXingGuanRenderer::new);
+        event.registerEntityRenderer((EntityType<com.phagens.corpseorigin.Entity.ZbrFishEntity>) EntityRegistry.ZBR_FISH.get(), ZbrFishRenderer::new);
     }
 }

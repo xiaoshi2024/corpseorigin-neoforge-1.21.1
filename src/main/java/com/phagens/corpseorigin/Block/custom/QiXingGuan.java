@@ -66,6 +66,7 @@ public class QiXingGuan extends Block implements EntityBlock {
         if (!level.isClientSide) {
             spreadWaterInfection(level, pos);
         }
+        level.scheduleTick(pos, this, 20);
     }
 
     @Override
@@ -74,6 +75,7 @@ public class QiXingGuan extends Block implements EntityBlock {
         if (!level.isClientSide && state.is(state.getBlock())) {
             clearInfection(pos, level);
         }
+
     }
 
 
@@ -81,12 +83,13 @@ public class QiXingGuan extends Block implements EntityBlock {
     protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         super.tick(state, level, pos, random);
 
+
         if (!state.getValue(SUMMONED)) {
             // 检测实体
             detectEntitiesInInfectedArea(level, pos);
             // 重新安排下次检测
-            level.scheduleTick(pos, this, 20);
         }
+        level.scheduleTick(pos, this, 20);
 
 
     }
@@ -193,7 +196,7 @@ public class QiXingGuan extends Block implements EntityBlock {
     //召唤逻辑
     private void detectEntitiesInInfectedArea(Level level, BlockPos posE) {
         final int DETECTION_RADIUS = 32;  // 检测半径32格
-        final int REQUIRED_ENTITY_COUNT = 30;
+        final int REQUIRED_ENTITY_COUNT = 3;
         // 检测指定范围内的所有实体
         List<Entity> entities = level.getEntitiesOfClass(
                 Entity.class,  // 可以改为特定生物类型
