@@ -35,7 +35,7 @@ public class Moditems {
             () -> new YAOJIMoBan(new Item.Properties())
                     .addAttributeModifier(Attributes.MAX_HEALTH,
                             AttributeModifier.Operation.ADD_MULTIPLIED_BASE
-                    , 0.5,"NAMES"));
+                    , 0.5,"yaoshuione"));
     //这里 你去看item包里的Yaoji  然后 你看addAttributeModifier方法里面 传入参数 即可
 }
 

@@ -1,5 +1,6 @@
 package com.phagens.corpseorigin;
 
+import com.phagens.corpseorigin.event.player.playerDie;
 import com.phagens.corpseorigin.register.BlockEntityRegistry;
 import com.phagens.corpseorigin.register.BlockRegistry;
 import com.phagens.corpseorigin.register.EffectRegister;
@@ -89,7 +90,7 @@ public class CorpseOrigin {
         // Register the Deferred Register to the mod event bus so tabs get registered
         CREATIVE_MODE_TABS.register(modEventBus);
         //死亡移除
-        modEventBus.register(com.phagens.corpseorigin.event.player.playerDie.class);
+        NeoForge.EVENT_BUS.register(playerDie.class);
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (CorpseOrigin) to respond directly to events.
