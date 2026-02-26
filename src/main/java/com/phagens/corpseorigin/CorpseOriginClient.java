@@ -3,7 +3,6 @@ package com.phagens.corpseorigin;
 import com.phagens.corpseorigin.client.Renderer.block.QiXingGuanRenderer;
 import com.phagens.corpseorigin.client.Renderer.entity.ZbrFishRenderer;
 import com.phagens.corpseorigin.register.BlockEntityRegistry;
-import com.phagens.corpseorigin.register.BlockRegistry;
 import com.phagens.corpseorigin.register.EntityRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.EntityType;

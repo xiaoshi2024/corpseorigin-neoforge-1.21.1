@@ -1,6 +1,5 @@
 package com.phagens.corpseorigin.Item;
 
-import com.phagens.corpseorigin.register.Moditems;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -12,7 +11,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.Tier;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
-import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.Objects;
 

@@ -2,7 +2,6 @@ package com.phagens.corpseorigin.data;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import com.phagens.corpseorigin.CorpseOrigin;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;

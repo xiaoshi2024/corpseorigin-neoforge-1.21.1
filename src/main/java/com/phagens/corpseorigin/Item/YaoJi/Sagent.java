@@ -1,10 +1,12 @@
 package com.phagens.corpseorigin.Item.YaoJi;
 
 import com.phagens.corpseorigin.CorpseOrigin;
+import com.phagens.corpseorigin.client.Renderer.item.SagentRenderer;
 import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -15,16 +17,39 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import software.bernie.geckolib.animatable.GeoItem;
+import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
+import software.bernie.geckolib.animatable.client.GeoRenderProvider;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.*;
+import software.bernie.geckolib.renderer.GeoItemRenderer;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
-public class YAOJIMoBan extends Item {
+public class Sagent extends Item implements GeoItem {
+    private static final RawAnimation PRESS = RawAnimation.begin().thenPlay("press");
     private final List<AttributeData> attributeModifiers;
+    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    private final String variant;
 
-    public YAOJIMoBan(Properties properties) {
+    public Sagent(Properties properties) {
+        this(properties, "null");
+    }
+
+    public Sagent(Properties properties, String variant) {
         super(properties);
+        // Register our item as server-side handled.
+        // This enables both animation data syncing and server-side animation triggering
+        SingletonGeoAnimatable.registerSyncedAnimatable(this);
         this.attributeModifiers = new ArrayList<>();
+        this.variant = variant;
+    }
+
+    public String getVariant() {
+        return variant;
     }
 
     public static class AttributeData {
@@ -46,37 +71,80 @@ public class YAOJIMoBan extends Item {
 
 
 
-    public YAOJIMoBan addAttributeModifier(Holder<Attribute> attribute, AttributeModifier.Operation operation, double amount, String name) {
+    public Sagent addAttributeModifier(Holder<Attribute> attribute, AttributeModifier.Operation operation, double amount, String name) {
         this.attributeModifiers.add(new AttributeData(attribute, operation, amount, name));
         return this;
     }
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand usedHand) {
         ItemStack itemStack = player.getItemInHand(usedHand);
-        if (!level.isClientSide) {
-
-            ItemStack powerPotion = new ItemStack(Items.AIR); //.get()
-            if (!player.getInventory().add(powerPotion)) {
-
-                player.drop(powerPotion, false);
+        
+        // 如果是 null 变种，不能使用
+        if (this.variant.equals("null")) {
+            return InteractionResultHolder.fail(itemStack);
+        }
+        
+        // 触发动画（在服务器端触发）
+        if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            try {
+                triggerAnim(player, GeoItem.getOrAssignId(itemStack, serverLevel), "press_controller", "press");
+            } catch (Exception e) {
+                // 忽略动画错误，继续执行
             }
+        }
+
+        if (!level.isClientSide) {
+            // 应用属性效果
             appAttrid(player);
-
             saveModifiersToPlayerData(player);
-
-            itemStack.shrink(1);
         }
 
         return InteractionResultHolder.sidedSuccess(itemStack, level.isClientSide());
+    }
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return cache;
+    }
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        controllers.add(new AnimationController<Sagent>(this, "press_controller", 0, this::predicate)
+                .triggerableAnim("press", PRESS));
+    }
+
+    private PlayState predicate(AnimationState<Sagent> SagentAnimationState) {
+        return PlayState.CONTINUE;
+    }
+
+    @Override
+    public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
+        consumer.accept(new GeoRenderProvider() {
+            private SagentRenderer renderer;
+
+            @Override
+            public GeoItemRenderer<Sagent> getGeoItemRenderer() {
+                if (this.renderer == null)
+                    this.renderer = new SagentRenderer();
+
+                return this.renderer;
+            }
+        });
+    }
+
+    public int getDefaultAnimationSpeed() {
+        return 30;
     }
 
     private void appAttrid(Player player){
         for (AttributeData attributeData : attributeModifiers){
             AttributeInstance attributeInstance = player.getAttribute(attributeData.attribute);
             if (attributeInstance != null){
-                AttributeModifier modifier =
-                        new AttributeModifier(attributeData.modifierId,attributeData.amount,attributeData.operation);
-                attributeInstance.addTransientModifier(modifier);
+                // 检查修饰符是否已经存在
+                if (attributeInstance.getModifier(attributeData.modifierId) == null) {
+                    AttributeModifier modifier = new AttributeModifier(attributeData.modifierId,attributeData.amount,attributeData.operation);
+                    attributeInstance.addTransientModifier(modifier);
+                }
             }
 
         }

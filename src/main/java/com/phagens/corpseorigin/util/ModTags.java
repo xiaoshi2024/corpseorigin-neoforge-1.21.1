@@ -1,10 +1,10 @@
 package com.phagens.corpseorigin.util;
 
-import net.minecraft.tags.TagKey;
-import net.minecraft.world.level.material.Fluid;
+import com.phagens.corpseorigin.CorpseOrigin;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
-import com.phagens.corpseorigin.CorpseOrigin;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.material.Fluid;
 
 public class ModTags {
     public static class Fluids {
