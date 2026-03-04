@@ -1,6 +1,11 @@
 package com.phagens.corpseorigin;
 
 import com.mojang.logging.LogUtils;
+import com.phagens.corpseorigin.GongFU.GongFaZL.BaseGongFaItem;
+import com.phagens.corpseorigin.GongFU.GongFaZL.GongFaData;
+import com.phagens.corpseorigin.GongFU.GongFaZL.GongFaDataFactory;
+import com.phagens.corpseorigin.GongFU.MenuTypeRegister;
+import com.phagens.corpseorigin.GongFU.PackGongFu.NetworkPaketGL;
 import com.phagens.corpseorigin.event.player.playerDie;
 import com.phagens.corpseorigin.register.*;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -8,7 +13,9 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
+import net.neoforged.bus.api.Event;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -55,10 +62,15 @@ public class CorpseOrigin {
             .withTabsBefore(CreativeModeTabs.COMBAT)
             .icon(() -> QI_XING_GUAN_ITEM.get().getDefaultInstance())
             .displayItems((parameters, output) -> {
+                BaseGongFaItem leiXi = (BaseGongFaItem) Moditems.LEI_XI_GONG_FA.get();
                 output.accept(QI_XING_GUAN_ITEM.get());
                 output.accept(Moditems.BYWATER_BUCKET.get());
                 output.accept(Moditems.BYWATER_BOTTLE.get());
                 output.accept(Moditems.S_AGENT.get());output.accept(Moditems.NULL_S_AGENT.get());
+                output.accept(GongFaDataFactory.createGongFaItem(leiXi,5,"copy_5"));
+                output.accept(GongFaDataFactory.createGongFaItem(leiXi,3,"copy_9"));
+                output.accept(GongFaDataFactory.createGongFaItem(leiXi,1,"copy_5"));
+
             }).build());
 
     // The constructor for the mod class is the first code that is run when your mod is loaded.
@@ -72,6 +84,11 @@ public class CorpseOrigin {
         BlockEntityRegistry.BLOCK_ENTITIES.register(modEventBus);
         EntityRegistry.ENTITIES.register(modEventBus);
         EffectRegister.MOB_EFFECTS.register(modEventBus);
+        MenuTypeRegister.MENUS.register(modEventBus);
+
+
+        NetworkPaketGL.registerPackets(modEventBus);
+
         // Register the Deferred Register to the mod event bus so tabs get registered
         CREATIVE_MODE_TABS.register(modEventBus);
         //死亡移除
@@ -85,6 +102,8 @@ public class CorpseOrigin {
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }
+
+
 
     private void commonSetup(FMLCommonSetupEvent event) {
         // Some common setup code

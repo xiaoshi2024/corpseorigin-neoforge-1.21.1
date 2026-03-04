@@ -4,6 +4,7 @@ import com.phagens.corpseorigin.CorpseOrigin;
 import com.phagens.corpseorigin.Item.ByWaterBottleItem;
 import com.phagens.corpseorigin.Item.ByWaterBucketItem;
 import com.phagens.corpseorigin.Item.JuQue;
+import com.phagens.corpseorigin.Item.LieGongFa;
 import com.phagens.corpseorigin.Item.YaoJi.Sagent;
 import com.phagens.corpseorigin.Item.tier.Modtiers;
 import net.minecraft.resources.ResourceLocation;
@@ -42,6 +43,12 @@ public class Moditems {
                             AttributeModifier.Operation.ADD_MULTIPLIED_BASE
                     , 0.3,"null"));
     //这里 你去看item包里的Yaoji  然后 你看addAttributeModifier方法里面 传入参数 即可
+
+
+
+    //功法暂时
+    public static final DeferredItem<Item> LEI_XI_GONG_FA = ITEMS.register("lei_xi_gong_fa",
+            () -> new LieGongFa(new Item.Properties(), "REX"));
 }
 
 
