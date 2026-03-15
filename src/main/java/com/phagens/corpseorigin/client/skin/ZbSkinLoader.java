@@ -20,7 +20,10 @@ public class ZbSkinLoader {
      */
     public static void loadSkinAsync(LowerLevelZbEntity entity, String username) {
         if (username == null || username.isEmpty()) {
-            entity.setSkinState(ZbSkinState.FAILED);
+            // 使用默认皮肤
+            ResourceLocation defaultSkin = getDefaultSkin(username);
+            entity.setSkinTexture(defaultSkin);
+            entity.setSkinState(ZbSkinState.LOADED);
             return;
         }
 
@@ -47,27 +50,36 @@ public class ZbSkinLoader {
                     skin = ZbSkinIntegration.getPlayerSkin(username);
                 }
 
+                // 如果 CSL 不可用或加载失败，使用默认皮肤
+                if (skin == null) {
+                    skin = getDefaultSkin(username);
+                    LOGGER.info("⚠️ 使用默认皮肤: {}", username);
+                }
+
                 final ResourceLocation finalSkin = skin;
 
                 // 回到主线程更新实体
+                ResourceLocation finalSkin1 = skin;
                 Minecraft.getInstance().execute(() -> {
-                    if (finalSkin != null) {
-                        // 加载成功
-                        entity.setSkinTexture(finalSkin);
-                        entity.setSkinState(ZbSkinState.LOADED);
-                        ZbSkinCache.put(username, finalSkin);
+                    entity.setSkinTexture(finalSkin);
+                    entity.setSkinState(ZbSkinState.LOADED);
+                    
+                    // 即使是默认皮肤也缓存
+                    ZbSkinCache.put(username, finalSkin);
+                    
+                    if (finalSkin1 != getDefaultSkin(username)) {
                         LOGGER.info("✅ 皮肤加载成功: {}", username);
-                    } else {
-                        // 加载失败
-                        entity.setSkinState(ZbSkinState.FAILED);
-                        LOGGER.warn("❌ 皮肤加载失败: {}", username);
                     }
                 });
 
             } catch (Exception e) {
                 LOGGER.error("皮肤加载异常: {}", e.getMessage());
                 Minecraft.getInstance().execute(() -> {
-                    entity.setSkinState(ZbSkinState.FAILED);
+                    // 异常时使用默认皮肤
+                    ResourceLocation defaultSkin = getDefaultSkin(username);
+                    entity.setSkinTexture(defaultSkin);
+                    entity.setSkinState(ZbSkinState.LOADED);
+                    ZbSkinCache.put(username, defaultSkin);
                 });
             }
         });
@@ -75,5 +87,14 @@ public class ZbSkinLoader {
         skinThread.setDaemon(true);
         skinThread.setName("ZbSkinLoader-" + username);
         skinThread.start();
+    }
+
+    /**
+     * 获取默认皮肤
+     */
+    private static ResourceLocation getDefaultSkin(String username) {
+        // 使用 Minecraft 的默认玩家皮肤机制
+        java.util.UUID uuid = java.util.UUID.nameUUIDFromBytes(("OfflinePlayer:" + username).getBytes());
+        return net.minecraft.client.resources.DefaultPlayerSkin.getDefaultTexture();
     }
 }

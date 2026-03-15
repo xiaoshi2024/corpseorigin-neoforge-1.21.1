@@ -69,5 +69,7 @@
   "death.attack.zombie_brother": "%1$s 被尸兄杀死了",
 
   "message.corpseorigin.cultivation_opened": "修行界面已打开",
-  "message.corpseorigin.water_infected": "这片水已被尸水污染！"
+  "message.corpseorigin.water_infected": "这片水已被尸水污染！",
+
+  "subtitles.corpseorigin.ground_chi": "地阶尸兄：吃~~"
 }

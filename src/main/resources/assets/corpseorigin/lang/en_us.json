@@ -69,5 +69,7 @@
   "death.attack.zombie_brother": "%1$s was killed by Zombie Brother",
 
   "message.corpseorigin.cultivation_opened": "Cultivation interface opened",
-  "message.corpseorigin.water_infected": "This water is contaminated with corpse water!"
+  "message.corpseorigin.water_infected": "This water is contaminated with corpse water!",
+
+  "subtitles.corpseorigin.ground_chi": "brother zombie eat~~"
 }

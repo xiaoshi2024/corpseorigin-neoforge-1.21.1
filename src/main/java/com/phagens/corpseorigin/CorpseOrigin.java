@@ -86,6 +86,8 @@ public class CorpseOrigin {
         EffectRegister.MOB_EFFECTS.register(modEventBus);
         MenuTypeRegister.MENUS.register(modEventBus);
 
+        // 注册音效
+        ModSounds.register(modEventBus);
 
         NetworkPaketGL.registerPackets(modEventBus);
 

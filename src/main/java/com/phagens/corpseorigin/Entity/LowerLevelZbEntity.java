@@ -5,6 +5,7 @@ import com.phagens.corpseorigin.Entity.EntityAI.Vibrationsys.ModVibrationUser;
 import com.phagens.corpseorigin.client.skin.ZbSkinLoader;
 import com.phagens.corpseorigin.client.skin.ZbSkinState;
 import com.phagens.corpseorigin.network.ZbSkinUpdatePacket;
+import com.phagens.corpseorigin.register.ModSounds;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -196,6 +197,11 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
     }
 
     @Override
+    public void aiStep() {
+        super.aiStep();
+    }
+
+    @Override
     public void addAdditionalSaveData(CompoundTag compound) {
         super.addAdditionalSaveData(compound);
 
@@ -206,6 +212,7 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
             compound.putString("PlayerSkinName", playerSkinName);
         }
         compound.putInt("SkinState", this.entityData.get(DATA_SKIN_STATE));
+        compound.putBoolean("SkinLoadStarted", this.skinLoadStarted);
         compound.putBoolean("PlayingShieye", this.entityData.get(DATA_PLAYING_SHIEYE));
         compound.putInt("ShieyeCooldown", this.shieyeCooldown);
         compound.putInt("EvolutionLevel", this.evolutionLevel);
@@ -226,6 +233,9 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
         }
         if (compound.contains("SkinState")) {
             this.entityData.set(DATA_SKIN_STATE, compound.getInt("SkinState"));
+        }
+        if (compound.contains("SkinLoadStarted")) {
+            this.skinLoadStarted = compound.getBoolean("SkinLoadStarted");
         }
         if (compound.contains("PlayingShieye")) {
             this.entityData.set(DATA_PLAYING_SHIEYE, compound.getBoolean("PlayingShieye"));
@@ -293,6 +303,10 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
         boolean result = super.doHurtTarget(entity);
         
         if (result && !this.level().isClientSide) {
+            // 攻击时播放吃的音效
+            float pitch = 0.8F + this.random.nextFloat() * 0.4F;
+            this.playSound(ModSounds.GROUND_CHI.get(), 1.0F, pitch);
+            
             // 击杀目标后处理进化逻辑
             handleKill(entity);
         }
@@ -455,9 +469,15 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
         int stateCode = this.entityData.get(DATA_SKIN_STATE);
         ZbSkinState currentState = ZbSkinState.fromCode(stateCode);
 
-        // 如果有玩家名且未开始加载，且当前状态允许加载
-        if (name != null && !name.isEmpty() && !skinLoadStarted) {
-            if (currentState == ZbSkinState.NOT_LOADED || currentState == ZbSkinState.FAILED) {
+        // 如果有玩家名
+        if (name != null && !name.isEmpty()) {
+            // 情况1：未开始加载，且当前状态允许加载
+            if (!skinLoadStarted && (currentState == ZbSkinState.NOT_LOADED || currentState == ZbSkinState.FAILED)) {
+                startSkinLoad(name);
+            }
+            // 情况2：皮肤状态是LOADED但皮肤纹理为null（重启后会出现）
+            else if (currentState == ZbSkinState.LOADED && this.skinTexture == null) {
+                // 重新加载皮肤
                 startSkinLoad(name);
             }
         }
@@ -465,7 +485,7 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
 
     @OnlyIn(Dist.CLIENT)
     private void startSkinLoad(String playerName) {
-        if (skinLoadStarted) return;
+        // 即使已经开始加载，也要重新加载（用于重启后皮肤为null的情况）
         skinLoadStarted = true;
 
         // 设置状态为加载中
