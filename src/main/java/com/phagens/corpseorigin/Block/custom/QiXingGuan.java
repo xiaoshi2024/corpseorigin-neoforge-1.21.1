@@ -2,6 +2,8 @@ package com.phagens.corpseorigin.Block.custom;
 
 
 import com.phagens.corpseorigin.Block.entity.QiXingGuanBlockEntity;
+import com.phagens.corpseorigin.CorpseOrigin;
+import com.phagens.corpseorigin.Entity.LowerLevelZbEntity;
 import com.phagens.corpseorigin.data.InfectionData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -29,13 +31,14 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.function.Supplier;
 
 public class QiXingGuan extends Block implements EntityBlock {
-    private final EntityType<?> ENTITY;
+    private final Supplier<EntityType<?>> ENTITY;
 
     public static final BooleanProperty SUMMONED = BooleanProperty.create("summoned");
 
-    public QiXingGuan(EntityType<?> entity) {
+    public QiXingGuan(Supplier<EntityType<?>> entity) {
         super(BlockBehaviour.Properties.of()
                 .strength(1.5f,6.0f).//硬度抗性
                 sound(SoundType.WOOD)//声音
@@ -194,21 +197,23 @@ public class QiXingGuan extends Block implements EntityBlock {
         return false;
     }
 
-    //召唤逻辑
+    //召唤逻辑 - 只有棺材旁边有尸兄才允许开馆
     private void detectEntitiesInInfectedArea(Level level, BlockPos posE) {
-        final int DETECTION_RADIUS = 32;  // 检测半径32格
-        final int REQUIRED_ENTITY_COUNT = 3;
-        // 检测指定范围内的所有实体
-        List<Entity> entities = level.getEntitiesOfClass(
-                Entity.class,  // 可以改为特定生物类型
+        final int DETECTION_RADIUS = 8;  // 检测半径8格（棺材周围）
+        final int REQUIRED_ZB_COUNT = 3; // 需要至少3个尸兄
+        
+        // 检测棺材周围的尸兄
+        List<LowerLevelZbEntity> zbEntities = level.getEntitiesOfClass(
+                LowerLevelZbEntity.class,
                 new AABB(posE).inflate(DETECTION_RADIUS)
         );
-        // 如果达到所需数量且未召唤过
-        if (entities.size() >= REQUIRED_ENTITY_COUNT && !level.getBlockState(posE).getValue(SUMMONED)) {
+        
+        // 如果棺材周围有足够数量的尸兄且未召唤过，则开馆召唤尸王
+        if (zbEntities.size() >= REQUIRED_ZB_COUNT && !level.getBlockState(posE).getValue(SUMMONED)) {
+            CorpseOrigin.LOGGER.info("七星棺周围检测到 {} 个尸兄，开馆召唤尸王龙右！", zbEntities.size());
             triggerAction((ServerLevel) level, posE);
             level.setBlock(posE, this.stateDefinition.any().setValue(SUMMONED, true), 3);
         }
-
     }
 
     @Override
@@ -223,7 +228,7 @@ public class QiXingGuan extends Block implements EntityBlock {
     }
 
     private void triggerAction(ServerLevel level,BlockPos pos) {
-        ENTITY.spawn(level, null, null, pos.above(), MobSpawnType.EVENT, false, false);
+        ENTITY.get().spawn(level, null, null, pos.above(), MobSpawnType.EVENT, false, false);
     }
 
 

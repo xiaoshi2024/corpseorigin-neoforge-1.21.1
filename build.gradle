@@ -42,6 +42,10 @@ repositories {
         name = "Modrinth"
         url = "https://api.modrinth.com/maven"
     }
+
+    maven {
+        url "https://cursemaven.com"
+    }
 }
 
 base {
@@ -137,6 +141,8 @@ configurations {
 dependencies {
 
     implementation "maven.modrinth:geckolib:lWsXauBN"
+
+//    implementation "curse.maven:customskinloader-286924:7372987"
 
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime

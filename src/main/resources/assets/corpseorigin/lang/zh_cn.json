@@ -1,0 +1,73 @@
+{
+  "itemGroup.corpseorigin": "尸兄模组",
+
+  "block.corpseorigin.qi_xing_guan": "七星棺",
+
+  "item.corpseorigin.qi_xings_guan_item": "七星棺",
+  "item.corpseorigin.bywater_bucket": "尸水桶",
+  "item.corpseorigin.bywater_bottle": "尸水瓶",
+  "item.corpseorigin.ming_juque": "巨阙剑",
+  "item.corpseorigin.s_agent": "黄色药剂",
+  "item.corpseorigin.null_s_agent": "空药剂",
+  "item.corpseorigin.lei_xi_gong_fa": "雷系功法",
+
+  "entity.corpseorigin.zbr_fish": "尸兄鱼",
+
+  "effect.corpseorigin.by": "尸水感染",
+
+  "container.corpseorigin.gong_fu": "修行",
+
+  "gongfa.rarity.1": "人阶",
+  "gongfa.rarity.2": "地阶",
+  "gongfa.rarity.3": "天阶",
+  "gongfa.rarity.4": "神阶",
+  "gongfa.rarity.5": "超神阶",
+
+  "gongfa.ceng.copy_1": "一重天",
+  "gongfa.ceng.copy_2": "二重天",
+  "gongfa.ceng.copy_3": "三重天",
+  "gongfa.ceng.copy_4": "四重天",
+  "gongfa.ceng.copy_5": "五重天",
+  "gongfa.ceng.copy_6": "六重天",
+  "gongfa.ceng.copy_7": "七重天",
+  "gongfa.ceng.copy_8": "八重天",
+  "gongfa.ceng.copy_9": "九重天",
+
+  "gongfa.attribute.attack_damage": "攻击力",
+  "gongfa.attribute.movement_speed": "移动速度",
+  "gongfa.attribute.max_health": "生命值",
+  "gongfa.attribute.armor": "护甲值",
+  "gongfa.attribute.knockback_resistance": "击退抗性",
+
+  "gongfa.skill.lightning_basic": "基础雷击",
+  "gongfa.skill.lightning_strike": "雷电打击",
+  "gongfa.skill.lightning_dash": "疾风雷",
+  "gongfa.skill.heavenly_thunder": "天雷降世",
+  "gongfa.skill.thousand_thunder": "万雷归宗",
+  "gongfa.skill.thunder_god": "雷神附体",
+
+  "tooltip.corpseorigin.bywater_bottle": "喝下它会中毒...",
+  "tooltip.corpseorigin.bywater_bucket": "放置后会污染水源",
+  "tooltip.corpseorigin.ming_juque": "巨阙神兵，可斩杀残血之敌",
+  "tooltip.corpseorigin.gongfa.rarity": "品级: %s",
+  "tooltip.corpseorigin.gongfa.ceng": "功法层级: %s",
+  "tooltip.corpseorigin.gongfa.attribute": "武学加持:",
+  "tooltip.corpseorigin.gongfa.skills": "技艺:",
+
+  "corpseorigin.configuration.title": "尸兄模组配置",
+  "corpseorigin.configuration.section.corpseorigin.common.toml": "尸兄模组通用配置",
+  "corpseorigin.configuration.section.corpseorigin.common.toml.title": "尸兄模组通用配置",
+  "corpseorigin.configuration.items": "物品列表",
+  "corpseorigin.configuration.logDirtBlock": "记录泥土方块",
+  "corpseorigin.configuration.magicNumberIntroduction": "魔法数字文本",
+  "corpseorigin.configuration.magicNumber": "魔法数字",
+
+  "key.corpseorigin.category": "尸兄模组",
+  "key.corpseorigin.open_gongfu": "打开修行界面",
+
+  "death.attack.corpse_water": "%1$s 在尸水中溺亡",
+  "death.attack.zombie_brother": "%1$s 被尸兄杀死了",
+
+  "message.corpseorigin.cultivation_opened": "修行界面已打开",
+  "message.corpseorigin.water_infected": "这片水已被尸水污染！"
+}

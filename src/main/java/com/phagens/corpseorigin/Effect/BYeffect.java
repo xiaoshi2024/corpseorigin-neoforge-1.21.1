@@ -1,5 +1,7 @@
 package com.phagens.corpseorigin.Effect;
 
+import com.phagens.corpseorigin.Entity.LowerLevelZbEntity;
+import com.phagens.corpseorigin.register.EntityRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffect;
@@ -7,6 +9,7 @@ import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.npc.Villager;
 
 public class BYeffect extends MobEffect {
 
@@ -38,30 +41,36 @@ public class BYeffect extends MobEffect {
     }
 
     private void performTransformation(LivingEntity livingEntity, ServerLevel serverLevel) {
-        EntityType<?> targetType = getTransformationTarget(livingEntity);
-        if (targetType != null){
-            BlockPos pos = livingEntity.blockPosition();
-            float yRot = livingEntity.getYRot();
-            float xRot = livingEntity.getXRot();
-            livingEntity.remove(Entity.RemovalReason.CHANGED_DIMENSION);
-
-            LivingEntity newEntity = (LivingEntity) targetType.create(serverLevel);
-            if (newEntity != null){
-                newEntity.moveTo(pos.getX(), pos.getY(), pos.getZ(), yRot, xRot);
-                serverLevel.addFreshEntity(newEntity);
-            }
+        // 只处理村民转化为尸兄
+        if (livingEntity instanceof Villager villager) {
+            convertVillagerToZb(villager, serverLevel);
         }
     }
 
-    private EntityType<?> getTransformationTarget(LivingEntity livingEntity) {
-        EntityType<?> type = livingEntity.getType();//暂定
-        if (type == EntityType.PIG) return EntityType.COW;
-        if (type == EntityType.SHEEP) return EntityType.PIG;
-        if (type == EntityType.COW) return EntityType.SHEEP;
-        if (type == EntityType.ZOMBIE) return EntityType.SKELETON;
-        if (type == EntityType.SKELETON) return EntityType.ZOMBIE;
-        if (type == EntityType.CREEPER) return EntityType.ENDERMAN;
-        return null;
+    /**
+     * 将村民转化为尸兄
+     */
+    private void convertVillagerToZb(Villager villager, ServerLevel serverLevel) {
+        // 创建尸兄实体
+        LowerLevelZbEntity zb = new LowerLevelZbEntity(EntityRegistry.LOWER_LEVEL_ZB.get(), serverLevel);
+        zb.setPos(villager.getX(), villager.getY(), villager.getZ());
+        zb.setYRot(villager.getYRot());
+        zb.setXRot(villager.getXRot());
+        
+        // 设置皮肤为村民的名字（如果有）
+        String villagerName = villager.getName().getString();
+        if (!villagerName.equals("村民")) {
+            zb.setPlayerSkinName(villagerName);
+        }
+        
+        // 移除村民
+        villager.remove(Entity.RemovalReason.CHANGED_DIMENSION);
+        
+        // 添加尸兄到世界
+        serverLevel.addFreshEntity(zb);
+        
+        // 播放转化特效
+        serverLevel.broadcastEntityEvent(zb, (byte) 35);
     }
 
 

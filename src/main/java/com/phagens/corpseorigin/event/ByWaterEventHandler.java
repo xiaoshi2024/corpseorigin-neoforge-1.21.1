@@ -1,14 +1,17 @@
 package com.phagens.corpseorigin.event;
 
 import com.phagens.corpseorigin.CorpseOrigin;
+import com.phagens.corpseorigin.Entity.LowerLevelZbEntity;
 import com.phagens.corpseorigin.data.InfectionData;
 import com.phagens.corpseorigin.register.EffectRegister;
+import com.phagens.corpseorigin.register.EntityRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -68,6 +71,11 @@ public class ByWaterEventHandler {
     }
 
     private static void handleLivingEntityInfection(LivingEntity entity, Level level) {
+        // 只处理村民
+        if (!(entity instanceof Villager)) {
+            return;
+        }
+        
         UUID entityUUID = entity.getUUID();
         long currentTime = System.currentTimeMillis();
         Long lastCheckTime = playerCheckCooldowns.get(entityUUID); // 使用统一的检查冷却
@@ -76,6 +84,7 @@ public class ByWaterEventHandler {
             BlockPos entityPos = entity.blockPosition();
 
             if (isEntityInInfectedWater(level, entityPos)) {
+                // 只给村民应用 BYeffect 效果
                 applyPoisonEffectToEntity(entity);
             }
 

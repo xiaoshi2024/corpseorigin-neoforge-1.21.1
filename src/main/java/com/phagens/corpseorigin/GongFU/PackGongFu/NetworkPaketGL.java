@@ -20,11 +20,17 @@ public class NetworkPaketGL {
         // 获取协议注册器
         PayloadRegistrar registrar = event.registrar("1.0");
 
-        // 注册服务端接收的包
-        registrar.playToServer(
+        // 注册双向包（客户端发送，服务端接收）
+        registrar.playBidirectional(
                 OpenGongFuMenuPacket.TYPE,
                 OpenGongFuMenuPacket.STREAM_CODEC,
-                NetworkPaketGL::handleOpenGongFuMenu
+                (packet, context) -> {
+                    if (!context.flow().isClientbound()) {
+                        // 服务端处理
+                        handleOpenGongFuMenu(packet, context);
+                    }
+                    // 客户端不处理这个包
+                }
         );
     }
 

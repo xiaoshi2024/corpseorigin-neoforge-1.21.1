@@ -66,7 +66,7 @@ public class ModVibrationUser implements VibrationSystem.User {
         return true;
     }
 
-    //振动事件处理中心
+    //振动事件处理中心-感知到振动（闻到活人味）
     @Override
     public void onReceiveVibration(ServerLevel serverLevel, BlockPos blockPos, Holder<GameEvent> holder, @Nullable Entity entity0, @Nullable Entity entity1, float v) {
         if (!entity.isDeadOrDying()) {
@@ -173,7 +173,7 @@ public class ModVibrationUser implements VibrationSystem.User {
         if (entity instanceof net.minecraft.world.entity.PathfinderMob pathfinderMob) {
             switch (intensity) {
                 case WEAK:
-                    // 微弱振动：好奇探索
+                    // 微弱振动：好奇探索，不攻击，只是去调查
                     pathfinderMob.getBrain().setMemoryWithExpiry(
                             MemoryModuleType.DISTURBANCE_LOCATION,
                             sourcePos,
@@ -183,7 +183,7 @@ public class ModVibrationUser implements VibrationSystem.User {
                     break;
 
                 case MEDIUM:
-                    // 中等振动：主动搜索
+                    // 中等振动：主动搜索，看向声源并走过去，但不主动攻击
                     if (sourceEntity instanceof LivingEntity livingEntity) {
                         pathfinderMob.getBrain().setMemory(
                                 MemoryModuleType.LOOK_TARGET,
@@ -199,28 +199,37 @@ public class ModVibrationUser implements VibrationSystem.User {
                                 new WalkTarget(sourcePos, 1.5F, 5)
                         );
                     }
-                    pathfinderMob.getBrain().setActiveActivityIfPossible(Activity.FIGHT);
+                    // 不设置攻击目标，只是调查
+                    pathfinderMob.getBrain().setActiveActivityIfPossible(Activity.INVESTIGATE);
                     break;
 
                 case STRONG:
-                    // 强烈振动：全力追击
+                    // 强烈振动：全力追击，但只在近距离且能攻击时才设置攻击目标
                     if (sourceEntity instanceof LivingEntity livingEntity &&
                             pathfinderMob.canAttack(livingEntity)) {
-                        pathfinderMob.getBrain().setMemory(
-                                MemoryModuleType.ATTACK_TARGET,
-                                livingEntity
-                        );
-                        pathfinderMob.getBrain().setMemory(
-                                MemoryModuleType.WALK_TARGET,
-                                new WalkTarget(new EntityTracker(livingEntity, false), 2.0F, 0)
-                        );
+                        // 只有当实体在很近的距离（3格内）才设置攻击目标
+                        double distance = pathfinderMob.distanceToSqr(livingEntity);
+                        if (distance < 9.0) { // 3格内
+                            pathfinderMob.getBrain().setMemory(
+                                    MemoryModuleType.ATTACK_TARGET,
+                                    livingEntity
+                            );
+                            pathfinderMob.getBrain().setActiveActivityIfPossible(Activity.FIGHT);
+                        } else {
+                            // 距离太远，只是走过去调查
+                            pathfinderMob.getBrain().setMemory(
+                                    MemoryModuleType.WALK_TARGET,
+                                    new WalkTarget(new EntityTracker(livingEntity, false), 2.0F, 0)
+                            );
+                            pathfinderMob.getBrain().setActiveActivityIfPossible(Activity.INVESTIGATE);
+                        }
                     } else {
                         pathfinderMob.getBrain().setMemory(
                                 MemoryModuleType.WALK_TARGET,
                                 new WalkTarget(sourcePos, 2.0F, 3)
                         );
+                        pathfinderMob.getBrain().setActiveActivityIfPossible(Activity.INVESTIGATE);
                     }
-                    pathfinderMob.getBrain().setActiveActivityIfPossible(Activity.FIGHT);
                     break;
             }
         }

@@ -1,15 +1,73 @@
 {
-  "itemGroup.corpseorigin": "Example Mod Tab",
-  "block.corpseorigin.example_block": "Example Block",
-  "item.corpseorigin.example_item": "Example Item",
+  "itemGroup.corpseorigin": "Corpse Origin Mod",
+
+  "block.corpseorigin.qi_xing_guan": "Seven Star Coffin",
+
+  "item.corpseorigin.qi_xings_guan_item": "Seven Star Coffin",
   "item.corpseorigin.bywater_bucket": "Corpse Water Bucket",
   "item.corpseorigin.bywater_bottle": "Corpse Water Bottle",
+  "item.corpseorigin.ming_juque": "Juque Sword",
+  "item.corpseorigin.s_agent": "Yellow Agent",
+  "item.corpseorigin.null_s_agent": "Null Agent",
+  "item.corpseorigin.lei_xi_gong_fa": "Lightning Skill Book",
 
-  "corpseorigin.configuration.title": " CorpseOrigin Configs",
-  "corpseorigin.configuration.section.corpseorigin.common.toml": " CorpseOrigin Configs",
-  "corpseorigin.configuration.section.corpseorigin.common.toml.title": " CorpseOrigin Configs",
+  "entity.corpseorigin.zbr_fish": "Zombie Brother Fish",
+
+  "effect.corpseorigin.by": "Corpse Water Infection",
+
+  "container.corpseorigin.gong_fu": "Cultivation",
+
+  "gongfa.rarity.1": "Mortal Rank",
+  "gongfa.rarity.2": "Earth Rank",
+  "gongfa.rarity.3": "Heaven Rank",
+  "gongfa.rarity.4": "Divine Rank",
+  "gongfa.rarity.5": "Transcendent Rank",
+
+  "gongfa.ceng.copy_1": "First Layer",
+  "gongfa.ceng.copy_2": "Second Layer",
+  "gongfa.ceng.copy_3": "Third Layer",
+  "gongfa.ceng.copy_4": "Fourth Layer",
+  "gongfa.ceng.copy_5": "Fifth Layer",
+  "gongfa.ceng.copy_6": "Sixth Layer",
+  "gongfa.ceng.copy_7": "Seventh Layer",
+  "gongfa.ceng.copy_8": "Eighth Layer",
+  "gongfa.ceng.copy_9": "Ninth Layer",
+
+  "gongfa.attribute.attack_damage": "Attack Damage",
+  "gongfa.attribute.movement_speed": "Movement Speed",
+  "gongfa.attribute.max_health": "Max Health",
+  "gongfa.attribute.armor": "Armor",
+  "gongfa.attribute.knockback_resistance": "Knockback Resistance",
+
+  "gongfa.skill.lightning_basic": "Basic Lightning Strike",
+  "gongfa.skill.lightning_strike": "Lightning Strike",
+  "gongfa.skill.lightning_dash": "Lightning Dash",
+  "gongfa.skill.heavenly_thunder": "Heavenly Thunder",
+  "gongfa.skill.thousand_thunder": "Thousand Thunder Return",
+  "gongfa.skill.thunder_god": "Thunder God Possession",
+
+  "tooltip.corpseorigin.bywater_bottle": "Drinking it will poison you...",
+  "tooltip.corpseorigin.bywater_bucket": "Placing it will contaminate water sources",
+  "tooltip.corpseorigin.ming_juque": "A divine sword that can execute weakened enemies",
+  "tooltip.corpseorigin.gongfa.rarity": "Rarity: %s",
+  "tooltip.corpseorigin.gongfa.ceng": "Cultivation Layer: %s",
+  "tooltip.corpseorigin.gongfa.attribute": "Blessings:",
+  "tooltip.corpseorigin.gongfa.skills": "Skills:",
+
+  "corpseorigin.configuration.title": "CorpseOrigin Configs",
+  "corpseorigin.configuration.section.corpseorigin.common.toml": "CorpseOrigin Common Config",
+  "corpseorigin.configuration.section.corpseorigin.common.toml.title": "CorpseOrigin Common Config",
   "corpseorigin.configuration.items": "Item List",
   "corpseorigin.configuration.logDirtBlock": "Log Dirt Block",
   "corpseorigin.configuration.magicNumberIntroduction": "Magic Number Text",
-  "corpseorigin.configuration.magicNumber": "Magic Number"
+  "corpseorigin.configuration.magicNumber": "Magic Number",
+
+  "key.corpseorigin.category": "Corpse Origin",
+  "key.corpseorigin.open_gongfu": "Open Cultivation Screen",
+
+  "death.attack.corpse_water": "%1$s died in corpse water",
+  "death.attack.zombie_brother": "%1$s was killed by Zombie Brother",
+
+  "message.corpseorigin.cultivation_opened": "Cultivation interface opened",
+  "message.corpseorigin.water_infected": "This water is contaminated with corpse water!"
 }
