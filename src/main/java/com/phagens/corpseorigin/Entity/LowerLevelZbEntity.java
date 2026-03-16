@@ -73,6 +73,14 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
     // 饥饿度系统 (0-100, 100为饱腹, 0为极度饥饿)
     private int hunger = 100;
     private static final int HUNGER_THRESHOLD_FOR_CANNIBALISM = 20; // 饥饿度低于20才允许吞噬
+    
+    // 神志系统
+    private boolean hasSentient = false; // 是否保留生前神志
+    private int speechCooldown = 0; // 说话冷却时间
+    
+    // 贪婪系统
+    private boolean isGreedy = false; // 是否贪婪
+    private int greedCooldown = 0; // 贪婪行为冷却时间
 
     // 振动系统
     private final DynamicGameEventListener<Listener> dynamicGameEventListener;
@@ -84,6 +92,10 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
         this.vibrationUser = new ModVibrationUser(this);
         this.vibrationData = new VibrationSystem.Data();
         this.dynamicGameEventListener = new DynamicGameEventListener<>(new VibrationSystem.Listener(this));
+
+        // 初始化神志和贪婪系统
+        this.hasSentient = this.random.nextFloat() < 0.3; // 30%概率保留生前神志
+        this.isGreedy = this.random.nextFloat() < 0.5; // 50%概率贪婪
 
         // 客户端字段已经在声明时初始化，不需要在这里处理
     }
@@ -246,6 +258,12 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
         compound.putInt("EvolutionLevel", this.evolutionLevel);
         compound.putInt("Kills", this.kills);
         compound.putInt("Hunger", this.hunger);
+        
+        // 保存神志和贪婪系统数据
+        compound.putBoolean("HasSentient", this.hasSentient);
+        compound.putInt("SpeechCooldown", this.speechCooldown);
+        compound.putBoolean("IsGreedy", this.isGreedy);
+        compound.putInt("GreedCooldown", this.greedCooldown);
     }
 
     @Override
@@ -283,6 +301,21 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
         if (compound.contains("Hunger")) {
             this.hunger = compound.getInt("Hunger");
         }
+        
+        // 读取神志和贪婪系统数据
+        if (compound.contains("HasSentient")) {
+            this.hasSentient = compound.getBoolean("HasSentient");
+        }
+        if (compound.contains("SpeechCooldown")) {
+            this.speechCooldown = compound.getInt("SpeechCooldown");
+        }
+        if (compound.contains("IsGreedy")) {
+            this.isGreedy = compound.getBoolean("IsGreedy");
+        }
+        if (compound.contains("GreedCooldown")) {
+            this.greedCooldown = compound.getInt("GreedCooldown");
+        }
+        
         // 读取完成后更新自定义名称
         if (!this.level().isClientSide) {
             updateCustomName();
@@ -312,6 +345,27 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
             if (this.tickCount % 100 == 0 && hunger > 0) {
                 hunger--;
             }
+            
+            // 服务端：神志系统
+            if (hasSentient) {
+                if (speechCooldown > 0) {
+                    speechCooldown--;
+                } else if (this.tickCount % 200 == 0) { // 每10秒尝试说话
+                    attemptSpeech();
+                }
+            }
+            
+            // 服务端：贪婪系统
+            if (isGreedy) {
+                if (greedCooldown > 0) {
+                    greedCooldown--;
+                } else if (this.tickCount % 150 == 0) { // 每7.5秒尝试贪婪行为
+                    attemptGreedyBehavior();
+                }
+            }
+            
+            // 服务端：视力随等级变化
+            updateVisionRange();
         }
 
         // 客户端：加载皮肤
@@ -342,11 +396,28 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
             float pitch = 0.8F + this.random.nextFloat() * 0.4F;
             this.playSound(ModSounds.GROUND_CHI.get(), 1.0F, pitch);
             
+            // 随机感染村民
+            if (entity instanceof net.minecraft.world.entity.npc.Villager villager) {
+                if (this.random.nextFloat() < 0.3) { // 30% 概率感染
+                    infectVillager(villager);
+                }
+            }
+            
             // 击杀目标后处理进化逻辑
             handleKill(entity);
         }
         
         return result;
+    }
+    
+    /**
+     * 感染村民为尸兄
+     */
+    private void infectVillager(net.minecraft.world.entity.npc.Villager villager) {
+        if (!(this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
+        
+        // 使用 BYeffect 来感染村民（3-15秒随机延迟后变异）
+        com.phagens.corpseorigin.Effect.BYeffect.applyInfection(villager, serverLevel);
     }
     
     /**
@@ -676,5 +747,97 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
         this.entityData.set(DATA_PLAYING_SHIEYE, true);
         this.shieyeCooldown = 200; // 10秒冷却时间
         this.shieyeAnimationTicks = 60; // 3秒 = 60 ticks，动画持续时间
+    }
+    
+    /**
+     * 更新视力范围
+     * 基础尸兄在晚上和人类一样的视力
+     * 随着等级提升，视力范围增加
+     */
+    private void updateVisionRange() {
+        double baseVision = 16.0D; // 人类基础视力
+        double levelBonus = this.evolutionLevel * 2.0D; // 每级增加2格视力
+        double totalVision = baseVision + levelBonus;
+        
+        // 更新视力属性
+        if (this.getAttribute(Attributes.FOLLOW_RANGE) != null) {
+            this.getAttribute(Attributes.FOLLOW_RANGE).setBaseValue(totalVision);
+        }
+    }
+    
+    /**
+     * 尝试说话
+     * 保留生前神志的尸兄会随机口吐人言
+     */
+    private void attemptSpeech() {
+        if (this.random.nextFloat() < 0.3) { // 30%概率说话
+            String[] phrases = {
+                "救...救我...",
+                "好饿...",
+                "我...我怎么了...",
+                "不要...不要杀我...",
+                "肉...肉...",
+                "谁来...救救我...",
+                "好疼...好疼...",
+                "我不想死..."
+            };
+            
+            String phrase = phrases[this.random.nextInt(phrases.length)];
+            this.level().broadcastEntityEvent(this, (byte) 46); // 播放说话效果
+            
+            // 发送聊天消息（只有附近的玩家能看到）
+            net.minecraft.network.chat.Component message = net.minecraft.network.chat.Component.literal(phrase);
+            for (Player player : this.level().getEntitiesOfClass(Player.class, this.getBoundingBox().inflate(32.0D))) {
+                player.sendSystemMessage(message);
+            }
+            
+            speechCooldown = 400; // 20秒冷却
+        }
+    }
+    
+    /**
+     * 尝试贪婪行为
+     * 贪婪的尸兄会被黄金和绿宝石吸引
+     */
+    private void attemptGreedyBehavior() {
+        // 搜索附近的黄金和绿宝石物品
+        java.util.List<net.minecraft.world.entity.item.ItemEntity> items = this.level().getEntitiesOfClass(
+            net.minecraft.world.entity.item.ItemEntity.class,
+            this.getBoundingBox().inflate(16.0D)
+        );
+        
+        net.minecraft.world.entity.item.ItemEntity targetItem = null;
+        double closestDistance = Double.MAX_VALUE;
+        
+        for (net.minecraft.world.entity.item.ItemEntity item : items) {
+            net.minecraft.world.item.ItemStack stack = item.getItem();
+            if (isValuableItem(stack)) {
+                double distance = this.distanceToSqr(item);
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    targetItem = item;
+                }
+            }
+        }
+        
+        // 如果找到有价值的物品，靠近它
+        if (targetItem != null) {
+            this.getNavigation().moveTo(targetItem, 1.2D);
+            greedCooldown = 200; // 10秒冷却
+        }
+    }
+    
+    /**
+     * 判断物品是否有价值（黄金或绿宝石）
+     */
+    private boolean isValuableItem(net.minecraft.world.item.ItemStack stack) {
+        net.minecraft.world.item.Item item = stack.getItem();
+        return item == net.minecraft.world.item.Items.GOLD_INGOT ||
+               item == net.minecraft.world.item.Items.GOLD_NUGGET ||
+               item == net.minecraft.world.item.Items.GOLD_BLOCK ||
+               item == net.minecraft.world.item.Items.EMERALD ||
+               item == net.minecraft.world.item.Items.EMERALD_BLOCK ||
+               item == net.minecraft.world.item.Items.GOLDEN_APPLE ||
+               item == net.minecraft.world.item.Items.ENCHANTED_GOLDEN_APPLE;
     }
 }

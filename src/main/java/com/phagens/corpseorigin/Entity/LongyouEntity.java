@@ -1,6 +1,8 @@
 package com.phagens.corpseorigin.Entity;
 
 import com.phagens.corpseorigin.CorpseOrigin;
+import com.phagens.corpseorigin.Effect.BYeffect;
+import com.phagens.corpseorigin.register.EntityRegistry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -52,6 +54,16 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
     private static final int MAX_MINIONS = 10;
     // 识别范围
     private static final double RECOGNITION_RANGE = 64.0D;
+    
+    // 龙右的状态系统
+    private int hunger = 100; // 饥饿度 (0-100, 100为饱腹)
+    private int mood = 50; // 心情值 (0-100, 50为中性)
+    private int interest = 0; // 兴趣值 (0-100, 0为无兴趣)
+    
+    // 状态阈值
+    private static final int HUNGER_THRESHOLD = 30; // 饥饿度低于此值才会攻击
+    private static final int MOOD_THRESHOLD = 70; // 心情值高于此值不会攻击
+    private static final int INTEREST_THRESHOLD = 60; // 兴趣值高于此值不会攻击
 
     public LongyouEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
@@ -132,6 +144,24 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
             }
         }
 
+        // 服务端：状态系统更新
+        if (!this.level().isClientSide) {
+            // 每100 tick（5秒）减少1点饥饿度
+            if (this.tickCount % 100 == 0 && hunger > 0) {
+                hunger--;
+            }
+            
+            // 心情值自然恢复（每200 tick恢复1点）
+            if (this.tickCount % 200 == 0 && mood < 100) {
+                mood++;
+            }
+            
+            // 兴趣值自然衰减（每150 tick减少1点）
+            if (this.tickCount % 150 == 0 && interest > 0) {
+                interest--;
+            }
+        }
+
         // 服务端：执行智能判断
         if (!this.level().isClientSide && this.level() instanceof ServerLevel) {
             if (intelligenceCheckCooldown-- <= 0) {
@@ -144,6 +174,7 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
     /**
      * 龙右的智能判断系统
      * 评估周围的尸兄，决定哪些是手下，哪些是粮仓
+     * 评估周围的村民，决定哪些作为食物，哪些有利用价值感染
      */
     private void performIntelligenceCheck() {
         if (!(this.level() instanceof ServerLevel serverLevel)) return;
@@ -178,9 +209,64 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
             }
         }
 
+        // 获取范围内的所有村民
+        List<Villager> nearbyVillagers = serverLevel.getEntitiesOfClass(
+                Villager.class,
+                this.getBoundingBox().inflate(RECOGNITION_RANGE)
+        );
+
+        for (Villager villager : nearbyVillagers) {
+            // 评估村民的价值
+            VillagerValue value = evaluateVillager(villager);
+
+            if (value == VillagerValue.INFECT) {
+                // 感染村民
+                infectVillager(villager, serverLevel);
+            } else {
+                // 作为食物
+                consumeVillager(villager, serverLevel);
+            }
+        }
+
         // 清理已死亡的尸兄
         minions.removeIf(id -> serverLevel.getEntity(id) == null || !(serverLevel.getEntity(id) instanceof LowerLevelZbEntity));
         foodReserves.removeIf(id -> serverLevel.getEntity(id) == null || !(serverLevel.getEntity(id) instanceof LowerLevelZbEntity));
+    }
+
+    /**
+     * 评估村民的价值
+     */
+    private VillagerValue evaluateVillager(Villager villager) {
+        // 随机决定村民的价值，80%概率感染，20%概率作为食物
+        // 可以根据村民的职业、等级等因素调整概率
+        return this.random.nextFloat() < 0.8 ? VillagerValue.INFECT : VillagerValue.FOOD;
+    }
+
+    /**
+     * 感染村民
+     */
+    private void infectVillager(Villager villager, ServerLevel serverLevel) {
+        CorpseOrigin.LOGGER.info("龙右感染村民 {}", villager.getUUID());
+        
+        // 使用 BYeffect 来感染村民（3-15秒随机延迟后变异）
+        BYeffect.applyInfection(villager, serverLevel);
+    }
+
+    /**
+     * 消耗村民作为食物
+     */
+    private void consumeVillager(Villager villager, ServerLevel serverLevel) {
+        CorpseOrigin.LOGGER.info("龙右消耗村民 {} 作为食物", villager.getUUID());
+        
+        // 恢复生命值
+        this.heal(this.getMaxHealth() * 0.2F);
+        
+        // 播放效果
+        serverLevel.broadcastEntityEvent(this, (byte) 35);
+        this.playSound(net.minecraft.sounds.SoundEvents.GENERIC_EAT, 2.0F, 0.8F);
+        
+        // 移除村民
+        villager.remove(net.minecraft.world.entity.Entity.RemovalReason.KILLED);
     }
 
     /**
@@ -206,6 +292,7 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
     /**
      * 判断是否应该攻击某个目标
      * 龙右作为尸王，不会食用同类（尸兄）
+     * 在不饿或高兴时不会主动攻击其他生物
      */
     @Override
     public boolean doHurtTarget(net.minecraft.world.entity.Entity entity) {
@@ -214,8 +301,26 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
             CorpseOrigin.LOGGER.debug("龙右拒绝攻击尸兄（同类）");
             return false;
         }
+        
+        // 检查状态是否允许攻击
+        if (!shouldAttack()) {
+            CorpseOrigin.LOGGER.debug("龙右当前状态不允许攻击");
+            return false;
+        }
 
         return super.doHurtTarget(entity);
+    }
+    
+    /**
+     * 判断龙右是否应该攻击
+     * 只有在饥饿度低于阈值，且心情和兴趣值不高于阈值时才会攻击
+     */
+    private boolean shouldAttack() {
+        boolean isHungry = hunger < HUNGER_THRESHOLD;
+        boolean isHappy = mood > MOOD_THRESHOLD;
+        boolean isInterested = interest > INTEREST_THRESHOLD;
+        
+        return isHungry && !isHappy && !isInterested;
     }
 
     /**
@@ -223,8 +328,8 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
      * 作为尸王，他不需要像普通尸兄那样吞噬同类
      */
     public boolean needsToEat() {
-        // 龙右作为尸王，生命值低于50%时才会考虑进食
-        return this.getHealth() < this.getMaxHealth() * 0.5;
+        // 龙右作为尸王，饥饿度低于阈值时才会考虑进食
+        return hunger < HUNGER_THRESHOLD;
     }
 
     /**
@@ -234,21 +339,41 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
         if (!(this.level() instanceof ServerLevel serverLevel)) return;
         if (foodReserves.isEmpty()) return;
 
-        // 获取一个粮仓
-        UUID foodId = foodReserves.iterator().next();
-        if (serverLevel.getEntity(foodId) instanceof LowerLevelZbEntity food) {
-            CorpseOrigin.LOGGER.info("龙右消耗粮仓 {} 恢复生命值", foodId);
+        // 寻找距离最近的粮仓
+        LowerLevelZbEntity nearestFood = null;
+        double minDistance = Double.MAX_VALUE;
+        UUID nearestFoodId = null;
+        
+        for (UUID foodId : foodReserves) {
+            if (serverLevel.getEntity(foodId) instanceof LowerLevelZbEntity food) {
+                double distance = this.distanceToSqr(food);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestFood = food;
+                    nearestFoodId = foodId;
+                }
+            }
+        }
+        
+        // 检查距离是否小于2格
+        if (nearestFood != null && minDistance < 4.0) { // 2格的平方是4.0
+            CorpseOrigin.LOGGER.info("龙右消耗粮仓 {} 恢复生命值", nearestFoodId);
 
             // 恢复生命值
             this.heal(this.getMaxHealth() * 0.3F);
+            
+            // 恢复饥饿度
+            hunger = 100;
 
             // 播放效果
             serverLevel.broadcastEntityEvent(this, (byte) 35);
             this.playSound(net.minecraft.sounds.SoundEvents.GENERIC_EAT, 2.0F, 0.8F);
 
             // 移除粮仓
-            food.discard();
-            foodReserves.remove(foodId);
+            nearestFood.discard();
+            foodReserves.remove(nearestFoodId);
+        } else if (nearestFood != null) {
+            CorpseOrigin.LOGGER.info("龙右距离粮仓太远，无法消耗");
         }
     }
 
@@ -277,6 +402,11 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
         super.addAdditionalSaveData(compound);
         compound.putBoolean("PlayingShieye", this.entityData.get(DATA_PLAYING_SHIEYE));
         compound.putInt("ShieyeCooldown", this.shieyeCooldown);
+        
+        // 保存状态系统数据
+        compound.putInt("Hunger", this.hunger);
+        compound.putInt("Mood", this.mood);
+        compound.putInt("Interest", this.interest);
 
         // 保存手下列表
         CompoundTag minionsTag = new CompoundTag();
@@ -305,6 +435,17 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
         }
         if (compound.contains("ShieyeCooldown")) {
             this.shieyeCooldown = compound.getInt("ShieyeCooldown");
+        }
+        
+        // 读取状态系统数据
+        if (compound.contains("Hunger")) {
+            this.hunger = compound.getInt("Hunger");
+        }
+        if (compound.contains("Mood")) {
+            this.mood = compound.getInt("Mood");
+        }
+        if (compound.contains("Interest")) {
+            this.interest = compound.getInt("Interest");
         }
 
         // 读取手下列表
@@ -336,5 +477,13 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
     private enum ZombieValue {
         MINION,      // 手下 - 有潜力的尸兄
         FOOD_RESERVE // 粮仓 - 作为储备食物的尸兄
+    }
+
+    /**
+     * 村民价值枚举
+     */
+    private enum VillagerValue {
+        INFECT, // 有利用价值，感染为尸兄
+        FOOD    // 作为食物消耗
     }
 }

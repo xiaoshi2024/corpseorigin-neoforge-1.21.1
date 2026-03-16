@@ -2,6 +2,7 @@ package com.phagens.corpseorigin.Entity;
 
 import com.phagens.corpseorigin.Entity.EntityAI.JLAI.ModFollow;
 import com.phagens.corpseorigin.Entity.EntityAI.Vibrationsys.ModVibrationUser;
+import com.phagens.corpseorigin.register.EntityRegistry;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -178,5 +179,32 @@ public class ZbrFishEntity extends AbstractFish implements GeoEntity, VibrationS
     @Override
     public net.minecraft.world.item.ItemStack getBucketItemStack() {
         return net.minecraft.world.item.ItemStack.EMPTY;
+    }
+    
+    /**
+     * 攻击目标时，有一定概率感染村民
+     */
+    @Override
+    public boolean doHurtTarget(net.minecraft.world.entity.Entity entity) {
+        boolean result = super.doHurtTarget(entity);
+        
+        // 随机感染村民
+        if (result && !this.level().isClientSide && entity instanceof net.minecraft.world.entity.npc.Villager villager) {
+            if (this.random.nextFloat() < 0.3) { // 30% 概率感染
+                infectVillager(villager);
+            }
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 感染村民为尸兄
+     */
+    private void infectVillager(net.minecraft.world.entity.npc.Villager villager) {
+        if (!(this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
+        
+        // 使用 BYeffect 来感染村民（3-15秒随机延迟后变异）
+        com.phagens.corpseorigin.Effect.BYeffect.applyInfection(villager, serverLevel);
     }
 }
