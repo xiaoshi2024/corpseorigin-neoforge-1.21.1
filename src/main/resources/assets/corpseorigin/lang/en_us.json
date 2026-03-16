@@ -12,6 +12,10 @@
   "item.corpseorigin.lei_xi_gong_fa": "Lightning Skill Book",
 
   "entity.corpseorigin.zbr_fish": "Zombie Brother Fish",
+  "entity.corpseorigin.lower_level_zb": "Zombie Brothers",
+  "entity.corpseorigin.lower_level_zb.named": "Zombie Brothers-%s",
+  "entity.corpseorigin.lower_level_zb.default": "Zombie Brothers",
+  "entity.corpseorigin.longyou": "Long you",
 
   "effect.corpseorigin.by": "Corpse Water Infection",
 

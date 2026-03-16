@@ -35,7 +35,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.UUID;
 
-public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, VibrationSystem {
+public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, VibrationSystem {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     protected static final RawAnimation WALK_ANIM = RawAnimation.begin().thenLoop("walk");
     protected static final RawAnimation IDLE_ANIM = RawAnimation.begin().thenLoop("idle");
@@ -44,6 +44,8 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
 
     // 同步数据
     private static final EntityDataAccessor<String> DATA_PLAYER_NAME =
+            SynchedEntityData.defineId(LowerLevelZbEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<String> DATA_CUSTOM_ID =
             SynchedEntityData.defineId(LowerLevelZbEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Integer> DATA_SKIN_STATE =
             SynchedEntityData.defineId(LowerLevelZbEntity.class, EntityDataSerializers.INT);
@@ -103,12 +105,37 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
         this.playerSkinName = playerName;
         this.entityData.set(DATA_PLAYER_NAME, playerName);
         CorpseOrigin.LOGGER.info("尸兄设置皮肤玩家: {}", playerName);
+
+        if (!this.level().isClientSide) {
+            updateCustomName();
+        }
+    }
+
+    /**
+     * 设置自定义 ID（用于指令召唤）
+     */
+    // 在设置自定义ID时调用
+    public void setCustomId(String customId) {
+        this.entityData.set(DATA_CUSTOM_ID, customId);
+        CorpseOrigin.LOGGER.info("尸兄设置自定义ID: {}", customId);
+
+        if (!this.level().isClientSide) {
+            updateCustomName();
+        }
+    }
+
+    /**
+     * 获取自定义 ID
+     */
+    public String getCustomId() {
+        return this.entityData.get(DATA_CUSTOM_ID);
     }
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(DATA_PLAYER_NAME, "");
+        builder.define(DATA_CUSTOM_ID, "");
         builder.define(DATA_SKIN_STATE, ZbSkinState.NOT_LOADED.getCode());
         builder.define(DATA_PLAYING_SHIEYE, false);
     }
@@ -211,6 +238,7 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
         if (playerSkinName != null) {
             compound.putString("PlayerSkinName", playerSkinName);
         }
+        compound.putString("CustomId", this.entityData.get(DATA_CUSTOM_ID));
         compound.putInt("SkinState", this.entityData.get(DATA_SKIN_STATE));
         compound.putBoolean("SkinLoadStarted", this.skinLoadStarted);
         compound.putBoolean("PlayingShieye", this.entityData.get(DATA_PLAYING_SHIEYE));
@@ -230,6 +258,9 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
         if (compound.contains("PlayerSkinName")) {
             this.playerSkinName = compound.getString("PlayerSkinName");
             this.entityData.set(DATA_PLAYER_NAME, this.playerSkinName);
+        }
+        if (compound.contains("CustomId")) {
+            this.entityData.set(DATA_CUSTOM_ID, compound.getString("CustomId"));
         }
         if (compound.contains("SkinState")) {
             this.entityData.set(DATA_SKIN_STATE, compound.getInt("SkinState"));
@@ -251,6 +282,10 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
         }
         if (compound.contains("Hunger")) {
             this.hunger = compound.getInt("Hunger");
+        }
+        // 读取完成后更新自定义名称
+        if (!this.level().isClientSide) {
+            updateCustomName();
         }
     }
 
@@ -560,6 +595,62 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
     @Override
     public boolean requiresCustomPersistence() {
         return super.requiresCustomPersistence();
+    }
+
+    /**
+     * 更新实体的自定义名称（用于玉模组和头顶标签）
+     */
+    private void updateCustomName() {
+        String customId = this.getCustomId();
+        String playerName = this.getPlayerSkinName();
+
+        net.minecraft.network.chat.Component displayName;
+
+        if (!customId.isEmpty()) {
+            displayName = net.minecraft.network.chat.Component.translatable(
+                    "entity.corpseorigin.lower_level_zb.named",
+                    customId
+            );
+        } else if (playerName != null && !playerName.isEmpty()) {
+            displayName = net.minecraft.network.chat.Component.translatable(
+                    "entity.corpseorigin.lower_level_zb.named",
+                    playerName
+            );
+        } else {
+            displayName = net.minecraft.network.chat.Component.translatable(
+                    "entity.corpseorigin.lower_level_zb.default"
+            );
+        }
+
+        // 设置自定义名称
+        this.setCustomName(displayName);
+        // 确保始终显示（可选）
+        this.setCustomNameVisible(false);
+    }
+
+    @Override
+    public net.minecraft.network.chat.Component getDisplayName() {
+        String customId = this.getCustomId();
+        String playerName = this.getPlayerSkinName();
+
+        if (!customId.isEmpty()) {
+            // 有自定义ID时：使用 entity.corpseorigin.lower_level_zb.named
+            return net.minecraft.network.chat.Component.translatable(
+                    "entity.corpseorigin.lower_level_zb.named",
+                    customId
+            );
+        } else if (playerName != null && !playerName.isEmpty()) {
+            // 有玩家皮肤名称时：也使用 entity.corpseorigin.lower_level_zb.named
+            return net.minecraft.network.chat.Component.translatable(
+                    "entity.corpseorigin.lower_level_zb.named",
+                    playerName
+            );
+        } else {
+            // 默认显示：使用 entity.corpseorigin.lower_level_zb.default
+            return net.minecraft.network.chat.Component.translatable(
+                    "entity.corpseorigin.lower_level_zb.default"
+            );
+        }
     }
     
     public int getEvolutionLevel() {

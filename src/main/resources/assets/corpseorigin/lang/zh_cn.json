@@ -12,6 +12,10 @@
   "item.corpseorigin.lei_xi_gong_fa": "雷系功法",
 
   "entity.corpseorigin.zbr_fish": "尸兄鱼",
+  "entity.corpseorigin.lower_level_zb": "尸兄",
+  "entity.corpseorigin.lower_level_zb.named": "尸兄-%s",
+  "entity.corpseorigin.lower_level_zb.default": "尸兄",
+  "entity.corpseorigin.longyou": "龙右",
 
   "effect.corpseorigin.by": "尸水感染",
 
@@ -72,4 +76,5 @@
   "message.corpseorigin.water_infected": "这片水已被尸水污染！",
 
   "subtitles.corpseorigin.ground_chi": "地阶尸兄：吃~~"
+
 }

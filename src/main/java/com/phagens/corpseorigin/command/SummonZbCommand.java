@@ -80,6 +80,9 @@ public class SummonZbCommand {
         // 设置皮肤名称（万用皮肤补丁会自动从皮肤站加载）
         zb.setPlayerSkinName(playerName);
         
+        // 设置自定义 ID
+        zb.setCustomId(playerName);
+        
         source.sendSuccess(() -> 
             Component.literal("§a成功召唤尸兄！皮肤玩家: §e" + playerName), 
             true
