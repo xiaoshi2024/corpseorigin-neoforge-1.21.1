@@ -1,0 +1,79 @@
+{
+  "itemGroup.corpseorigin": "Zombie-Bruder Mod",
+
+  "block.corpseorigin.qi_xing_guan": "Sternensarg",
+
+  "item.corpseorigin.qi_xings_guan_item": "Sternensarg",
+  "item.corpseorigin.bywater_bucket": "Zombie-Wassereimer",
+  "item.corpseorigin.bywater_bottle": "Zombie-Wasserflasche",
+  "item.corpseorigin.ming_juque": "Juque-Schwert",
+  "item.corpseorigin.s_agent": "Gelbes Mittel",
+  "item.corpseorigin.null_s_agent": "Leeres Mittel",
+  "item.corpseorigin.lei_xi_gong_fa": "Blitz-Technik",
+
+  "entity.corpseorigin.zbr_fish": "Zombie-Bruder Fisch",
+  "entity.corpseorigin.lower_level_zb": "Zombie-Bruder",
+  "entity.corpseorigin.lower_level_zb.named": "Zombie-Bruder-%s",
+  "entity.corpseorigin.lower_level_zb.default": "Zombie-Bruder",
+  "entity.corpseorigin.longyou": "Long You",
+
+  "effect.corpseorigin.by": "Zombie-Wasser-Infektion",
+
+  "container.corpseorigin.gong_fu": "Kultivierung",
+
+  "gongfa.rarity.1": "Sterblicher Rang",
+  "gongfa.rarity.2": "Irdischer Rang",
+  "gongfa.rarity.3": "Himmlischer Rang",
+  "gongfa.rarity.4": "Göttlicher Rang",
+  "gongfa.rarity.5": "Transzendenter Rang",
+
+  "gongfa.ceng.copy_1": "Erster Himmel",
+  "gongfa.ceng.copy_2": "Zweiter Himmel",
+  "gongfa.ceng.copy_3": "Dritter Himmel",
+  "gongfa.ceng.copy_4": "Vierter Himmel",
+  "gongfa.ceng.copy_5": "Fünfter Himmel",
+  "gongfa.ceng.copy_6": "Sechster Himmel",
+  "gongfa.ceng.copy_7": "Siebter Himmel",
+  "gongfa.ceng.copy_8": "Achter Himmel",
+  "gongfa.ceng.copy_9": "Neunter Himmel",
+
+  "gongfa.attribute.attack_damage": "Angriffsschaden",
+  "gongfa.attribute.movement_speed": "Bewegungsgeschwindigkeit",
+  "gongfa.attribute.max_health": "Maximale Gesundheit",
+  "gongfa.attribute.armor": "Rüstung",
+  "gongfa.attribute.knockback_resistance": "Rückstoßwiderstand",
+
+  "gongfa.skill.lightning_basic": "Basis-Blitz",
+  "gongfa.skill.lightning_strike": "Blitzschlag",
+  "gongfa.skill.lightning_dash": "Blitz-Rush",
+  "gongfa.skill.heavenly_thunder": "Himmlischer Donner",
+  "gongfa.skill.thousand_thunder": "Tausend Blitze",
+  "gongfa.skill.thunder_god": "Donnergott-Besitz",
+
+  "tooltip.corpseorigin.bywater_bottle": "Das Trinken wird dich vergiften...",
+  "tooltip.corpseorigin.bywater_bucket": "Das Platzieren wird Wasserquellen kontaminieren",
+  "tooltip.corpseorigin.ming_juque": "Ein göttliches Schwert, das geschwächte Feinde hinrichten kann",
+  "tooltip.corpseorigin.gongfa.rarity": "Seltenheit: %s",
+  "tooltip.corpseorigin.gongfa.ceng": "Kultivierungsschicht: %s",
+  "tooltip.corpseorigin.gongfa.attribute": "Segnungen:",
+  "tooltip.corpseorigin.gongfa.skills": "Fähigkeiten:",
+
+  "corpseorigin.configuration.title": "Zombie-Bruder Konfiguration",
+  "corpseorigin.configuration.section.corpseorigin.common.toml": "Allgemeine Konfiguration",
+  "corpseorigin.configuration.section.corpseorigin.common.toml.title": "Allgemeine Konfiguration",
+  "corpseorigin.configuration.items": "Gegenstandsliste",
+  "corpseorigin.configuration.logDirtBlock": "Erde-Block protokollieren",
+  "corpseorigin.configuration.magicNumberIntroduction": "Magische Zahl Text",
+  "corpseorigin.configuration.magicNumber": "Magische Zahl",
+
+  "key.corpseorigin.category": "Zombie-Bruder",
+  "key.corpseorigin.open_gongfu": "Kultivierungsoberfläche öffnen",
+
+  "death.attack.corpse_water": "%1$s ist im Zombie-Wasser ertrunken",
+  "death.attack.zombie_brother": "%1$s wurde von einem Zombie-Bruder getötet",
+
+  "message.corpseorigin.cultivation_opened": "Kultivierungsoberfläche geöffnet",
+  "message.corpseorigin.water_infected": "Dieses Wasser ist mit Zombie-Wasser kontaminiert!",
+
+  "subtitles.corpseorigin.ground_chi": "Zombie-Bruder isst~~"
+}

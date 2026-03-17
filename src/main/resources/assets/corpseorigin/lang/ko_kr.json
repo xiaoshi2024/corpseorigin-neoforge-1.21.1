@@ -1,0 +1,79 @@
+{
+  "itemGroup.corpseorigin": "시웅 모드",
+
+  "block.corpseorigin.qi_xing_guan": "칠성관",
+
+  "item.corpseorigin.qi_xings_guan_item": "칠성관",
+  "item.corpseorigin.bywater_bucket": "시수 양동이",
+  "item.corpseorigin.bywater_bottle": "시수 병",
+  "item.corpseorigin.ming_juque": "거궐검",
+  "item.corpseorigin.s_agent": "황색 약제",
+  "item.corpseorigin.null_s_agent": "빈 약제",
+  "item.corpseorigin.lei_xi_gong_fa": "뇌계 공법",
+
+  "entity.corpseorigin.zbr_fish": "시웅 물고기",
+  "entity.corpseorigin.lower_level_zb": "시웅",
+  "entity.corpseorigin.lower_level_zb.named": "시웅-%s",
+  "entity.corpseorigin.lower_level_zb.default": "시웅",
+  "entity.corpseorigin.longyou": "용우",
+
+  "effect.corpseorigin.by": "시수 감염",
+
+  "container.corpseorigin.gong_fu": "수행",
+
+  "gongfa.rarity.1": "인계",
+  "gongfa.rarity.2": "지계",
+  "gongfa.rarity.3": "천계",
+  "gongfa.rarity.4": "신계",
+  "gongfa.rarity.5": "초신계",
+
+  "gongfa.ceng.copy_1": "일중천",
+  "gongfa.ceng.copy_2": "이중천",
+  "gongfa.ceng.copy_3": "삼중천",
+  "gongfa.ceng.copy_4": "사중천",
+  "gongfa.ceng.copy_5": "오중천",
+  "gongfa.ceng.copy_6": "육중천",
+  "gongfa.ceng.copy_7": "칠중천",
+  "gongfa.ceng.copy_8": "팔중천",
+  "gongfa.ceng.copy_9": "구중천",
+
+  "gongfa.attribute.attack_damage": "공격력",
+  "gongfa.attribute.movement_speed": "이동 속도",
+  "gongfa.attribute.max_health": "생명력",
+  "gongfa.attribute.armor": "방어력",
+  "gongfa.attribute.knockback_resistance": "넉백 저항",
+
+  "gongfa.skill.lightning_basic": "기초 뇌격",
+  "gongfa.skill.lightning_strike": "뇌전 타격",
+  "gongfa.skill.lightning_dash": "질풍뇌",
+  "gongfa.skill.heavenly_thunder": "천뢰강세",
+  "gongfa.skill.thousand_thunder": "만뢰귀종",
+  "gongfa.skill.thunder_god": "뇌신부체",
+
+  "tooltip.corpseorigin.bywater_bottle": "마시면 중독됩니다...",
+  "tooltip.corpseorigin.bywater_bucket": "설치하면 수원을 오염시킵니다",
+  "tooltip.corpseorigin.ming_juque": "거궐신병, 잔혈의 적을 참살",
+  "tooltip.corpseorigin.gongfa.rarity": "등급: %s",
+  "tooltip.corpseorigin.gongfa.ceng": "공법층급: %s",
+  "tooltip.corpseorigin.gongfa.attribute": "무학가지:",
+  "tooltip.corpseorigin.gongfa.skills": "기예:",
+
+  "corpseorigin.configuration.title": "시웅 모드 설정",
+  "corpseorigin.configuration.section.corpseorigin.common.toml": "시웅 모드 일반 설정",
+  "corpseorigin.configuration.section.corpseorigin.common.toml.title": "시웅 모드 일반 설정",
+  "corpseorigin.configuration.items": "아이템 목록",
+  "corpseorigin.configuration.logDirtBlock": "흙 블록 기록",
+  "corpseorigin.configuration.magicNumberIntroduction": "마법 숫자 텍스트",
+  "corpseorigin.configuration.magicNumber": "마법 숫자",
+
+  "key.corpseorigin.category": "시웅 모드",
+  "key.corpseorigin.open_gongfu": "수행 인터페이스 열기",
+
+  "death.attack.corpse_water": "%1$s 이(가) 시수에 빠져 사망",
+  "death.attack.zombie_brother": "%1$s 이(가) 시웅에게 살해당함",
+
+  "message.corpseorigin.cultivation_opened": "수행 인터페이스가 열렸습니다",
+  "message.corpseorigin.water_infected": "이 물은 시수로 오염되었습니다!",
+
+  "subtitles.corpseorigin.ground_chi": "지계 시웅: 먹는다~~"
+}

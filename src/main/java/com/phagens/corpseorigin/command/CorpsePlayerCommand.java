@@ -36,7 +36,7 @@ public class CorpsePlayerCommand {
                                 
                                 context.getSource().sendSuccess(
                                     () -> net.minecraft.network.chat.Component.literal(
-                                        "已将玩家 " + player.getName().getString() + " 设置为尸体状态，类型: " + type
+                                        "已将玩家 " + player.getName().getString() + " 设置为尸兄状态，类型: " + type
                                     ), true
                                 );
                                 return 1;
@@ -60,7 +60,7 @@ public class CorpsePlayerCommand {
                             
                             context.getSource().sendSuccess(
                                 () -> net.minecraft.network.chat.Component.literal(
-                                    "已移除玩家 " + player.getName().getString() + " 的尸体状态"
+                                    "已移除玩家 " + player.getName().getString() + " 的尸兄状态"
                                 ), true
                             );
                             return 1;
@@ -84,8 +84,8 @@ public class CorpsePlayerCommand {
                             context.getSource().sendSuccess(
                                 () -> net.minecraft.network.chat.Component.literal(
                                     "玩家 " + player.getName().getString() + " 状态:\n" +
-                                    "  是否为尸体: " + isCorpse + "\n" +
-                                    "  尸体类型: " + type + "\n" +
+                                    "  是否为尸兄: " + isCorpse + "\n" +
+                                    "  尸兄类型: " + type + "\n" +
                                     "  饥饿度: " + hunger + "\n" +
                                     "  进化等级: " + evolution + "\n" +
                                     "  击杀数: " + kills + "\n" +

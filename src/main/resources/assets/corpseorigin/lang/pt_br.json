@@ -1,0 +1,79 @@
+{
+  "itemGroup.corpseorigin": "Mod Irmão Zumbi",
+
+  "block.corpseorigin.qi_xing_guan": "Caixão das Sete Estrelas",
+
+  "item.corpseorigin.qi_xings_guan_item": "Caixão das Sete Estrelas",
+  "item.corpseorigin.bywater_bucket": "Balde de Água Zumbi",
+  "item.corpseorigin.bywater_bottle": "Frasco de Água Zumbi",
+  "item.corpseorigin.ming_juque": "Espada Juque",
+  "item.corpseorigin.s_agent": "Agente Amarelo",
+  "item.corpseorigin.null_s_agent": "Agente Vazio",
+  "item.corpseorigin.lei_xi_gong_fa": "Técnica do Raio",
+
+  "entity.corpseorigin.zbr_fish": "Peixe Irmão Zumbi",
+  "entity.corpseorigin.lower_level_zb": "Irmão Zumbi",
+  "entity.corpseorigin.lower_level_zb.named": "Irmão Zumbi-%s",
+  "entity.corpseorigin.lower_level_zb.default": "Irmão Zumbi",
+  "entity.corpseorigin.longyou": "Long You",
+
+  "effect.corpseorigin.by": "Infecção por Água Zumbi",
+
+  "container.corpseorigin.gong_fu": "Cultivação",
+
+  "gongfa.rarity.1": "Rank Mortal",
+  "gongfa.rarity.2": "Rank Terrestre",
+  "gongfa.rarity.3": "Rank Celestial",
+  "gongfa.rarity.4": "Rank Divino",
+  "gongfa.rarity.5": "Rank Transcendente",
+
+  "gongfa.ceng.copy_1": "Primeiro Céu",
+  "gongfa.ceng.copy_2": "Segundo Céu",
+  "gongfa.ceng.copy_3": "Terceiro Céu",
+  "gongfa.ceng.copy_4": "Quarto Céu",
+  "gongfa.ceng.copy_5": "Quinto Céu",
+  "gongfa.ceng.copy_6": "Sexto Céu",
+  "gongfa.ceng.copy_7": "Sétimo Céu",
+  "gongfa.ceng.copy_8": "Oitavo Céu",
+  "gongfa.ceng.copy_9": "Nono Céu",
+
+  "gongfa.attribute.attack_damage": "Dano de Ataque",
+  "gongfa.attribute.movement_speed": "Velocidade de Movimento",
+  "gongfa.attribute.max_health": "Vida Máxima",
+  "gongfa.attribute.armor": "Armadura",
+  "gongfa.attribute.knockback_resistance": "Resistência a Repulsão",
+
+  "gongfa.skill.lightning_basic": "Raio Básico",
+  "gongfa.skill.lightning_strike": "Golpe de Raio",
+  "gongfa.skill.lightning_dash": "Corrida Relâmpago",
+  "gongfa.skill.heavenly_thunder": "Trovão Celestial",
+  "gongfa.skill.thousand_thunder": "Mil Raios",
+  "gongfa.skill.thunder_god": "Possessão do Deus do Trovão",
+
+  "tooltip.corpseorigin.bywater_bottle": "Beber isso envenenará você...",
+  "tooltip.corpseorigin.bywater_bucket": "Colocar contaminará fontes de água",
+  "tooltip.corpseorigin.ming_juque": "Uma espada divina que pode executar inimigos enfraquecidos",
+  "tooltip.corpseorigin.gongfa.rarity": "Raridade: %s",
+  "tooltip.corpseorigin.gongfa.ceng": "Camada de Cultivação: %s",
+  "tooltip.corpseorigin.gongfa.attribute": "Bênçãos:",
+  "tooltip.corpseorigin.gongfa.skills": "Habilidades:",
+
+  "corpseorigin.configuration.title": "Configuração Irmão Zumbi",
+  "corpseorigin.configuration.section.corpseorigin.common.toml": "Configuração Comum",
+  "corpseorigin.configuration.section.corpseorigin.common.toml.title": "Configuração Comum",
+  "corpseorigin.configuration.items": "Lista de Itens",
+  "corpseorigin.configuration.logDirtBlock": "Registrar Bloco de Terra",
+  "corpseorigin.configuration.magicNumberIntroduction": "Texto do Número Mágico",
+  "corpseorigin.configuration.magicNumber": "Número Mágico",
+
+  "key.corpseorigin.category": "Irmão Zumbi",
+  "key.corpseorigin.open_gongfu": "Abrir Interface de Cultivação",
+
+  "death.attack.corpse_water": "%1$s morreu em água zumbi",
+  "death.attack.zombie_brother": "%1$s foi morto por um Irmão Zumbi",
+
+  "message.corpseorigin.cultivation_opened": "Interface de cultivação aberta",
+  "message.corpseorigin.water_infected": "Esta água está contaminada com água zumbi!",
+
+  "subtitles.corpseorigin.ground_chi": "Irmão Zumbi come~~"
+}

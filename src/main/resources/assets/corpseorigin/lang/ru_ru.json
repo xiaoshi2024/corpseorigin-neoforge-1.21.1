@@ -1,0 +1,79 @@
+{
+  "itemGroup.corpseorigin": "Мод Брат Зомби",
+
+  "block.corpseorigin.qi_xing_guan": "Гроб Семи Звезд",
+
+  "item.corpseorigin.qi_xings_guan_item": "Гроб Семи Звезд",
+  "item.corpseorigin.bywater_bucket": "Ведро Зомби-Воды",
+  "item.corpseorigin.bywater_bottle": "Бутылка Зомби-Воды",
+  "item.corpseorigin.ming_juque": "Меч Цзюэ",
+  "item.corpseorigin.s_agent": "Желтый Агент",
+  "item.corpseorigin.null_s_agent": "Пустой Агент",
+  "item.corpseorigin.lei_xi_gong_fa": "Техника Молнии",
+
+  "entity.corpseorigin.zbr_fish": "Рыба Брат Зомби",
+  "entity.corpseorigin.lower_level_zb": "Брат Зомби",
+  "entity.corpseorigin.lower_level_zb.named": "Брат Зомби-%s",
+  "entity.corpseorigin.lower_level_zb.default": "Брат Зомби",
+  "entity.corpseorigin.longyou": "Лун Ю",
+
+  "effect.corpseorigin.by": "Инфекция Зомби-Водой",
+
+  "container.corpseorigin.gong_fu": "Культивация",
+
+  "gongfa.rarity.1": "Смертный Ранг",
+  "gongfa.rarity.2": "Земной Ранг",
+  "gongfa.rarity.3": "Небесный Ранг",
+  "gongfa.rarity.4": "Божественный Ранг",
+  "gongfa.rarity.5": "Трансцендентный Ранг",
+
+  "gongfa.ceng.copy_1": "Первое Небо",
+  "gongfa.ceng.copy_2": "Второе Небо",
+  "gongfa.ceng.copy_3": "Третье Небо",
+  "gongfa.ceng.copy_4": "Четвертое Небо",
+  "gongfa.ceng.copy_5": "Пятое Небо",
+  "gongfa.ceng.copy_6": "Шестое Небо",
+  "gongfa.ceng.copy_7": "Седьмое Небо",
+  "gongfa.ceng.copy_8": "Восьмое Небо",
+  "gongfa.ceng.copy_9": "Девятое Небо",
+
+  "gongfa.attribute.attack_damage": "Урон Атаки",
+  "gongfa.attribute.movement_speed": "Скорость Передвижения",
+  "gongfa.attribute.max_health": "Максимальное Здоровье",
+  "gongfa.attribute.armor": "Броня",
+  "gongfa.attribute.knockback_resistance": "Сопротивление Отбрасыванию",
+
+  "gongfa.skill.lightning_basic": "Базовая Молния",
+  "gongfa.skill.lightning_strike": "Удар Молнии",
+  "gongfa.skill.lightning_dash": "Молниеносный Рывок",
+  "gongfa.skill.heavenly_thunder": "Небесный Гром",
+  "gongfa.skill.thousand_thunder": "Тысяча Молний",
+  "gongfa.skill.thunder_god": "Одержимость Богом Грома",
+
+  "tooltip.corpseorigin.bywater_bottle": "Выпив это, вы отравитесь...",
+  "tooltip.corpseorigin.bywater_bucket": "Размещение заразит источники воды",
+  "tooltip.corpseorigin.ming_juque": "Божественный меч, способный казнить ослабленных врагов",
+  "tooltip.corpseorigin.gongfa.rarity": "Редкость: %s",
+  "tooltip.corpseorigin.gongfa.ceng": "Уровень Культивации: %s",
+  "tooltip.corpseorigin.gongfa.attribute": "Благословения:",
+  "tooltip.corpseorigin.gongfa.skills": "Навыки:",
+
+  "corpseorigin.configuration.title": "Конфигурация Брата Зомби",
+  "corpseorigin.configuration.section.corpseorigin.common.toml": "Общая Конфигурация",
+  "corpseorigin.configuration.section.corpseorigin.common.toml.title": "Общая Конфигурация",
+  "corpseorigin.configuration.items": "Список Предметов",
+  "corpseorigin.configuration.logDirtBlock": "Журнал Блока Земли",
+  "corpseorigin.configuration.magicNumberIntroduction": "Текст Магического Числа",
+  "corpseorigin.configuration.magicNumber": "Магическое Число",
+
+  "key.corpseorigin.category": "Брат Зомби",
+  "key.corpseorigin.open_gongfu": "Открыть Интерфейс Культивации",
+
+  "death.attack.corpse_water": "%1$s утонул в зомби-воде",
+  "death.attack.zombie_brother": "%1$s был убит Братом Зомби",
+
+  "message.corpseorigin.cultivation_opened": "Интерфейс культивации открыт",
+  "message.corpseorigin.water_infected": "Эта вода заражена зомби-водой!",
+
+  "subtitles.corpseorigin.ground_chi": "Брат Зомби ест~~"
+}

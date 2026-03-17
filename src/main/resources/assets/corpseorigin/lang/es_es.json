@@ -1,0 +1,79 @@
+{
+  "itemGroup.corpseorigin": "Mod Hermano Zombie",
+
+  "block.corpseorigin.qi_xing_guan": "Ataúd de las Siete Estrellas",
+
+  "item.corpseorigin.qi_xings_guan_item": "Ataúd de las Siete Estrellas",
+  "item.corpseorigin.bywater_bucket": "Cubo de Agua Zombie",
+  "item.corpseorigin.bywater_bottle": "Botella de Agua Zombie",
+  "item.corpseorigin.ming_juque": "Espada Juque",
+  "item.corpseorigin.s_agent": "Agente Amarillo",
+  "item.corpseorigin.null_s_agent": "Agente Vacío",
+  "item.corpseorigin.lei_xi_gong_fa": "Técnica del Rayo",
+
+  "entity.corpseorigin.zbr_fish": "Pez Hermano Zombie",
+  "entity.corpseorigin.lower_level_zb": "Hermano Zombie",
+  "entity.corpseorigin.lower_level_zb.named": "Hermano Zombie-%s",
+  "entity.corpseorigin.lower_level_zb.default": "Hermano Zombie",
+  "entity.corpseorigin.longyou": "Long You",
+
+  "effect.corpseorigin.by": "Infección por Agua Zombie",
+
+  "container.corpseorigin.gong_fu": "Cultivación",
+
+  "gongfa.rarity.1": "Rango Mortal",
+  "gongfa.rarity.2": "Rango Terrestre",
+  "gongfa.rarity.3": "Rango Celestial",
+  "gongfa.rarity.4": "Rango Divino",
+  "gongfa.rarity.5": "Rango Trascendente",
+
+  "gongfa.ceng.copy_1": "Primer Cielo",
+  "gongfa.ceng.copy_2": "Segundo Cielo",
+  "gongfa.ceng.copy_3": "Tercer Cielo",
+  "gongfa.ceng.copy_4": "Cuarto Cielo",
+  "gongfa.ceng.copy_5": "Quinto Cielo",
+  "gongfa.ceng.copy_6": "Sexto Cielo",
+  "gongfa.ceng.copy_7": "Séptimo Cielo",
+  "gongfa.ceng.copy_8": "Octavo Cielo",
+  "gongfa.ceng.copy_9": "Noveno Cielo",
+
+  "gongfa.attribute.attack_damage": "Daño de Ataque",
+  "gongfa.attribute.movement_speed": "Velocidad de Movimiento",
+  "gongfa.attribute.max_health": "Salud Máxima",
+  "gongfa.attribute.armor": "Armadura",
+  "gongfa.attribute.knockback_resistance": "Resistencia al Retroceso",
+
+  "gongfa.skill.lightning_basic": "Rayo Básico",
+  "gongfa.skill.lightning_strike": "Golpe de Rayo",
+  "gongfa.skill.lightning_dash": "Carrera Relámpago",
+  "gongfa.skill.heavenly_thunder": "Trueno Celestial",
+  "gongfa.skill.thousand_thunder": "Mil Truenos",
+  "gongfa.skill.thunder_god": "Posesión del Dios del Trueno",
+
+  "tooltip.corpseorigin.bywater_bottle": "Beber esto te envenenará...",
+  "tooltip.corpseorigin.bywater_bucket": "Colocarlo contaminará las fuentes de agua",
+  "tooltip.corpseorigin.ming_juque": "Una espada divina que puede ejecutar enemigos debilitados",
+  "tooltip.corpseorigin.gongfa.rarity": "Rareza: %s",
+  "tooltip.corpseorigin.gongfa.ceng": "Capa de Cultivación: %s",
+  "tooltip.corpseorigin.gongfa.attribute": "Bendiciones:",
+  "tooltip.corpseorigin.gongfa.skills": "Habilidades:",
+
+  "corpseorigin.configuration.title": "Configuración Hermano Zombie",
+  "corpseorigin.configuration.section.corpseorigin.common.toml": "Configuración Común",
+  "corpseorigin.configuration.section.corpseorigin.common.toml.title": "Configuración Común",
+  "corpseorigin.configuration.items": "Lista de Objetos",
+  "corpseorigin.configuration.logDirtBlock": "Registrar Bloque de Tierra",
+  "corpseorigin.configuration.magicNumberIntroduction": "Texto del Número Mágico",
+  "corpseorigin.configuration.magicNumber": "Número Mágico",
+
+  "key.corpseorigin.category": "Hermano Zombie",
+  "key.corpseorigin.open_gongfu": "Abrir Interfaz de Cultivación",
+
+  "death.attack.corpse_water": "%1$s murió en agua zombie",
+  "death.attack.zombie_brother": "%1$s fue asesinado por un Hermano Zombie",
+
+  "message.corpseorigin.cultivation_opened": "Interfaz de cultivación abierta",
+  "message.corpseorigin.water_infected": "¡Esta agua está contaminada con agua zombie!",
+
+  "subtitles.corpseorigin.ground_chi": "Hermano Zombie come~~"
+}

@@ -1,0 +1,79 @@
+{
+  "itemGroup.corpseorigin": "ज़ोंबी भाई मॉड",
+
+  "block.corpseorigin.qi_xing_guan": "सात तारों का ताबूत",
+
+  "item.corpseorigin.qi_xings_guan_item": "सात तारों का ताबूत",
+  "item.corpseorigin.bywater_bucket": "ज़ोंबी पानी की बाल्टी",
+  "item.corpseorigin.bywater_bottle": "ज़ोंबी पानी की बोतल",
+  "item.corpseorigin.ming_juque": "जुकी तलवार",
+  "item.corpseorigin.s_agent": "पीला एजेंट",
+  "item.corpseorigin.null_s_agent": "खाली एजेंट",
+  "item.corpseorigin.lei_xi_gong_fa": "बिजली तकनीक",
+
+  "entity.corpseorigin.zbr_fish": "ज़ोंबी भाई मछली",
+  "entity.corpseorigin.lower_level_zb": "ज़ोंबी भाई",
+  "entity.corpseorigin.lower_level_zb.named": "ज़ोंबी भाई-%s",
+  "entity.corpseorigin.lower_level_zb.default": "ज़ोंबी भाई",
+  "entity.corpseorigin.longyou": "लॉन्ग यू",
+
+  "effect.corpseorigin.by": "ज़ोंबी पानी संक्रमण",
+
+  "container.corpseorigin.gong_fu": "साधना",
+
+  "gongfa.rarity.1": "मर्त्य रैंक",
+  "gongfa.rarity.2": " earthly रैंक",
+  "gongfa.rarity.3": "स्वर्गीय रैंक",
+  "gongfa.rarity.4": "दिव्य रैंक",
+  "gongfa.rarity.5": "पारलौकिक रैंक",
+
+  "gongfa.ceng.copy_1": "पहला स्वर्ग",
+  "gongfa.ceng.copy_2": "दूसरा स्वर्ग",
+  "gongfa.ceng.copy_3": "तीसरा स्वर्ग",
+  "gongfa.ceng.copy_4": "चौथा स्वर्ग",
+  "gongfa.ceng.copy_5": "पांचवां स्वर्ग",
+  "gongfa.ceng.copy_6": "छठा स्वर्ग",
+  "gongfa.ceng.copy_7": "सातवां स्वर्ग",
+  "gongfa.ceng.copy_8": "आठवां स्वर्ग",
+  "gongfa.ceng.copy_9": "नौवां स्वर्ग",
+
+  "gongfa.attribute.attack_damage": "हमला क्षति",
+  "gongfa.attribute.movement_speed": "गति",
+  "gongfa.attribute.max_health": "अधिकतम स्वास्थ्य",
+  "gongfa.attribute.armor": "कवच",
+  "gongfa.attribute.knockback_resistance": "प्रतिकर्षण प्रतिरोध",
+
+  "gongfa.skill.lightning_basic": "बुनियादी बिजली",
+  "gongfa.skill.lightning_strike": "बिजली प्रहार",
+  "gongfa.skill.lightning_dash": "बिजली दौड़",
+  "gongfa.skill.heavenly_thunder": "स्वर्गीय गर्जन",
+  "gongfa.skill.thousand_thunder": "हजार बिजलियां",
+  "gongfa.skill.thunder_god": "गर्जन देवता अधिकार",
+
+  "tooltip.corpseorigin.bywater_bottle": "इसे पीने से आप जहर खा जाएंगे...",
+  "tooltip.corpseorigin.bywater_bucket": "इसे रखने से पानी के स्रोत प्रदूषित होंगे",
+  "tooltip.corpseorigin.ming_juque": "एक दिव्य तलवार जो कमजोर दुश्मनों को मार सकती है",
+  "tooltip.corpseorigin.gongfa.rarity": "दुर्लभता: %s",
+  "tooltip.corpseorigin.gongfa.ceng": "साधना स्तर: %s",
+  "tooltip.corpseorigin.gongfa.attribute": "आशीर्वाद:",
+  "tooltip.corpseorigin.gongfa.skills": "कौशल:",
+
+  "corpseorigin.configuration.title": "ज़ोंबी भाई कॉन्फ़िगरेशन",
+  "corpseorigin.configuration.section.corpseorigin.common.toml": "सामान्य कॉन्फ़िगरेशन",
+  "corpseorigin.configuration.section.corpseorigin.common.toml.title": "सामान्य कॉन्फ़िगरेशन",
+  "corpseorigin.configuration.items": "वस्तु सूची",
+  "corpseorigin.configuration.logDirtBlock": "मिट्टी का ब्लॉक लॉग करें",
+  "corpseorigin.configuration.magicNumberIntroduction": "जादुई संख्या पाठ",
+  "corpseorigin.configuration.magicNumber": "जादुई संख्या",
+
+  "key.corpseorigin.category": "ज़ोंबी भाई",
+  "key.corpseorigin.open_gongfu": "साधना इंटरफ़ेस खोलें",
+
+  "death.attack.corpse_water": "%1$s ज़ोंबी पानी में डूब कर मर गया",
+  "death.attack.zombie_brother": "%1$s को ज़ोंबी भाई ने मार डाला",
+
+  "message.corpseorigin.cultivation_opened": "साधना इंटरफ़ेस खोला गया",
+  "message.corpseorigin.water_infected": "यह पानी ज़ोंबी पानी से प्रदूषित है!",
+
+  "subtitles.corpseorigin.ground_chi": "ज़ोंबी भाई खा रहा है~~"
+}

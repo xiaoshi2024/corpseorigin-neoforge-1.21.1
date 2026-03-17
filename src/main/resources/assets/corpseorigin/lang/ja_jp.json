@@ -1,0 +1,79 @@
+{
+  "itemGroup.corpseorigin": "屍兄モッド",
+
+  "block.corpseorigin.qi_xing_guan": "七星棺",
+
+  "item.corpseorigin.qi_xings_guan_item": "七星棺",
+  "item.corpseorigin.bywater_bucket": "屍水バケツ",
+  "item.corpseorigin.bywater_bottle": "屍水ボトル",
+  "item.corpseorigin.ming_juque": "巨闕剣",
+  "item.corpseorigin.s_agent": "黄色薬剤",
+  "item.corpseorigin.null_s_agent": "空薬剤",
+  "item.corpseorigin.lei_xi_gong_fa": "雷系功法",
+
+  "entity.corpseorigin.zbr_fish": "屍兄魚",
+  "entity.corpseorigin.lower_level_zb": "屍兄",
+  "entity.corpseorigin.lower_level_zb.named": "屍兄-%s",
+  "entity.corpseorigin.lower_level_zb.default": "屍兄",
+  "entity.corpseorigin.longyou": "龍右",
+
+  "effect.corpseorigin.by": "屍水感染",
+
+  "container.corpseorigin.gong_fu": "修行",
+
+  "gongfa.rarity.1": "人階",
+  "gongfa.rarity.2": "地階",
+  "gongfa.rarity.3": "天階",
+  "gongfa.rarity.4": "神階",
+  "gongfa.rarity.5": "超神階",
+
+  "gongfa.ceng.copy_1": "一重天",
+  "gongfa.ceng.copy_2": "二重天",
+  "gongfa.ceng.copy_3": "三重天",
+  "gongfa.ceng.copy_4": "四重天",
+  "gongfa.ceng.copy_5": "五重天",
+  "gongfa.ceng.copy_6": "六重天",
+  "gongfa.ceng.copy_7": "七重天",
+  "gongfa.ceng.copy_8": "八重天",
+  "gongfa.ceng.copy_9": "九重天",
+
+  "gongfa.attribute.attack_damage": "攻撃力",
+  "gongfa.attribute.movement_speed": "移動速度",
+  "gongfa.attribute.max_health": "生命值",
+  "gongfa.attribute.armor": "防御力",
+  "gongfa.attribute.knockback_resistance": "ノックバック耐性",
+
+  "gongfa.skill.lightning_basic": "基礎雷撃",
+  "gongfa.skill.lightning_strike": "雷撃",
+  "gongfa.skill.lightning_dash": "疾風雷",
+  "gongfa.skill.heavenly_thunder": "天雷降世",
+  "gongfa.skill.thousand_thunder": "万雷帰宗",
+  "gongfa.skill.thunder_god": "雷神憑依",
+
+  "tooltip.corpseorigin.bywater_bottle": "飲むと毒に侵される...",
+  "tooltip.corpseorigin.bywater_bucket": "設置すると水源を汚染する",
+  "tooltip.corpseorigin.ming_juque": "巨闕神兵、瀕死の敵を斬る",
+  "tooltip.corpseorigin.gongfa.rarity": "レア度: %s",
+  "tooltip.corpseorigin.gongfa.ceng": "功法層級: %s",
+  "tooltip.corpseorigin.gongfa.attribute": "武学加持:",
+  "tooltip.corpseorigin.gongfa.skills": "スキル:",
+
+  "corpseorigin.configuration.title": "屍兄設定",
+  "corpseorigin.configuration.section.corpseorigin.common.toml": "一般設定",
+  "corpseorigin.configuration.section.corpseorigin.common.toml.title": "一般設定",
+  "corpseorigin.configuration.items": "アイテムリスト",
+  "corpseorigin.configuration.logDirtBlock": "土ブロックを記録",
+  "corpseorigin.configuration.magicNumberIntroduction": "魔法数字テキスト",
+  "corpseorigin.configuration.magicNumber": "魔法数字",
+
+  "key.corpseorigin.category": "屍兄",
+  "key.corpseorigin.open_gongfu": "修行画面を開く",
+
+  "death.attack.corpse_water": "%1$s は屍水で溺死した",
+  "death.attack.zombie_brother": "%1$s は屍兄に殺された",
+
+  "message.corpseorigin.cultivation_opened": "修行画面が開きました",
+  "message.corpseorigin.water_infected": "この水は屍水で汚染されています!",
+
+  "subtitles.corpseorigin.ground_chi": "地階屍兄：食べる~~"
+}
