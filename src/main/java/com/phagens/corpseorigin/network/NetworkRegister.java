@@ -22,6 +22,13 @@ public class NetworkRegister {
                 ZbSkinUpdatePacket::handleData
         );
 
+        // 注册玩家尸体状态同步包 (服务端 → 客户端)
+        registrar.playToClient(
+                PlayerCorpseSyncPacket.TYPE,
+                PlayerCorpseSyncPacket.STREAM_CODEC,
+                PlayerCorpseSyncPacket::handle
+        );
+
         CorpseOrigin.LOGGER.info("网络包注册完成");
     }
 }

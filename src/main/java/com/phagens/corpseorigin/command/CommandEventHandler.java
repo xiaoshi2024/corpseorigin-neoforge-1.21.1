@@ -12,5 +12,7 @@ public class CommandEventHandler {
     public static void onRegisterCommands(RegisterCommandsEvent event) {
         // 注册召唤尸兄指令
         SummonZbCommand.register(event.getDispatcher());
+        // 注册玩家尸体指令
+        CorpsePlayerCommand.register(event.getDispatcher());
     }
 }

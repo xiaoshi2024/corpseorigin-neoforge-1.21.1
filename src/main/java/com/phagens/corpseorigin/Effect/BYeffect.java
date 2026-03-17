@@ -2,9 +2,12 @@ package com.phagens.corpseorigin.Effect;
 
 import com.phagens.corpseorigin.CorpseOrigin;
 import com.phagens.corpseorigin.Entity.LowerLevelZbEntity;
+import com.phagens.corpseorigin.network.PlayerCorpseSyncPacket;
+import com.phagens.corpseorigin.player.PlayerCorpseData;
 import com.phagens.corpseorigin.register.EffectRegister;
 import com.phagens.corpseorigin.register.EntityRegistry;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -12,6 +15,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 public class BYeffect extends MobEffect {
 
@@ -52,10 +56,9 @@ public class BYeffect extends MobEffect {
         if (livingEntity instanceof Villager villager) {
             convertVillagerToZb(villager, serverLevel);
         }
-        // 玩家感染逻辑（可选）
-        else if (livingEntity instanceof Player player) {
-            CorpseOrigin.LOGGER.info("玩家 {} 感染，但目前没有处理逻辑", player.getName().getString());
-            // 这里可以添加玩家感染后的效果
+        // 玩家感染逻辑 - 转化为尸族
+        else if (livingEntity instanceof ServerPlayer player) {
+            convertPlayerToCorpse(player);
         }
     }
 
@@ -162,9 +165,29 @@ public class BYeffect extends MobEffect {
     }
 
     /**
+     * 将玩家转化为尸族
+     */
+    private void convertPlayerToCorpse(ServerPlayer player) {
+        // 设置玩家为尸族状态
+        PlayerCorpseData.setPlayerAsCorpse(player, 1);
+
+        // 同步到客户端
+        PlayerCorpseSyncPacket packet = new PlayerCorpseSyncPacket(
+                player.getId(), true, 1, PlayerCorpseData.getCorpseData(player)
+        );
+        PacketDistributor.sendToPlayer(player, packet);
+        PacketDistributor.sendToPlayersTrackingEntity(player, packet);
+
+        // 播放转化特效
+        player.level().broadcastEntityEvent(player, (byte) 35);
+
+        CorpseOrigin.LOGGER.info("玩家 {} 已转化为尸族！", player.getName().getString());
+    }
+
+    /**
      * 检查目标是否可以被感染
      */
     public static boolean canInfect(LivingEntity target) {
-        return target instanceof Villager;
+        return target instanceof Villager || target instanceof Player;
     }
 }

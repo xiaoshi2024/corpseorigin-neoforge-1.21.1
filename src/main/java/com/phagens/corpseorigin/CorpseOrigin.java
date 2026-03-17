@@ -7,6 +7,7 @@ import com.phagens.corpseorigin.GongFU.GongFaZL.GongFaDataFactory;
 import com.phagens.corpseorigin.GongFU.MenuTypeRegister;
 import com.phagens.corpseorigin.GongFU.PackGongFu.NetworkPaketGL;
 import com.phagens.corpseorigin.event.player.playerDie;
+import com.phagens.corpseorigin.player.CorpsePlayerAttachment;
 import com.phagens.corpseorigin.register.*;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -85,6 +86,7 @@ public class CorpseOrigin {
         EntityRegistry.ENTITIES.register(modEventBus);
         EffectRegister.MOB_EFFECTS.register(modEventBus);
         MenuTypeRegister.MENUS.register(modEventBus);
+        CorpsePlayerAttachment.ATTACHMENT_TYPES.register(modEventBus);
 
         // 注册音效
         ModSounds.register(modEventBus);
