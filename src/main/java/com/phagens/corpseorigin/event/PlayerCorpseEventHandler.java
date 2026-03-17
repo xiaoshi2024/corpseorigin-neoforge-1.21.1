@@ -6,9 +6,15 @@ import com.phagens.corpseorigin.player.CorpsePlayerAttachment;
 import com.phagens.corpseorigin.player.PlayerCorpseData;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -80,6 +86,7 @@ public class PlayerCorpseEventHandler {
     }
 
     private static void updateCorpseBehavior(ServerPlayer player) {
+        // 每5秒减少1点饥饿度
         if (player.tickCount % 100 == 0) {
             int hunger = PlayerCorpseData.getHunger(player);
             if (hunger > 0) {
@@ -87,6 +94,37 @@ public class PlayerCorpseEventHandler {
             }
         }
 
+        // 每10秒：尸族被动恢复（吃活物回血特性）
+        if (player.tickCount % 200 == 0) {
+            // 基础生命恢复
+            if (player.getHealth() < player.getMaxHealth()) {
+                float healAmount = 0.5f; // 基础恢复
+                
+                // 根据进化等级增加恢复量
+                int evolutionLevel = PlayerCorpseData.getEvolutionLevel(player);
+                healAmount += evolutionLevel * 0.3f; // 每级增加0.3恢复
+                
+                player.heal(healAmount);
+            }
+            
+            // 高等级尸族获得力量效果
+            int evolutionLevel = PlayerCorpseData.getEvolutionLevel(player);
+            if (evolutionLevel >= 3) {
+                // 3级以上获得力量I
+                player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 300, 0, false, false));
+            }
+            if (evolutionLevel >= 5) {
+                // 5级获得力量II（覆盖力量I）
+                player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 300, 1, false, false));
+            }
+            
+            // 高等级尸族获得夜视能力（3级以上）
+            if (evolutionLevel >= 3) {
+                player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 400, 0, false, false));
+            }
+        }
+
+        // 神志系统：随机说话
         if (player.tickCount % 200 == 0 && PlayerCorpseData.hasSentient(player)) {
             if (player.getRandom().nextFloat() < 0.3f) {
                 String[] phrases = {
@@ -103,5 +141,84 @@ public class PlayerCorpseEventHandler {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(phrase));
             }
         }
+    }
+
+    /**
+     * 尸族攻击生物时恢复饱食度和生命值（吃活物特性）
+     */
+    @SubscribeEvent
+    public static void onLivingDamage(LivingDamageEvent.Post event) {
+        if (event.getSource().getEntity() instanceof ServerPlayer player) {
+            if (PlayerCorpseData.isCorpse(player)) {
+                LivingEntity target = event.getEntity();
+                
+                // 只有攻击活物（非亡灵、非机械）才恢复
+                if (isLivingCreature(target)) {
+                    // 恢复饥饿度（饱食度）
+                    int currentHunger = PlayerCorpseData.getHunger(player);
+                    int newHunger = Math.min(100, currentHunger + 5); // 攻击一次恢复5点
+                    PlayerCorpseData.setHunger(player, newHunger);
+                    
+                    // 恢复生命值
+                    float healAmount = 1.0f; // 基础恢复
+                    int evolutionLevel = PlayerCorpseData.getEvolutionLevel(player);
+                    healAmount += evolutionLevel * 0.5f; // 每级增加0.5恢复
+                    
+                    player.heal(healAmount);
+                    
+                    CorpseOrigin.LOGGER.debug("尸族玩家 {} 攻击 {} 恢复 {} 饥饿度和 {} 生命值",
+                            player.getName().getString(), target.getName().getString(), 
+                            newHunger - currentHunger, healAmount);
+                }
+            }
+        }
+    }
+    
+    /**
+     * 判断目标是否是活物（可以被"吃"）
+     */
+    private static boolean isLivingCreature(LivingEntity entity) {
+        // 排除亡灵生物（僵尸、骷髅等）
+        if (entity.getType().getCategory() == net.minecraft.world.entity.MobCategory.MONSTER) {
+            // 尸兄可以吞噬其他怪物
+            return true;
+        }
+        // 动物和村民都是活物
+        return entity.getType().getCategory() == net.minecraft.world.entity.MobCategory.CREATURE ||
+               entity.getType().getCategory() == net.minecraft.world.entity.MobCategory.AMBIENT ||
+               entity instanceof net.minecraft.world.entity.npc.AbstractVillager ||
+               entity instanceof Player;
+    }
+
+    /**
+     * 尸族免疫普通毒素
+     */
+    @SubscribeEvent
+    public static void onEffectApplicable(MobEffectEvent.Applicable event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            if (PlayerCorpseData.isCorpse(player)) {
+                // 检查是否是毒素效果
+                if (isPoisonEffect(event.getEffectInstance())) {
+                    // 尸族免疫普通毒素
+                    event.setResult(MobEffectEvent.Applicable.Result.DO_NOT_APPLY);
+                    CorpseOrigin.LOGGER.debug("尸族玩家 {} 免疫毒素", player.getName().getString());
+                }
+            }
+        }
+    }
+    
+    /**
+     * 判断是否是毒素效果
+     */
+    private static boolean isPoisonEffect(MobEffectInstance effect) {
+        if (effect == null) return false;
+        
+        // 获取效果实例（解包 Holder）
+        MobEffect mobEffect = effect.getEffect().value();
+        
+        // 原版毒素效果
+        return mobEffect == MobEffects.POISON.value() ||
+               mobEffect == MobEffects.HUNGER.value() ||
+               mobEffect.getCategory() == net.minecraft.world.effect.MobEffectCategory.HARMFUL;
     }
 }

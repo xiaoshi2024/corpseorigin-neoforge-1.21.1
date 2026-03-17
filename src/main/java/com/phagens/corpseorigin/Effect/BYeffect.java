@@ -120,6 +120,13 @@ public class BYeffect extends MobEffect {
             return;
         }
 
+        // 检查玩家是否已经是尸兄，避免重复感染
+        if (target instanceof Player player && PlayerCorpseData.isCorpse(player)) {
+            CorpseOrigin.LOGGER.debug("玩家 {} 已经是尸兄，跳过感染",
+                    player.getName().getString());
+            return;
+        }
+
         // 随机延迟3-15秒（60-300 ticks）
         int duration = 60 + serverLevel.getRandom().nextInt(241);
 
@@ -147,6 +154,13 @@ public class BYeffect extends MobEffect {
         if (target.hasEffect(EffectRegister.QIANS)) {
             CorpseOrigin.LOGGER.debug("目标 {} 已经被感染，跳过重复感染",
                     target.getName().getString());
+            return;
+        }
+
+        // 检查玩家是否已经是尸兄，避免重复感染
+        if (target instanceof Player player && PlayerCorpseData.isCorpse(player)) {
+            CorpseOrigin.LOGGER.debug("玩家 {} 已经是尸兄，跳过感染",
+                    player.getName().getString());
             return;
         }
 
@@ -186,8 +200,19 @@ public class BYeffect extends MobEffect {
 
     /**
      * 检查目标是否可以被感染
+     * 已经是尸兄的玩家不会被感染
      */
     public static boolean canInfect(LivingEntity target) {
-        return target instanceof Villager || target instanceof Player;
+        // 村民可以被感染
+        if (target instanceof Villager) {
+            return true;
+        }
+        
+        // 玩家可以被感染，但已经是尸兄的玩家除外
+        if (target instanceof Player player) {
+            return !PlayerCorpseData.isCorpse(player);
+        }
+        
+        return false;
     }
 }

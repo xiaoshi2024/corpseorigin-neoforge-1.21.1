@@ -3,6 +3,9 @@ package com.phagens.corpseorigin.Entity;
 import com.phagens.corpseorigin.Entity.EntityAI.JLAI.ModFollow;
 import com.phagens.corpseorigin.Entity.EntityAI.Vibrationsys.ModVibrationUser;
 import com.phagens.corpseorigin.register.EntityRegistry;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -35,6 +38,13 @@ public class ZbrFishEntity extends AbstractFish implements GeoEntity, VibrationS
     private final DynamicGameEventListener<Listener> dynamicGameEventListener;
     private final VibrationSystem.User vibrationUser;
     private VibrationSystem.Data vibrationData;
+    
+    // 尸族特性字段
+    private int evolutionLevel = 1; // 进化等级
+    private int hunger = 100; // 饥饿度 (0-100)
+    private static final int HUNGER_THRESHOLD = 20; // 饥饿阈值
+    private int lastHurtTick = -1000; // 上次被攻击的游戏刻
+    private static final int HURT_MEMORY_DURATION = 200; // 被攻击记忆持续时间（10秒）
 
     public ZbrFishEntity(EntityType<? extends AbstractFish> entityType, Level level) {
         super(entityType, level);
@@ -89,9 +99,41 @@ public class ZbrFishEntity extends AbstractFish implements GeoEntity, VibrationS
     }
     
     protected void addBehaviourGoals() {
-        // 攻击目标
-        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
-        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, AbstractVillager.class, false));
+        // 攻击目标 - 使用自定义条件判断是否攻击
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 0, true, false, this::shouldAttackTarget));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, AbstractVillager.class, 0, true, false, this::shouldAttackTarget));
+    }
+    
+    /**
+     * 判断是否应该攻击目标
+     * 尸兄鱼不会主动攻击尸兄玩家（同类），除非极度饥饿或被攻击
+     */
+    private boolean shouldAttackTarget(net.minecraft.world.entity.LivingEntity entity) {
+        // 不攻击龙右（尸王）
+        if (entity instanceof LongyouEntity) {
+            return false;
+        }
+        
+        // 检查目标是否已成为尸兄的玩家（同类）
+        if (entity instanceof Player player) {
+            if (com.phagens.corpseorigin.player.PlayerCorpseData.isCorpse(player)) {
+                // 如果被攻击了，允许反击
+                boolean wasRecentlyHurt = (this.tickCount - lastHurtTick) < HURT_MEMORY_DURATION;
+                if (wasRecentlyHurt) {
+                    return true; // 被攻击时反击同类玩家
+                }
+                
+                // 同类尸兄玩家，只有在极度饥饿时才攻击
+                boolean isHungry = this.hunger <= HUNGER_THRESHOLD;
+                
+                // 只有在极度饥饿时才攻击同类玩家
+                if (!isHungry) {
+                    return false; // 不饥饿时不攻击同类
+                }
+            }
+        }
+        
+        return true;
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -123,7 +165,40 @@ public class ZbrFishEntity extends AbstractFish implements GeoEntity, VibrationS
         super.tick();
         if (!this.level().isClientSide) {
             VibrationSystem.Ticker.tick((net.minecraft.server.level.ServerLevel) this.level(), this.vibrationData, this.vibrationUser);
+            
+            // 尸族特性：每5秒减少1点饥饿度
+            if (this.tickCount % 100 == 0 && hunger > 0) {
+                hunger--;
+            }
+            
+            // 尸族特性：每10秒被动恢复生命
+            if (this.tickCount % 200 == 0) {
+                if (this.getHealth() < this.getMaxHealth()) {
+                    float healAmount = 0.5f + (evolutionLevel * 0.3f); // 基础恢复 + 等级加成
+                    this.heal(healAmount);
+                }
+            }
         }
+    }
+    
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        // 记录被攻击的时间（用于反击逻辑）
+        if (source.getEntity() instanceof net.minecraft.world.entity.LivingEntity) {
+            lastHurtTick = this.tickCount;
+        }
+        return super.hurt(source, amount);
+    }
+    
+    @Override
+    public boolean canBeAffected(MobEffectInstance effect) {
+        // 尸族免疫普通毒素
+        if (effect.getEffect().value() == net.minecraft.world.effect.MobEffects.POISON.value() ||
+            effect.getEffect().value() == net.minecraft.world.effect.MobEffects.HUNGER.value() ||
+            effect.getEffect().value().getCategory() == net.minecraft.world.effect.MobEffectCategory.HARMFUL) {
+            return false;
+        }
+        return super.canBeAffected(effect);
     }
     
     @Override
@@ -181,17 +256,67 @@ public class ZbrFishEntity extends AbstractFish implements GeoEntity, VibrationS
         return net.minecraft.world.item.ItemStack.EMPTY;
     }
     
+    @Override
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putInt("EvolutionLevel", this.evolutionLevel);
+        compound.putInt("Hunger", this.hunger);
+        compound.putInt("LastHurtTick", this.lastHurtTick);
+    }
+    
+    @Override
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        if (compound.contains("EvolutionLevel")) {
+            this.evolutionLevel = compound.getInt("EvolutionLevel");
+        }
+        if (compound.contains("Hunger")) {
+            this.hunger = compound.getInt("Hunger");
+        }
+        if (compound.contains("LastHurtTick")) {
+            this.lastHurtTick = compound.getInt("LastHurtTick");
+        }
+    }
+    
     /**
      * 攻击目标时，有一定概率感染村民
+     * 尸族特性：攻击活物时恢复生命值和饥饿度
      */
     @Override
     public boolean doHurtTarget(net.minecraft.world.entity.Entity entity) {
+        // 检查是否应该攻击尸兄玩家
+        if (entity instanceof Player player) {
+            if (com.phagens.corpseorigin.player.PlayerCorpseData.isCorpse(player)) {
+                // 如果被攻击了，允许反击
+                boolean wasRecentlyHurt = (this.tickCount - lastHurtTick) < HURT_MEMORY_DURATION;
+                if (!wasRecentlyHurt) {
+                    // 同类尸兄玩家，只有在极度饥饿时才攻击
+                    boolean isHungry = this.hunger <= HUNGER_THRESHOLD;
+                    if (!isHungry) {
+                        return false; // 不饥饿时不攻击同类
+                    }
+                }
+            }
+        }
+        
         boolean result = super.doHurtTarget(entity);
         
-        // 随机感染村民
-        if (result && !this.level().isClientSide && entity instanceof net.minecraft.world.entity.npc.Villager villager) {
-            if (this.random.nextFloat() < 0.3) { // 30% 概率感染
-                infectVillager(villager);
+        if (result && !this.level().isClientSide) {
+            // 尸族特性：攻击活物时恢复生命值和饥饿度
+            if (entity instanceof net.minecraft.world.entity.LivingEntity target) {
+                // 恢复饥饿度
+                hunger = Math.min(100, hunger + 5);
+                
+                // 恢复生命值
+                float healAmount = 1.0f + (evolutionLevel * 0.5f);
+                this.heal(healAmount);
+            }
+            
+            // 随机感染村民
+            if (entity instanceof net.minecraft.world.entity.npc.Villager villager) {
+                if (this.random.nextFloat() < 0.3) { // 30% 概率感染
+                    infectVillager(villager);
+                }
             }
         }
         

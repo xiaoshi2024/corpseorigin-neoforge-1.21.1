@@ -106,8 +106,16 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
     /**
      * 判断是否应该攻击某个目标
      * 用于AI目标选择
+     * 龙右不会主动攻击已成为尸兄的玩家（同类）
      */
     private boolean shouldAttackTarget(net.minecraft.world.entity.LivingEntity entity) {
+        // 不攻击已成为尸兄的玩家（同类）
+        if (entity instanceof Player player) {
+            if (com.phagens.corpseorigin.player.PlayerCorpseData.isCorpse(player)) {
+                return false; // 龙右作为尸王，不会攻击同类尸兄玩家
+            }
+        }
+        
         // 只有龙右应该主动出击时才会选择目标
         return shouldInitiateAttack();
     }
@@ -665,6 +673,18 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
                 }
             }
         }
+    }
+
+    @Override
+    public boolean canBeAffected(net.minecraft.world.effect.MobEffectInstance effect) {
+        // 尸王免疫所有毒素和有害效果
+        if (effect.getEffect().value() == net.minecraft.world.effect.MobEffects.POISON.value() ||
+            effect.getEffect().value() == net.minecraft.world.effect.MobEffects.HUNGER.value() ||
+            effect.getEffect().value() == net.minecraft.world.effect.MobEffects.WITHER.value() ||
+            effect.getEffect().value().getCategory() == net.minecraft.world.effect.MobEffectCategory.HARMFUL) {
+            return false;
+        }
+        return super.canBeAffected(effect);
     }
 
     /**

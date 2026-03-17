@@ -108,6 +108,10 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
     // 贪婪系统
     private boolean isGreedy = false; // 是否贪婪
     private int greedCooldown = 0; // 贪婪行为冷却时间
+    
+    // 被攻击记忆系统（用于反击）
+    private int lastHurtTick = -1000; // 上次被攻击的游戏刻
+    private static final int HURT_MEMORY_DURATION = 200; // 被攻击记忆持续时间（10秒）
 
     // 振动系统
     private final DynamicGameEventListener<Listener> dynamicGameEventListener;
@@ -216,12 +220,34 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
     /**
      * 判断是否应该攻击某个生物
      * 尸兄不会攻击龙右（真王）
+     * 尸兄不会主动攻击已成为尸兄的玩家（同类），除非极度饥饿或被攻击
      */
     private boolean shouldAttackMob(net.minecraft.world.entity.LivingEntity entity) {
         // 不攻击龙右（真王）
         if (entity instanceof LongyouEntity) {
             return false;
         }
+        
+        // 检查目标是否已成为尸兄的玩家（同类）
+        if (entity instanceof Player player) {
+            if (com.phagens.corpseorigin.player.PlayerCorpseData.isCorpse(player)) {
+                // 如果被攻击了，允许反击
+                boolean wasRecentlyHurt = (this.tickCount - lastHurtTick) < HURT_MEMORY_DURATION;
+                if (wasRecentlyHurt) {
+                    return true; // 被攻击时反击同类玩家
+                }
+                
+                // 同类尸兄玩家，只有在极度饥饿时才攻击
+                boolean isHungry = this.hunger <= HUNGER_THRESHOLD_FOR_CANNIBALISM;
+                boolean notUnderKing = !isUnderZombieKingLeadership();
+                
+                // 只有在满足吞噬条件时才攻击同类玩家
+                if (!isHungry || !notUnderKing) {
+                    return false; // 不饥饿或有尸王领导时不攻击同类
+                }
+            }
+        }
+        
         return true;
     }
 
@@ -281,6 +307,15 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
     public void aiStep() {
         super.aiStep();
     }
+    
+    @Override
+    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
+        // 记录被攻击的时间（用于反击逻辑）
+        if (source.getEntity() instanceof net.minecraft.world.entity.LivingEntity) {
+            lastHurtTick = this.tickCount;
+        }
+        return super.hurt(source, amount);
+    }
 
     @Override
     public void addAdditionalSaveData(CompoundTag compound) {
@@ -307,6 +342,9 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
         compound.putInt("SpeechCooldown", this.speechCooldown);
         compound.putBoolean("IsGreedy", this.isGreedy);
         compound.putInt("GreedCooldown", this.greedCooldown);
+        
+        // 保存被攻击记忆
+        compound.putInt("LastHurtTick", this.lastHurtTick);
     }
 
     @Override
@@ -360,6 +398,11 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
         }
         if (compound.contains("GreedCooldown")) {
             this.greedCooldown = compound.getInt("GreedCooldown");
+        }
+        
+        // 读取被攻击记忆
+        if (compound.contains("LastHurtTick")) {
+            this.lastHurtTick = compound.getInt("LastHurtTick");
         }
         
         // 读取完成后更新自定义名称
@@ -432,6 +475,30 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
             // 只有满足吞噬条件时才攻击其他尸兄
             if (!shouldAttackOtherZb(otherZb)) {
                 return false; // 不攻击，避免无意义的互相攻击
+            }
+        }
+        
+        // 如果目标是已成为尸兄的玩家，检查是否应该攻击
+        if (entity instanceof Player player) {
+            if (com.phagens.corpseorigin.player.PlayerCorpseData.isCorpse(player)) {
+                // 如果被攻击了，允许反击
+                boolean wasRecentlyHurt = (this.tickCount - lastHurtTick) < HURT_MEMORY_DURATION;
+                if (wasRecentlyHurt) {
+                    CorpseOrigin.LOGGER.info("尸兄 {} 反击同类玩家 {}", this.getId(), player.getName().getString());
+                    // 继续执行攻击逻辑
+                } else {
+                    // 同类尸兄玩家，只有在极度饥饿时才攻击
+                    boolean isHungry = this.hunger <= HUNGER_THRESHOLD_FOR_CANNIBALISM;
+                    boolean notUnderKing = !isUnderZombieKingLeadership();
+                    
+                    // 只有在满足吞噬条件时才攻击同类玩家
+                    if (!isHungry || !notUnderKing) {
+                        return false; // 不饥饿或有尸王领导时不攻击同类
+                    }
+                    
+                    // 满足条件，可以攻击同类玩家
+                    CorpseOrigin.LOGGER.info("尸兄 {} 因极度饥饿攻击同类玩家 {}", this.getId(), player.getName().getString());
+                }
             }
         }
         
@@ -712,6 +779,17 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
     @Override
     public boolean requiresCustomPersistence() {
         return super.requiresCustomPersistence();
+    }
+    
+    @Override
+    public boolean canBeAffected(net.minecraft.world.effect.MobEffectInstance effect) {
+        // 尸族免疫普通毒素
+        if (effect.getEffect().value() == net.minecraft.world.effect.MobEffects.POISON.value() ||
+            effect.getEffect().value() == net.minecraft.world.effect.MobEffects.HUNGER.value() ||
+            effect.getEffect().value().getCategory() == net.minecraft.world.effect.MobEffectCategory.HARMFUL) {
+            return false;
+        }
+        return super.canBeAffected(effect);
     }
 
     /**
