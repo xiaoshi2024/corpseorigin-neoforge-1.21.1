@@ -45,6 +45,10 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
     // 龙右的智能系统
     private int intelligenceCheckCooldown = 0;
     private static final int INTELLIGENCE_CHECK_INTERVAL = 100; // 每5秒检查一次
+    
+    // 村民处理冷却（避免龙右吃村民过快）
+    private int villagerConsumeCooldown = 0;
+    private static final int VILLAGER_CONSUME_INTERVAL = 300; // 每15秒才能吃/感染一个村民
 
     // 手下列表（被龙右认可的尸兄）
     private final Set<UUID> minions = new HashSet<>();
@@ -52,8 +56,12 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
     private final Set<UUID> foodReserves = new HashSet<>();
     // 手下数量上限
     private static final int MAX_MINIONS = 10;
-    // 识别范围
-    private static final double RECOGNITION_RANGE = 64.0D;
+    // 识别范围（用于评估尸兄和村民）
+    private static final double RECOGNITION_RANGE = 32.0D;
+    // 吞噬范围（只有在这个范围内的粮仓/村民才能被吞噬）
+    private static final double CONSUME_RANGE = 4.0D;
+    // 村民处理范围（只有在这个范围内的村民才能被感染或吃掉）
+    private static final double VILLAGER_INTERACTION_RANGE = 4.0D;
     
     // 龙右的状态系统
     private int hunger = 100; // 饥饿度 (0-100, 100为饱腹)
@@ -64,6 +72,10 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
     private static final int HUNGER_THRESHOLD = 30; // 饥饿度低于此值才会攻击
     private static final int MOOD_THRESHOLD = 70; // 心情值高于此值不会攻击
     private static final int INTEREST_THRESHOLD = 60; // 兴趣值高于此值不会攻击
+    
+    // 被攻击状态
+    private int lastHurtTick = -1000; // 上次被攻击的游戏刻
+    private static final int HURT_MEMORY_DURATION = 200; // 被攻击记忆持续时间（10秒）
 
     public LongyouEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
@@ -84,10 +96,20 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
 
         // 龙右作为尸王，不会攻击尸兄（同类），但会攻击其他生物
-        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, true));
-        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Animal.class, true));
-        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Villager.class, true));
+        // 使用自定义条件判断是否攻击：只有饥饿或被攻击时才会主动出击
+        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, 0, true, false, this::shouldAttackTarget));
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Animal.class, 0, true, false, this::shouldAttackTarget));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Villager.class, 0, true, false, this::shouldAttackTarget));
         // 不会主动攻击 LowerLevelZbEntity（尸兄同类）
+    }
+    
+    /**
+     * 判断是否应该攻击某个目标
+     * 用于AI目标选择
+     */
+    private boolean shouldAttackTarget(net.minecraft.world.entity.LivingEntity entity) {
+        // 只有龙右应该主动出击时才会选择目标
+        return shouldInitiateAttack();
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -130,11 +152,23 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
     }
 
     @Override
+    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
+        // 记录被攻击的时间
+        lastHurtTick = this.tickCount;
+        return super.hurt(source, amount);
+    }
+
+    @Override
     public void tick() {
         super.tick();
 
         if (shieyeCooldown > 0) {
             shieyeCooldown--;
+        }
+        
+        // 减少村民处理冷却
+        if (villagerConsumeCooldown > 0) {
+            villagerConsumeCooldown--;
         }
 
         if (!this.level().isClientSide && this.entityData.get(DATA_PLAYING_SHIEYE)) {
@@ -209,22 +243,81 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
             }
         }
 
-        // 获取范围内的所有村民
-        List<Villager> nearbyVillagers = serverLevel.getEntitiesOfClass(
-                Villager.class,
-                this.getBoundingBox().inflate(RECOGNITION_RANGE)
-        );
+        // 处理村民（有冷却时间限制）
+        if (villagerConsumeCooldown <= 0) {
+            // 获取范围内的所有村民（但只在很近的距离内才能处理）
+            List<Villager> nearbyVillagers = serverLevel.getEntitiesOfClass(
+                    Villager.class,
+                    this.getBoundingBox().inflate(VILLAGER_INTERACTION_RANGE)
+            );
 
-        for (Villager villager : nearbyVillagers) {
-            // 评估村民的价值
-            VillagerValue value = evaluateVillager(villager);
+            // 每次只处理一个最近的村民，避免一次性消灭所有村民
+            Villager targetVillager = null;
+            double minVillagerDistance = Double.MAX_VALUE;
+            
+            for (Villager villager : nearbyVillagers) {
+                double distance = this.distanceToSqr(villager);
+                if (distance < minVillagerDistance) {
+                    minVillagerDistance = distance;
+                    targetVillager = villager;
+                }
+            }
+            
+            // 只处理最近的一个村民
+            if (targetVillager != null) {
+                // 评估村民的价值
+                VillagerValue value = evaluateVillager(targetVillager);
 
-            if (value == VillagerValue.INFECT) {
-                // 感染村民
-                infectVillager(villager, serverLevel);
-            } else {
-                // 作为食物
-                consumeVillager(villager, serverLevel);
+                if (value == VillagerValue.INFECT) {
+                    // 感染村民
+                    infectVillager(targetVillager, serverLevel);
+                } else {
+                    // 作为食物
+                    consumeVillager(targetVillager, serverLevel);
+                }
+                // 设置冷却时间
+                villagerConsumeCooldown = VILLAGER_CONSUME_INTERVAL;
+            }
+        }
+
+        // 处理玩家（有冷却时间限制，与村民共享冷却）
+        if (villagerConsumeCooldown <= 0) {
+            // 获取范围内的所有玩家（但只在很近的距离内才能处理）
+            List<Player> nearbyPlayers = serverLevel.getEntitiesOfClass(
+                    Player.class,
+                    this.getBoundingBox().inflate(VILLAGER_INTERACTION_RANGE)
+            );
+
+            // 每次只处理一个最近的玩家
+            Player targetPlayer = null;
+            double minPlayerDistance = Double.MAX_VALUE;
+            
+            for (Player player : nearbyPlayers) {
+                // 跳过创造模式和旁观模式的玩家
+                if (player.isCreative() || player.isSpectator()) {
+                    continue;
+                }
+                double distance = this.distanceToSqr(player);
+                if (distance < minPlayerDistance) {
+                    minPlayerDistance = distance;
+                    targetPlayer = player;
+                }
+            }
+            
+            // 只处理最近的一个玩家
+            if (targetPlayer != null) {
+                // 评估玩家的价值
+                PlayerValue value = evaluatePlayer(targetPlayer);
+
+                if (value == PlayerValue.INFECT) {
+                    // 感染玩家
+                    infectPlayer(targetPlayer, serverLevel);
+                } else {
+                    // 作为食物
+                    consumePlayer(targetPlayer, serverLevel);
+                }
+                // 设置冷却时间
+                villagerConsumeCooldown = VILLAGER_CONSUME_INTERVAL;
             }
         }
 
@@ -235,11 +328,86 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
 
     /**
      * 评估村民的价值
+     * 大多数村民作为食物（85%），极少数感染成同伴（15%）
      */
     private VillagerValue evaluateVillager(Villager villager) {
-        // 随机决定村民的价值，80%概率感染，20%概率作为食物
-        // 可以根据村民的职业、等级等因素调整概率
-        return this.random.nextFloat() < 0.8 ? VillagerValue.INFECT : VillagerValue.FOOD;
+        // 随机决定村民的价值，15%概率感染，85%概率作为食物
+        // 龙右作为尸王，更倾向于把村民当作食物来恢复自身
+        return this.random.nextFloat() < 0.15 ? VillagerValue.INFECT : VillagerValue.FOOD;
+    }
+
+    /**
+     * 评估玩家的价值
+     * 根据玩家的装备、生命值等因素决定是感染还是吃掉
+     * 20%概率感染（有潜力的玩家），80%概率作为食物
+     */
+    private PlayerValue evaluatePlayer(Player player) {
+        // 计算玩家的"潜力值"
+        int potential = 0;
+        
+        // 根据装备计算潜力
+        for (net.minecraft.world.item.ItemStack item : player.getInventory().armor) {
+            if (!item.isEmpty()) {
+                potential += 5;
+            }
+        }
+        
+        // 根据生命值计算潜力
+        float healthPercent = player.getHealth() / player.getMaxHealth();
+        potential += (int)(healthPercent * 10);
+        
+        // 根据经验等级计算潜力
+        potential += player.experienceLevel;
+        
+        // 潜力高的玩家有更高概率被感染（最高40%概率）
+        float infectChance = 0.2f + Math.min(0.2f, potential / 100f);
+        
+        return this.random.nextFloat() < infectChance ? PlayerValue.INFECT : PlayerValue.FOOD;
+    }
+
+    /**
+     * 感染玩家
+     */
+    private void infectPlayer(Player player, ServerLevel serverLevel) {
+        CorpseOrigin.LOGGER.info("龙右感染玩家 {}", player.getName().getString());
+        
+        // 对玩家添加感染效果（更长的延迟，给玩家反应时间）
+        int duration = 200 + serverLevel.getRandom().nextInt(400); // 10-30秒
+        player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                com.phagens.corpseorigin.register.EffectRegister.QIANS,
+                duration,
+                0,
+                false,
+                true,
+                true
+        ));
+        
+        // 发送消息给玩家
+        player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§c§l你感受到了尸王的感染！快寻找解药！"));
+        
+        // 播放效果
+        serverLevel.broadcastEntityEvent(this, (byte) 7);
+    }
+
+    /**
+     * 消耗玩家作为食物
+     */
+    private void consumePlayer(Player player, ServerLevel serverLevel) {
+        CorpseOrigin.LOGGER.info("龙右消耗玩家 {} 作为食物", player.getName().getString());
+        
+        // 对玩家造成大量伤害（但不一定立即死亡，给逃跑机会）
+        float damage = player.getMaxHealth() * 0.5f; // 50%生命值伤害
+        player.hurt(serverLevel.damageSources().mobAttack(this), damage);
+        
+        // 恢复龙右生命值
+        this.heal(this.getMaxHealth() * 0.3F);
+        
+        // 播放效果
+        serverLevel.broadcastEntityEvent(this, (byte) 35);
+        this.playSound(net.minecraft.sounds.SoundEvents.GENERIC_EAT, 2.0F, 0.8F);
+        
+        // 发送消息给玩家
+        player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§4§l尸王吞噬了你的生命力！"));
     }
 
     /**
@@ -314,13 +482,33 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
     /**
      * 判断龙右是否应该攻击
      * 只有在饥饿度低于阈值，且心情和兴趣值不高于阈值时才会攻击
+     * 如果龙右吃饱了且没有被攻击，不会主动出击
      */
     private boolean shouldAttack() {
         boolean isHungry = hunger < HUNGER_THRESHOLD;
         boolean isHappy = mood > MOOD_THRESHOLD;
         boolean isInterested = interest > INTEREST_THRESHOLD;
+        boolean wasRecentlyHurt = (this.tickCount - lastHurtTick) < HURT_MEMORY_DURATION;
         
-        return isHungry && !isHappy && !isInterested;
+        // 如果被攻击了，可以反击
+        if (wasRecentlyHurt) {
+            return true;
+        }
+        
+        // 如果没被攻击且吃饱了（饥饿度>=阈值），不会主动出击
+        if (!isHungry) {
+            return false;
+        }
+        
+        // 饥饿且心情和兴趣不高时才会主动攻击
+        return !isHappy && !isInterested;
+    }
+    
+    /**
+     * 判断龙右是否应该主动出击（用于AI目标选择）
+     */
+    public boolean shouldInitiateAttack() {
+        return shouldAttack();
     }
 
     /**
@@ -355,8 +543,8 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
             }
         }
         
-        // 检查距离是否小于2格
-        if (nearestFood != null && minDistance < 4.0) { // 2格的平方是4.0
+        // 检查距离是否在吞噬范围内
+        if (nearestFood != null && minDistance < CONSUME_RANGE) {
             CorpseOrigin.LOGGER.info("龙右消耗粮仓 {} 恢复生命值", nearestFoodId);
 
             // 恢复生命值
@@ -407,6 +595,8 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
         compound.putInt("Hunger", this.hunger);
         compound.putInt("Mood", this.mood);
         compound.putInt("Interest", this.interest);
+        compound.putInt("LastHurtTick", this.lastHurtTick);
+        compound.putInt("VillagerConsumeCooldown", this.villagerConsumeCooldown);
 
         // 保存手下列表
         CompoundTag minionsTag = new CompoundTag();
@@ -447,6 +637,12 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
         if (compound.contains("Interest")) {
             this.interest = compound.getInt("Interest");
         }
+        if (compound.contains("LastHurtTick")) {
+            this.lastHurtTick = compound.getInt("LastHurtTick");
+        }
+        if (compound.contains("VillagerConsumeCooldown")) {
+            this.villagerConsumeCooldown = compound.getInt("VillagerConsumeCooldown");
+        }
 
         // 读取手下列表
         if (compound.contains("Minions")) {
@@ -484,6 +680,14 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
      */
     private enum VillagerValue {
         INFECT, // 有利用价值，感染为尸兄
+        FOOD    // 作为食物消耗
+    }
+
+    /**
+     * 玩家价值枚举
+     */
+    private enum PlayerValue {
+        INFECT, // 有潜力，感染为尸兄
         FOOD    // 作为食物消耗
     }
 }

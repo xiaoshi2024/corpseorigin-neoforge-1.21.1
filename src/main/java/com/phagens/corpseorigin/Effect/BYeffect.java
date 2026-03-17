@@ -110,6 +110,13 @@ public class BYeffect extends MobEffect {
     public static void applyInfection(LivingEntity target, ServerLevel serverLevel) {
         if (target == null || serverLevel == null) return;
 
+        // 检查目标是否已经被感染，避免重复感染
+        if (target.hasEffect(EffectRegister.QIANS)) {
+            CorpseOrigin.LOGGER.debug("目标 {} 已经被感染，跳过重复感染",
+                    target.getName().getString());
+            return;
+        }
+
         // 随机延迟3-15秒（60-300 ticks）
         int duration = 60 + serverLevel.getRandom().nextInt(241);
 
@@ -132,6 +139,13 @@ public class BYeffect extends MobEffect {
      */
     public static void applyInfection(LivingEntity target, ServerLevel serverLevel, int durationTicks) {
         if (target == null || serverLevel == null) return;
+
+        // 检查目标是否已经被感染，避免重复感染
+        if (target.hasEffect(EffectRegister.QIANS)) {
+            CorpseOrigin.LOGGER.debug("目标 {} 已经被感染，跳过重复感染",
+                    target.getName().getString());
+            return;
+        }
 
         // 添加效果 - 使用 EffectRegister.QIANS
         target.addEffect(new MobEffectInstance(

@@ -442,9 +442,9 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
             float pitch = 0.8F + this.random.nextFloat() * 0.4F;
             this.playSound(ModSounds.GROUND_CHI.get(), 1.0F, pitch);
             
-            // 随机感染村民
+            // 随机感染村民 - 大多数作为食物（85%），极少数感染（15%）
             if (entity instanceof net.minecraft.world.entity.npc.Villager villager) {
-                if (this.random.nextFloat() < 0.3) { // 30% 概率感染
+                if (this.random.nextFloat() < 0.15) { // 15% 概率感染，85%作为食物
                     infectVillager(villager);
                 }
             }
