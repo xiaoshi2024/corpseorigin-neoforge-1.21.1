@@ -1,59 +1,46 @@
 package com.phagens.corpseorigin.client.event;
 
 import com.phagens.corpseorigin.CorpseOrigin;
-import com.phagens.corpseorigin.client.Renderer.entity.CorpsePlayerGeoRenderer;
-import com.phagens.corpseorigin.player.PlayerCorpseData;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import com.phagens.corpseorigin.client.Renderer.layer.ExoskeletonRenderLayer;
+import com.phagens.corpseorigin.client.model.CorpsemoldelRegister;
+import com.phagens.corpseorigin.client.model.ExoskeletonModel;
+import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.client.resources.PlayerSkin;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.client.event.RenderPlayerEvent;
 
+/**
+ * 尸兄玩家渲染处理器
+ * 负责在玩家成为尸兄时添加外骨骼渲染层
+ */
 @EventBusSubscriber(modid = CorpseOrigin.MODID, value = Dist.CLIENT)
 public class CorpsePlayerRenderHandler {
 
-    private static CorpsePlayerGeoRenderer corpseRenderer;
-
     @SubscribeEvent
     public static void onAddLayers(EntityRenderersEvent.AddLayers event) {
-        // 创建自定义渲染器
-        corpseRenderer = new CorpsePlayerGeoRenderer(event.getContext());
+        CorpseOrigin.LOGGER.info("Adding exoskeleton layer to player renderer");
+
+        EntityModelSet modelSet = event.getContext().getModelSet();
+
+        // 为默认玩家渲染器添加外骨骼层
+        PlayerRenderer defaultRenderer = event.getSkin(PlayerSkin.Model.WIDE);
+        addExoskeletonLayer(defaultRenderer, modelSet);
+
+        // 为纤细模型玩家渲染器添加外骨骼层
+        PlayerRenderer slimRenderer = event.getSkin(PlayerSkin.Model.SLIM);
+        addExoskeletonLayer(slimRenderer, modelSet);
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void onRenderPlayerPre(RenderPlayerEvent.Pre event) {
-        Player player = event.getEntity();
+    private static void addExoskeletonLayer(PlayerRenderer renderer, EntityModelSet modelSet) {
+        if (renderer == null) return;
 
-        // 不是尸兄，使用原版渲染器
-        if (!PlayerCorpseData.isCorpse(player)) {
-            return;
-        }
-
-        // 取消原版渲染
-        event.setCanceled(true);
-
-        if (corpseRenderer == null) {
-            CorpseOrigin.LOGGER.error("CorpsePlayerRenderer not initialized!");
-            return;
-        }
-
-        // 使用自定义渲染器渲染
-        AbstractClientPlayer clientPlayer = (AbstractClientPlayer) player;
-
-        // 直接调用渲染方法
-        corpseRenderer.render(
-                clientPlayer,
-                clientPlayer.getYRot(),
-                event.getPartialTick(),
-                event.getPoseStack(),
-                event.getMultiBufferSource(),
-                event.getPackedLight()
+        ExoskeletonModel model = new ExoskeletonModel(
+                modelSet.bakeLayer(CorpsemoldelRegister.EXOSKELETON_LAYER)
         );
+
+        renderer.addLayer(new ExoskeletonRenderLayer(renderer, model));
     }
 }
