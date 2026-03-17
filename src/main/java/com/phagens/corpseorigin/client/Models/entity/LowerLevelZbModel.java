@@ -36,16 +36,31 @@ public class LowerLevelZbModel extends GeoModel<LowerLevelZbEntity> {
     // 其余方法保持不变...
     @Override
     public ResourceLocation getModelResource(LowerLevelZbEntity object) {
-        return ResourceLocation.fromNamespaceAndPath(MODID, "geo/entity/lower_level_zb.geo.json");
+        switch (object.getVariant()) {
+            case CRACKED:
+                return ResourceLocation.fromNamespaceAndPath(MODID, "geo/entity/lower_level_zb_rendering.geo.json");
+            default:
+                return ResourceLocation.fromNamespaceAndPath(MODID, "geo/entity/lower_level_zb.geo.json");
+        }
     }
 
     @Override
     public ResourceLocation getTextureResource(LowerLevelZbEntity object) {
-        return ResourceLocation.fromNamespaceAndPath(MODID, "textures/entity/lower_level_zb_render.png");
+        switch (object.getVariant()) {
+            case CRACKED:
+                return ResourceLocation.fromNamespaceAndPath(MODID, "textures/entity/lower_level_zb_rendering.png");
+            default:
+                return ResourceLocation.fromNamespaceAndPath(MODID, "textures/entity/lower_level_zb_render.png");
+        }
     }
 
     @Override
     public ResourceLocation getAnimationResource(LowerLevelZbEntity animatable) {
-        return ResourceLocation.fromNamespaceAndPath(MODID, "animations/entity/lower_level_zb.animation.json");
+        switch (animatable.getVariant()) {
+            case CRACKED:
+                return ResourceLocation.fromNamespaceAndPath(MODID, "animations/entity/lower_level_zb_rendering.animation.json");
+            default:
+                return ResourceLocation.fromNamespaceAndPath(MODID, "animations/entity/lower_level_zb.animation.json");
+        }
     }
 }

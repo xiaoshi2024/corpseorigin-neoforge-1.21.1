@@ -24,6 +24,8 @@ public class LowerLevelZbRenderer extends GeoEntityRenderer<LowerLevelZbEntity> 
     // 尸化骨骼覆盖纹理
     private static final ResourceLocation SKELETON_OVERLAY =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/entity/lower_level_zb_render.png");
+    private static final ResourceLocation CRACKED_SKELETON_OVERLAY =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/entity/lower_level_zb_rendering.png");
 
     public LowerLevelZbRenderer(EntityRendererProvider.Context context) {
         super(context, new LowerLevelZbModel());
@@ -60,7 +62,9 @@ public class LowerLevelZbRenderer extends GeoEntityRenderer<LowerLevelZbEntity> 
                     0xFFFFFFFF); // 白色，完全不透明
 
             // 叠加尸化骨骼纹理 - 80% 透明度
-            RenderType skeletonRenderType = RenderType.entityTranslucent(SKELETON_OVERLAY);
+            ResourceLocation overlayTexture = animatable.getVariant() == com.phagens.corpseorigin.Entity.LowerLevelZbEntity.Variant.CRACKED ? 
+                    CRACKED_SKELETON_OVERLAY : SKELETON_OVERLAY;
+            RenderType skeletonRenderType = RenderType.entityTranslucent(overlayTexture);
             VertexConsumer skeletonConsumer = bufferSource.getBuffer(skeletonRenderType);
 
             // 0xCCFFFFFF = 白色，80%透明度

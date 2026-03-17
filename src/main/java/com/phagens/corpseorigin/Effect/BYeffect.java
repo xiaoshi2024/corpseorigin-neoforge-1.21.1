@@ -76,6 +76,11 @@ public class BYeffect extends MobEffect {
             zb.setYRot(villager.getYRot());
             zb.setXRot(villager.getXRot());
 
+            // 随机设置变种类型，30%概率为裂口尸兄
+            if (serverLevel.getRandom().nextFloat() < 0.3) {
+                zb.setVariant(LowerLevelZbEntity.Variant.CRACKED);
+            }
+
             // 设置皮肤为村民的名字（如果有）
             String villagerName = villager.getName().getString();
             zb.setPlayerSkinName(villagerName);

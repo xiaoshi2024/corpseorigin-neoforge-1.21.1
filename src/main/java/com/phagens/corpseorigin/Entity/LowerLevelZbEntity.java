@@ -36,6 +36,31 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import java.util.UUID;
 
 public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, VibrationSystem {
+    // 变种类型枚举
+    public enum Variant {
+        NORMAL(0),
+        CRACKED(1); // 裂口尸兄
+
+        private final int code;
+
+        Variant(int code) {
+            this.code = code;
+        }
+
+        public int getCode() {
+            return code;
+        }
+
+        public static Variant fromCode(int code) {
+            for (Variant variant : values()) {
+                if (variant.code == code) {
+                    return variant;
+                }
+            }
+            return NORMAL;
+        }
+    }
+
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     protected static final RawAnimation WALK_ANIM = RawAnimation.begin().thenLoop("walk");
     protected static final RawAnimation IDLE_ANIM = RawAnimation.begin().thenLoop("idle");
@@ -51,6 +76,8 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
             SynchedEntityData.defineId(LowerLevelZbEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_PLAYING_SHIEYE =
             SynchedEntityData.defineId(LowerLevelZbEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_VARIANT =
+            SynchedEntityData.defineId(LowerLevelZbEntity.class, EntityDataSerializers.INT);
 
     private UUID playerSkinId;
     private String playerSkinName;
@@ -143,6 +170,20 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
         return this.entityData.get(DATA_CUSTOM_ID);
     }
 
+    /**
+     * 获取变种类型
+     */
+    public Variant getVariant() {
+        return Variant.fromCode(this.entityData.get(DATA_VARIANT));
+    }
+
+    /**
+     * 设置变种类型
+     */
+    public void setVariant(Variant variant) {
+        this.entityData.set(DATA_VARIANT, variant.getCode());
+    }
+
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
@@ -150,6 +191,7 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
         builder.define(DATA_CUSTOM_ID, "");
         builder.define(DATA_SKIN_STATE, ZbSkinState.NOT_LOADED.getCode());
         builder.define(DATA_PLAYING_SHIEYE, false);
+        builder.define(DATA_VARIANT, Variant.NORMAL.getCode());
     }
 
     @Override
@@ -258,6 +300,7 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
         compound.putInt("EvolutionLevel", this.evolutionLevel);
         compound.putInt("Kills", this.kills);
         compound.putInt("Hunger", this.hunger);
+        compound.putInt("Variant", this.entityData.get(DATA_VARIANT));
         
         // 保存神志和贪婪系统数据
         compound.putBoolean("HasSentient", this.hasSentient);
@@ -300,6 +343,9 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
         }
         if (compound.contains("Hunger")) {
             this.hunger = compound.getInt("Hunger");
+        }
+        if (compound.contains("Variant")) {
+            this.entityData.set(DATA_VARIANT, compound.getInt("Variant"));
         }
         
         // 读取神志和贪婪系统数据
