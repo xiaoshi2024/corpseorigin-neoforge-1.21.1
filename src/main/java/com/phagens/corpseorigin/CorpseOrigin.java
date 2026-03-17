@@ -9,7 +9,15 @@ import com.phagens.corpseorigin.GongFU.PackGongFu.NetworkPaketGL;
 import com.phagens.corpseorigin.event.player.playerDie;
 import com.phagens.corpseorigin.player.CorpsePlayerAttachment;
 import com.phagens.corpseorigin.register.*;
+import com.phagens.corpseorigin.skill.CorpseEvolutionTree;
+import com.phagens.corpseorigin.skill.CorpseSkillTree;
+import com.phagens.corpseorigin.skill.CorpseSkills;
+import com.phagens.corpseorigin.skill.SkillAttachment;
+import com.phagens.corpseorigin.skill.SkillEventHandler;
+import com.phagens.corpseorigin.voice.VoiceCommandRegistration;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -87,9 +95,15 @@ public class CorpseOrigin {
         EffectRegister.MOB_EFFECTS.register(modEventBus);
         MenuTypeRegister.MENUS.register(modEventBus);
         CorpsePlayerAttachment.ATTACHMENT_TYPES.register(modEventBus);
+        SkillAttachment.ATTACHMENT_TYPES.register(modEventBus);
 
         // 注册音效
         ModSounds.register(modEventBus);
+
+        // 初始化技能系统
+        CorpseSkills.init();
+        CorpseEvolutionTree.init();
+        CorpseSkillTree.init();
 
         NetworkPaketGL.registerPackets(modEventBus);
 
@@ -97,6 +111,17 @@ public class CorpseOrigin {
         CREATIVE_MODE_TABS.register(modEventBus);
         //死亡移除
         NeoForge.EVENT_BUS.register(playerDie.class);
+
+        // 注册技能事件处理器
+        NeoForge.EVENT_BUS.register(SkillEventHandler.class);
+
+        // 注册语音命令
+        NeoForge.EVENT_BUS.register(VoiceCommandRegistration.class);
+
+        // 初始化内置语音触发系统（仅在客户端）
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            com.phagens.corpseorigin.voice.VoiceTriggerIntegration.init(modEventBus, modContainer);
+        }
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (CorpseOrigin) to respond directly to events.

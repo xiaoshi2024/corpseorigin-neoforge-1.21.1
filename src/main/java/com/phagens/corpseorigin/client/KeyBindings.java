@@ -1,0 +1,93 @@
+package com.phagens.corpseorigin.client;
+
+import com.phagens.corpseorigin.CorpseOrigin;
+import com.phagens.corpseorigin.client.gui.SkillRadialScreen;
+import com.phagens.corpseorigin.client.gui.SkillTreeScreen;
+import com.phagens.corpseorigin.player.PlayerCorpseData;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import org.lwjgl.glfw.GLFW;
+
+/**
+ * 客户端按键绑定
+ */
+@EventBusSubscriber(modid = CorpseOrigin.MODID, value = Dist.CLIENT)
+public class KeyBindings {
+    
+    // 技能轮盘按键
+    public static final KeyMapping SKILL_WHEEL = new KeyMapping(
+            "key.corpseorigin.skill_wheel",
+            GLFW.GLFW_KEY_R,
+            "key.categories.corpseorigin"
+    );
+    
+    // 技能树界面按键
+    public static final KeyMapping SKILL_TREE = new KeyMapping(
+            "key.corpseorigin.skill_tree",
+            GLFW.GLFW_KEY_K,
+            "key.categories.corpseorigin"
+    );
+    
+    /**
+     * 注册按键绑定
+     */
+    @SubscribeEvent
+    public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
+        event.register(SKILL_WHEEL);
+        event.register(SKILL_TREE);
+    }
+    
+    /**
+     * 客户端 tick 事件 - 处理按键
+     */
+    @SubscribeEvent
+    public static void onClientTick(ClientTickEvent.Post event) {
+        Minecraft minecraft = Minecraft.getInstance();
+        
+        if (minecraft.player == null) {
+            return;
+        }
+        
+        // 检查是否是尸兄
+        if (!PlayerCorpseData.isCorpse(minecraft.player)) {
+            return;
+        }
+        
+        // 技能轮盘按键
+        if (SKILL_WHEEL.consumeClick()) {
+            openSkillWheel();
+        }
+        
+        // 技能树按键
+        if (SKILL_TREE.consumeClick()) {
+            openSkillTree();
+        }
+    }
+    
+    /**
+     * 打开技能轮盘
+     */
+    private static void openSkillWheel() {
+        Minecraft minecraft = Minecraft.getInstance();
+        
+        if (minecraft.screen == null && minecraft.player != null) {
+            SkillRadialScreen.show();
+        }
+    }
+    
+    /**
+     * 打开技能树界面
+     */
+    private static void openSkillTree() {
+        Minecraft minecraft = Minecraft.getInstance();
+
+        if (minecraft.screen == null && minecraft.player != null) {
+            SkillTreeScreen.show();
+        }
+    }
+}

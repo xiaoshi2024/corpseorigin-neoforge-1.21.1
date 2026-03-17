@@ -6,6 +6,9 @@ import com.phagens.corpseorigin.network.PlayerCorpseSyncPacket;
 import com.phagens.corpseorigin.player.PlayerCorpseData;
 import com.phagens.corpseorigin.register.EffectRegister;
 import com.phagens.corpseorigin.register.EntityRegistry;
+import com.phagens.corpseorigin.skill.CorpseSkills;
+import com.phagens.corpseorigin.skill.ISkillHandler;
+import com.phagens.corpseorigin.skill.SkillAttachment;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
@@ -185,6 +188,21 @@ public class BYeffect extends MobEffect {
         // 设置玩家为尸族状态
         PlayerCorpseData.setPlayerAsCorpse(player, 1);
 
+        // 初始化技能系统
+        ISkillHandler skillHandler = SkillAttachment.getSkillHandler(player);
+        
+        // 自动解锁初始技能（硬化皮肤）
+        if (!skillHandler.hasLearned(CorpseSkills.HARDENED_SKIN.getId())) {
+            skillHandler.learnSkill(CorpseSkills.HARDENED_SKIN);
+            CorpseOrigin.LOGGER.info("玩家 {} 解锁初始技能：硬化皮肤", player.getName().getString());
+        }
+        
+        // 给予一些初始进化点
+        skillHandler.addEvolutionPoints(5);
+        
+        // 同步技能数据到客户端
+        skillHandler.syncToClient();
+
         // 同步到客户端
         PlayerCorpseSyncPacket packet = new PlayerCorpseSyncPacket(
                 player.getId(), true, 1, PlayerCorpseData.getCorpseData(player)
@@ -194,8 +212,15 @@ public class BYeffect extends MobEffect {
 
         // 播放转化特效
         player.level().broadcastEntityEvent(player, (byte) 35);
+        
+        // 发送提示消息
+        player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                "§c§l你已被感染成为尸兄！§r\n" +
+                "§7按 §eK§7 打开技能树，按 §eR§7 打开技能轮盘\n" +
+                "§7击杀生物可获得进化点来解锁更多技能！"
+        ));
 
-        CorpseOrigin.LOGGER.info("玩家 {} 已转化为尸族！", player.getName().getString());
+        CorpseOrigin.LOGGER.info("玩家 {} 已转化为尸族！获得5点初始进化点和硬化皮肤技能", player.getName().getString());
     }
 
     /**
