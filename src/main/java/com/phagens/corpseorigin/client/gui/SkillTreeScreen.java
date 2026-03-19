@@ -173,15 +173,16 @@ public class SkillTreeScreen extends Screen {
     }
 
     private void renderTiledBackground(GuiGraphics graphics) {
-        int tileSize = 256;
-        for (int x = 0; x < this.width; x += tileSize) {
-            for (int y = 0; y < this.height; y += tileSize) {
-                graphics.blit(BACKGROUND_TEXTURE, x, y, 0, 0,
-                        Math.min(tileSize, this.width - x),
-                        Math.min(tileSize, this.height - y),
-                        tileSize, tileSize);
-            }
-        }
+//        int tileSize = 256;
+//        for (int x = 0; x < this.width; x += tileSize) {
+//            for (int y = 0; y < this.height; y += tileSize) {
+//                graphics.blit(BACKGROUND_TEXTURE, x, y, 0, 0,
+//                        Math.min(tileSize, this.width - x),
+//                        Math.min(tileSize, this.height - y),
+//                        tileSize, tileSize);
+//            }
+//        }
+        graphics.fill(0, 0, this.width, this.height, 0xFF1A1A2E);
     }
 
     private void renderConnections(GuiGraphics graphics) {
@@ -255,6 +256,7 @@ public class SkillTreeScreen extends Screen {
         return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
     }
 
+    // 修改 onUnlockButtonClicked 方法
     private void onUnlockButtonClicked(Button button) {
         if (selectedSkill == null || minecraft == null || minecraft.player == null) return;
 
@@ -266,8 +268,26 @@ public class SkillTreeScreen extends Screen {
             skillHandler.learnSkill(selectedSkill);
             unlockButton.active = false;
 
-            // 刷新节点状态
-            createNodeWidgets();
+            // 只更新节点状态，不重新创建
+            updateNodeStates();  // <-- 新增方法
+
+            // 更新选中技能状态
+            if (detailsPanel != null) {
+                detailsPanel.setSkill(selectedSkill, true, false);
+            }
+        }
+    }
+
+    // 新增方法：更新所有节点的状态
+    private void updateNodeStates() {
+        if (skillTree == null) return;
+
+        for (ISkillNode node : skillTree.getAllNodes()) {
+            SkillNodeWidget widget = nodeWidgets.get(node);
+            if (widget != null) {
+                SkillNodeWidget.NodeState newState = getNodeState(node);
+                widget.setState(newState);
+            }
         }
     }
 
