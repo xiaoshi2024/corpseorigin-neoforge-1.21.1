@@ -75,6 +75,8 @@ public class SkillRadialScreen extends GuiRadialMenu<ISkill> {
 
             CorpseOrigin.LOGGER.debug("请求激活技能: {}", selectedSkill.getId());
             // 发送网络包
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(
+                    new com.phagens.corpseorigin.network.ActivateSkillPacket(selectedSkill.getId()));
         }
     }
 

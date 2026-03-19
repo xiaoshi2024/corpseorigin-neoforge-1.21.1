@@ -44,9 +44,27 @@ public class SkillDetailsPanel extends AbstractWidget {
 
         int y = getY() + 5;
 
+        // 绘制技能图标
+        ResourceLocation iconPath = skill.getIcon();
+        if (iconPath != null) {
+            try {
+                graphics.blit(iconPath, getX() + 5, y, 0, 0, 16, 16, 16, 16);
+            } catch (Exception e) {
+                int color = getFallbackColor(skill.getSkillType());
+                graphics.fill(getX() + 5, y, getX() + 21, y + 16, color);
+                String firstLetter = skill.getName().getString().substring(0, 1);
+                graphics.drawString(font, firstLetter, getX() + 13 - font.width(firstLetter) / 2, y + 4, 0xFFFFFF, true);
+            }
+        } else {
+            int color = getFallbackColor(skill.getSkillType());
+            graphics.fill(getX() + 5, y, getX() + 21, y + 16, color);
+            String firstLetter = skill.getName().getString().substring(0, 1);
+            graphics.drawString(font, firstLetter, getX() + 13 - font.width(firstLetter) / 2, y + 4, 0xFFFFFF, true);
+        }
+
         // 绘制技能名称
-        graphics.drawString(font, skill.getName(), getX() + 5, y, 0xFFFFFF, true);
-        y += 15;
+        graphics.drawString(font, skill.getName(), getX() + 25, y + 4, 0xFFFFFF, true);
+        y += 20;
 
         // 绘制技能描述
         if (skill.getDescription() != null) {
@@ -87,6 +105,17 @@ public class SkillDetailsPanel extends AbstractWidget {
             statusColor = 0xFF0000;
         }
         graphics.drawString(font, status, getX() + 5, y, statusColor, true);
+    }
+
+    private int getFallbackColor(ISkill.SkillType type) {
+        return switch (type) {
+            case BASIC_EVOLUTION -> 0xFF666666;  // 灰色
+            case POWER_MUTATION -> 0xFFAA4444;   // 红色
+            case AGILITY_MUTATION -> 0xFF44AA44; // 绿色
+            case SPECIAL_MUTATION -> 0xFF4444AA; // 蓝色
+            case DIVINE_ABILITY -> 0xFFAA44AA;   // 紫色
+            case SUPREME_ABILITY -> 0xFFFFAA00;  // 金色
+        };
     }
 
     @Override

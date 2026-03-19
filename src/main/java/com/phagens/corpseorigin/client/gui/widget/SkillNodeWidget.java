@@ -14,8 +14,8 @@ import net.minecraft.resources.ResourceLocation;
  */
 public class SkillNodeWidget extends AbstractWidget {
 
-    private static final int NODE_SIZE = 32;
-    private static final int ICON_SIZE = 16;
+    private static final int NODE_SIZE = 64;
+    private static final int ICON_SIZE = 64;
     private final ISkill skill;
     private NodeState state;
     private final int tier;
@@ -85,13 +85,27 @@ public class SkillNodeWidget extends AbstractWidget {
     private void renderSkillIcon(GuiGraphics graphics) {
         ResourceLocation iconPath = skill.getIcon();
 
-        // 计算居中位置：节点大小32，图标大小16，所以偏移量为 (32-16)/2 = 8
-        int iconX = getX() + 8;
-        int iconY = getY() + 8;
+        // 计算居中位置：节点大小64，图标大小64，所以偏移量为 (64-64)/2 = 0
+        int iconX = getX() + 0;
+        int iconY = getY() + 0;
 
         if (iconPath != null) {
-            // 绘制16x16的技能图标
-            graphics.blit(iconPath, iconX, iconY, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+            // 绘制64x64的技能图标
+            try {
+                // 使用正确的blit参数顺序：resource, x, y, u, v, width, height, textureWidth, textureHeight
+                graphics.blit(iconPath, iconX, iconY, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+            } catch (Exception e) {
+                // 回退方案：使用技能类型颜色填充
+                int color = getFallbackColor(skill.getSkillType());
+                graphics.fill(iconX, iconY, iconX + ICON_SIZE, iconY + ICON_SIZE, color);
+
+                // 绘制技能名称首字母
+                String firstLetter = skill.getName().getString().substring(0, 1);
+                graphics.drawString(font, firstLetter,
+                        iconX + (ICON_SIZE - font.width(firstLetter)) / 2,
+                        iconY + (ICON_SIZE - font.lineHeight) / 2,
+                        0xFFFFFF, true);
+            }
         } else {
             // 回退方案：使用技能类型颜色填充
             int color = getFallbackColor(skill.getSkillType());
