@@ -44,6 +44,10 @@ public abstract class BaseSkill implements ISkill {
         this.cooldown = builder.cooldown;
         this.duration = builder.duration;
         this.attributeModifiers.putAll(builder.attributeModifiers);
+
+        // ✅ 添加调试输出
+        CorpseOrigin.LOGGER.info("技能 [{}] 的图标路径: {}",
+                builder.id.getPath(), this.icon);
     }
     
     @Override
@@ -180,8 +184,9 @@ public abstract class BaseSkill implements ISkill {
         
         public Builder(ResourceLocation id) {
             this.id = id;
-            this.icon = ResourceLocation.fromNamespaceAndPath(id.getNamespace(), 
-                    "textures/skill/" + id.getPath() + ".png");
+            // Vampirism 风格的资源路径：namespace:textures/skills/skill_name.png
+            this.icon = ResourceLocation.fromNamespaceAndPath(id.getNamespace(),
+                    "textures/skills/" + id.getPath() + ".png");
         }
         
         public Builder name(Component name) {
