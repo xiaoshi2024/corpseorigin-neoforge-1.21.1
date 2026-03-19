@@ -17,7 +17,6 @@ import java.util.List;
 
 /**
  * 技能轮盘界面 - 专业版
- * 使用分层渲染和专业渲染技术，同时保持独立图标
  */
 public class SkillRadialScreen extends GuiRadialMenu<ISkill> {
 
@@ -34,13 +33,26 @@ public class SkillRadialScreen extends GuiRadialMenu<ISkill> {
         ISkillHandler handler = SkillAttachment.getSkillHandler(player);
         List<IRadialMenuSlot<ISkill>> slots = new ArrayList<>();
 
-        for (ISkill skill : handler.getLearnedSkills()) {
-            if (skill.isActivatable()) {
-                slots.add(new RadialMenuSlot<>(skill.getName(), skill));
+        if (handler != null) {
+            CorpseOrigin.LOGGER.info("【轮盘菜单】玩家 {} 共有 {} 个已学习技能",
+                    player.getName().getString(), handler.getLearnedSkills().size());
+
+            int activatableCount = 0;
+            for (ISkill skill : handler.getLearnedSkills()) {
+                CorpseOrigin.LOGGER.info("  - 技能: {}, 可激活: {}",
+                        skill.getId(), skill.isActivatable());
+
+                if (skill.isActivatable()) {
+                    slots.add(new RadialMenuSlot<>(skill.getName(), skill));
+                    activatableCount++;
+                }
             }
+
+            CorpseOrigin.LOGGER.info("【轮盘菜单】找到 {} 个可激活技能", activatableCount);
         }
 
         if (slots.isEmpty()) {
+            CorpseOrigin.LOGGER.info("【轮盘菜单】没有可激活技能，显示默认提示");
             slots.add(new RadialMenuSlot<>(
                     Component.translatable("skill.corpseorigin.no_activatable"), null));
         }

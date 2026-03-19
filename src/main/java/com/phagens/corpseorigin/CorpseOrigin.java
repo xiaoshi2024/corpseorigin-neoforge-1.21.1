@@ -88,6 +88,9 @@ public class CorpseOrigin {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
 
+        // 先注册附件系统 - 重要！
+        SkillAttachment.ATTACHMENT_TYPES.register(modEventBus);
+
         Moditems.ITEMS.register(modEventBus);
         BlockRegistry.Blocks.register(modEventBus);
         BlockEntityRegistry.BLOCK_ENTITIES.register(modEventBus);
@@ -95,7 +98,6 @@ public class CorpseOrigin {
         EffectRegister.MOB_EFFECTS.register(modEventBus);
         MenuTypeRegister.MENUS.register(modEventBus);
         CorpsePlayerAttachment.ATTACHMENT_TYPES.register(modEventBus);
-        SkillAttachment.ATTACHMENT_TYPES.register(modEventBus);
 
         // 注册音效
         ModSounds.register(modEventBus);
@@ -109,6 +111,7 @@ public class CorpseOrigin {
 
         // Register the Deferred Register to the mod event bus so tabs get registered
         CREATIVE_MODE_TABS.register(modEventBus);
+
         //死亡移除
         NeoForge.EVENT_BUS.register(playerDie.class);
 
@@ -124,15 +127,11 @@ public class CorpseOrigin {
         }
 
         // Register ourselves for server and other game events we are interested in.
-        // Note that this is necessary if and only if we want *this* class (CorpseOrigin) to respond directly to events.
-        // Do not add this line if there are no @SubscribeEvent-annotated functions in this class, like onServerStarting() below.
         NeoForge.EVENT_BUS.register(this);
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }
-
-
 
     private void commonSetup(FMLCommonSetupEvent event) {
         // Some common setup code

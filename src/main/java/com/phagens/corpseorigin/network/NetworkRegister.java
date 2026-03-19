@@ -32,9 +32,6 @@ public class NetworkRegister {
                 PlayerCorpseSyncPacket::handle
         );
 
-        // 注意：所有技能相关的包（SyncSkillDataPacket, ActivateSkillPacket, SkillUnlockPacket等）
-        // 都在 NetworkPaketGL 中统一注册，避免重复注册错误
-
-        CorpseOrigin.LOGGER.info("NetworkRegister 网络包注册完成");
+        CorpseOrigin.LOGGER.info("NetworkRegister 网络包注册完成 - 技能包由 NetworkPaketGL 处理");
     }
 }

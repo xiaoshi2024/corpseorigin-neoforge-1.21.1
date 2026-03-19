@@ -63,18 +63,29 @@ public record SyncSkillDataPacket(
     /**
      * 客户端处理
      */
+    /**
+     * 客户端处理
+     */
     public static void handleClient(SyncSkillDataPacket packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             Level level = context.player().level();
             Entity entity = level.getEntity(packet.playerId());
-            
+
             if (entity instanceof Player player) {
                 SkillHandler handler = (SkillHandler) SkillAttachment.getSkillHandler(player);
-                
-                // 使用内部方法更新技能数据（避免操作不可修改的集合）
+
+                // 使用内部方法更新技能数据
                 handler.loadFromSyncData(packet.learnedSkills(), packet.evolutionPoints(), packet.cooldowns());
-                
-                CorpseOrigin.LOGGER.debug("接收到玩家 {} 的技能数据同步", player.getName().getString());
+
+                CorpseOrigin.LOGGER.info("【客户端】接收到技能数据同步: 玩家 {}, 技能数量 {}, 进化点 {}",
+                        player.getName().getString(),
+                        packet.learnedSkills().size(),
+                        packet.evolutionPoints());
+
+                // 打印具体技能
+                for (ResourceLocation skillId : packet.learnedSkills()) {
+                    CorpseOrigin.LOGGER.info("  - 同步技能: {}", skillId);
+                }
             }
         });
     }
