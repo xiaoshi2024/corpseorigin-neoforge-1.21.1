@@ -1,5 +1,6 @@
 package com.phagens.corpseorigin.GongFU.PackGongFu;
 
+import com.phagens.corpseorigin.CorpseOrigin;
 import com.phagens.corpseorigin.GongFU.PackGongFu.Paket.OpenGongFuMenuPacket;
 import com.phagens.corpseorigin.GongFU.Sceen.GongFuMenu;
 import com.phagens.corpseorigin.network.ActivateSkillPacket;
@@ -13,6 +14,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+
 //网络管理
 public class NetworkPaketGL {
 
@@ -20,10 +22,14 @@ public class NetworkPaketGL {
     public static void registerPackets(IEventBus modEventBus) {
         modEventBus.addListener(NetworkPaketGL::registerNetworkPackets);
     }
+
     public static void registerNetworkPackets(RegisterPayloadHandlersEvent event) {
-        // 获取协议注册器 - 使用与 NetworkRegister 不同的版本号
-        PayloadRegistrar registrar = event.registrar("corpseorigin_gongfu")
+        // 修复：使用与 NetworkRegister 相同的 channel 名称
+        // 确保所有包都在同一个通道下注册
+        PayloadRegistrar registrar = event.registrar(CorpseOrigin.MODID)  // 改为使用 MODID
                 .versioned("1.0.0");
+
+        CorpseOrigin.LOGGER.info("NetworkPaketGL 正在注册网络包到通道: {}", CorpseOrigin.MODID);
 
         // 注册双向包（客户端发送，服务端接收）
         registrar.playBidirectional(
@@ -65,6 +71,8 @@ public class NetworkPaketGL {
                 SkillUnlockPacket.STREAM_CODEC,
                 SkillUnlockPacket::handleOnServer
         );
+
+        CorpseOrigin.LOGGER.info("NetworkPaketGL 网络包注册完成，共注册了 5 个包");
     }
 
     private static void handleOpenGongFuMenu(OpenGongFuMenuPacket packet, IPayloadContext context) {
@@ -76,9 +84,5 @@ public class NetworkPaketGL {
                 ));
             }
         });
-
     }
 }
-
-
-

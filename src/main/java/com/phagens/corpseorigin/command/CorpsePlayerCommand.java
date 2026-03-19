@@ -1,7 +1,6 @@
 package com.phagens.corpseorigin.command;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.phagens.corpseorigin.CorpseOrigin;
 import com.phagens.corpseorigin.network.PlayerCorpseSyncPacket;
@@ -22,7 +21,7 @@ public class CorpsePlayerCommand {
                 Commands.literal("corpseplayer")
                         .requires(source -> source.hasPermission(2))
 
-                        // ========== 设置尸兄状态 ==========
+                        // 设置尸兄状态
                         .then(Commands.literal("set")
                                 .then(Commands.argument("player", EntityArgument.player())
                                         .then(Commands.argument("type", IntegerArgumentType.integer(0, 5))
@@ -32,10 +31,8 @@ public class CorpsePlayerCommand {
 
                                                     PlayerCorpseData.setPlayerAsCorpse(player, type);
 
-                                                    // 初始化技能系统
                                                     ISkillHandler skillHandler = SkillAttachment.getSkillHandler(player);
 
-                                                    // 自动解锁初始技能（硬化皮肤和利爪）
                                                     if (!skillHandler.hasLearned(CorpseSkills.HARDENED_SKIN.getId())) {
                                                         skillHandler.learnSkill(CorpseSkills.HARDENED_SKIN);
                                                     }
@@ -43,18 +40,15 @@ public class CorpsePlayerCommand {
                                                         skillHandler.learnSkill(CorpseSkills.SHARP_CLAWS);
                                                     }
 
-                                                    // 给予一些初始进化点
                                                     skillHandler.addEvolutionPoints(10);
                                                     skillHandler.syncToClient();
 
-                                                    // 同步到客户端
                                                     PlayerCorpseSyncPacket packet = new PlayerCorpseSyncPacket(
                                                             player.getId(), true, type, PlayerCorpseData.getCorpseData(player)
                                                     );
                                                     PacketDistributor.sendToPlayer(player, packet);
                                                     PacketDistributor.sendToPlayersTrackingEntity(player, packet);
 
-                                                    // 发送提示给玩家
                                                     player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                                                             "§c§l你已成为尸兄！§r\n" +
                                                                     "§7按 §eK§7 打开技能树，按 §eR§7 打开技能轮盘\n" +
@@ -64,7 +58,7 @@ public class CorpsePlayerCommand {
 
                                                     context.getSource().sendSuccess(
                                                             () -> net.minecraft.network.chat.Component.literal(
-                                                                    "已将玩家 " + player.getName().getString() + " 设置为尸兄状态，类型: " + type + "，获得10点初始进化点"
+                                                                    "已将玩家 " + player.getName().getString() + " 设置为尸兄状态，类型: " + type
                                                             ), true
                                                     );
                                                     return 1;
@@ -73,7 +67,7 @@ public class CorpsePlayerCommand {
                                 )
                         )
 
-                        // ========== 设置尸兄等级 ==========
+                        // 设置尸兄等级
                         .then(Commands.literal("setlevel")
                                 .then(Commands.argument("player", EntityArgument.player())
                                         .then(Commands.argument("level", IntegerArgumentType.integer(1, 10))
@@ -83,15 +77,13 @@ public class CorpsePlayerCommand {
 
                                                     if (!PlayerCorpseData.isCorpse(player)) {
                                                         context.getSource().sendFailure(
-                                                                net.minecraft.network.chat.Component.literal("该玩家不是尸兄，请先使用 /corpseplayer set 设置")
+                                                                net.minecraft.network.chat.Component.literal("该玩家不是尸兄")
                                                         );
                                                         return 0;
                                                     }
 
-                                                    // 设置进化等级
                                                     PlayerCorpseData.setEvolutionLevel(player, level);
 
-                                                    // 同步到客户端
                                                     PlayerCorpseSyncPacket packet = new PlayerCorpseSyncPacket(
                                                             player.getId(), true, PlayerCorpseData.getCorpseType(player),
                                                             PlayerCorpseData.getCorpseData(player)
@@ -115,77 +107,40 @@ public class CorpsePlayerCommand {
                                 )
                         )
 
-                        // ========== 测试技能（自动提升等级到5） ==========
+                        // 测试技能
                         .then(Commands.literal("testskills")
                                 .then(Commands.argument("player", EntityArgument.player())
                                         .executes(context -> {
                                             ServerPlayer player = EntityArgument.getPlayer(context, "player");
 
-                                            CorpseOrigin.LOGGER.info("========== 执行 testskills 命令 ==========");
-                                            CorpseOrigin.LOGGER.info("目标玩家: {}", player.getName().getString());
-
                                             if (!PlayerCorpseData.isCorpse(player)) {
                                                 context.getSource().sendFailure(
-                                                        net.minecraft.network.chat.Component.literal("该玩家不是尸兄，请先使用 /corpseplayer set 设置")
+                                                        net.minecraft.network.chat.Component.literal("该玩家不是尸兄")
                                                 );
                                                 return 0;
                                             }
 
-                                            // 先设置等级到5级（满足所有技能需求）
-                                            CorpseOrigin.LOGGER.info("提升玩家等级到5级");
                                             PlayerCorpseData.setEvolutionLevel(player, 5);
-
                                             ISkillHandler skillHandler = SkillAttachment.getSkillHandler(player);
 
-                                            // 打印当前状态
-                                            CorpseOrigin.LOGGER.info("当前技能: {}", skillHandler.getLearnedSkillIds());
-                                            CorpseOrigin.LOGGER.info("当前进化点: {}", skillHandler.getEvolutionPoints());
-                                            CorpseOrigin.LOGGER.info("当前等级: {}", PlayerCorpseData.getEvolutionLevel(player));
-
-                                            // 确保有足够的前置技能
                                             if (!skillHandler.hasLearned(CorpseSkills.SHARP_CLAWS.getId())) {
-                                                CorpseOrigin.LOGGER.info("学习前置技能: SHARP_CLAWS");
                                                 skillHandler.learnSkill(CorpseSkills.SHARP_CLAWS);
                                             }
-
-                                            // 学习力量分支技能
                                             if (!skillHandler.hasLearned(CorpseSkills.GIANT_STRENGTH.getId())) {
-                                                CorpseOrigin.LOGGER.info("学习技能: GIANT_STRENGTH");
                                                 skillHandler.learnSkill(CorpseSkills.GIANT_STRENGTH);
                                             }
-
-                                            // 学习可激活技能
                                             if (!skillHandler.hasLearned(CorpseSkills.BERSERK.getId())) {
-                                                CorpseOrigin.LOGGER.info("学习技能: BERSERK");
                                                 skillHandler.learnSkill(CorpseSkills.BERSERK);
                                             }
-
-                                            // 学习毒液
                                             if (!skillHandler.hasLearned(CorpseSkills.VENOM.getId())) {
-                                                CorpseOrigin.LOGGER.info("学习技能: VENOM");
                                                 skillHandler.learnSkill(CorpseSkills.VENOM);
                                             }
-
-                                            // 学习恐惧光环
                                             if (!skillHandler.hasLearned(CorpseSkills.FEAR_AURA.getId())) {
-                                                CorpseOrigin.LOGGER.info("学习技能: FEAR_AURA");
                                                 skillHandler.learnSkill(CorpseSkills.FEAR_AURA);
                                             }
 
-                                            // 给点进化点
-                                            CorpseOrigin.LOGGER.info("增加20进化点");
                                             skillHandler.addEvolutionPoints(20);
-
-                                            // 强制同步
-                                            CorpseOrigin.LOGGER.info("强制同步到客户端");
                                             skillHandler.syncToClient();
-
-                                            // 再次打印最终状态
-                                            CorpseOrigin.LOGGER.info("最终技能: {}", skillHandler.getLearnedSkillIds());
-                                            CorpseOrigin.LOGGER.info("最终进化点: {}", skillHandler.getEvolutionPoints());
-                                            CorpseOrigin.LOGGER.info("最终等级: {}", PlayerCorpseData.getEvolutionLevel(player));
-
-                                            CorpseOrigin.LOGGER.info("========== testskills 命令执行完毕 ==========");
 
                                             context.getSource().sendSuccess(
                                                     () -> net.minecraft.network.chat.Component.literal(
@@ -193,15 +148,12 @@ public class CorpsePlayerCommand {
                                                                     "  - 巨力（被动）\n" +
                                                                     "  - 狂暴（可激活）\n" +
                                                                     "  - 毒液（被动）\n" +
-                                                                    "  - 恐惧光环（可激活）\n" +
-                                                                    "并获得20进化点！\n" +
-                                                                    "§a同时将等级提升至5级！"
+                                                                    "  - 恐惧光环（可激活）"
                                                     ), true
                                             );
 
                                             player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                                                    "§a你获得了测试技能！按 R 键打开技能轮盘查看可激活技能！\n" +
-                                                            "§a你的尸兄等级已提升至5级！"
+                                                    "§a你获得了测试技能！按 R 键打开技能轮盘查看可激活技能！"
                                             ));
 
                                             return 1;
@@ -209,7 +161,7 @@ public class CorpsePlayerCommand {
                                 )
                         )
 
-                        // ========== 单独添加技能 ==========
+                        // 单独添加技能
                         .then(Commands.literal("addskill")
                                 .then(Commands.argument("player", EntityArgument.player())
                                         .then(Commands.argument("skill", net.minecraft.commands.arguments.ResourceLocationArgument.id())
@@ -227,15 +179,13 @@ public class CorpsePlayerCommand {
 
                                                     ISkillHandler skillHandler = SkillAttachment.getSkillHandler(player);
 
-                                                    CorpseOrigin.LOGGER.info("尝试添加技能: {}", skillId);
-
                                                     var result = skillHandler.learnSkill(skillId);
 
                                                     if (result.isSuccess()) {
                                                         skillHandler.syncToClient();
                                                         context.getSource().sendSuccess(
                                                                 () -> net.minecraft.network.chat.Component.literal(
-                                                                        "成功为玩家 " + player.getName().getString() + " 添加技能: " + skillId
+                                                                        "成功为玩家 " + player.getName().getString() + " 添加技能"
                                                                 ), true
                                                         );
                                                     } else {
@@ -251,7 +201,7 @@ public class CorpsePlayerCommand {
                                 )
                         )
 
-                        // ========== 移除尸兄状态 ==========
+                        // 移除尸兄状态
                         .then(Commands.literal("remove")
                                 .then(Commands.argument("player", EntityArgument.player())
                                         .executes(context -> {
@@ -259,7 +209,6 @@ public class CorpsePlayerCommand {
 
                                             PlayerCorpseData.removeCorpseState(player);
 
-                                            // 同步到客户端
                                             PlayerCorpseSyncPacket packet = new PlayerCorpseSyncPacket(
                                                     player.getId(), false, 0, PlayerCorpseData.getCorpseData(player)
                                             );
@@ -276,7 +225,7 @@ public class CorpsePlayerCommand {
                                 )
                         )
 
-                        // ========== 查看信息 ==========
+                        // 查看信息
                         .then(Commands.literal("info")
                                 .then(Commands.argument("player", EntityArgument.player())
                                         .executes(context -> {
@@ -291,7 +240,6 @@ public class CorpsePlayerCommand {
                                             boolean isGreedy = PlayerCorpseData.isGreedy(player);
                                             int variant = PlayerCorpseData.getVariant(player);
 
-                                            // 获取技能系统进化点
                                             var skillHandler = SkillAttachment.getSkillHandler(player);
                                             int skillPoints = skillHandler.getEvolutionPoints();
                                             int learnedSkills = skillHandler.getLearnedSkills().size();
@@ -312,7 +260,6 @@ public class CorpsePlayerCommand {
                                                     ), false
                                             );
 
-                                            // 如果已学习技能>0，列出技能
                                             if (learnedSkills > 0) {
                                                 StringBuilder skills = new StringBuilder("§7已学习技能: ");
                                                 for (var skill : skillHandler.getLearnedSkills()) {
@@ -326,7 +273,7 @@ public class CorpsePlayerCommand {
                                 )
                         )
 
-                        // ========== 进化点操作 ==========
+                        // 进化点操作
                         .then(Commands.literal("points")
                                 .then(Commands.argument("player", EntityArgument.player())
                                         .then(Commands.literal("add")

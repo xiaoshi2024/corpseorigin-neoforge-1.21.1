@@ -29,9 +29,18 @@ public class SkillHandler implements ISkillHandler {
     public static final Codec<SkillHandler> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.list(ResourceLocation.CODEC).fieldOf(NBT_LEARNED_SKILLS).forGetter(h -> new ArrayList<>(h.learnedSkills)),
             Codec.INT.fieldOf(NBT_EVOLUTION_POINTS).forGetter(h -> h.evolutionPoints),
-            Codec.unboundedMap(ResourceLocation.CODEC, Codec.INT).fieldOf(NBT_COOLDOWNS).forGetter(h -> h.cooldowns),
+            Codec.unboundedMap(ResourceLocation.CODEC, Codec.INT).fieldOf(NBT_COOLDOWNS).forGetter(h -> new HashMap<>(h.cooldowns)),
             Codec.list(ResourceLocation.CODEC).fieldOf(NBT_ACTIVE_SKILLS).forGetter(h -> new ArrayList<>(h.activeSkills))
-    ).apply(instance, SkillHandler::new));
+    ).apply(instance, (learned, points, cds, active) -> {
+        SkillHandler handler = new SkillHandler(null);
+        handler.learnedSkills.addAll(learned);
+        handler.evolutionPoints = points;
+        handler.cooldowns.putAll(cds);
+        handler.activeSkills.addAll(active);
+
+        CorpseOrigin.LOGGER.info("【反序列化】加载技能数据: {} 个技能, {} 进化点", learned.size(), points);
+        return handler;
+    }));
 
     private Player player;
     private final Set<ResourceLocation> learnedSkills = new HashSet<>();
@@ -62,19 +71,33 @@ public class SkillHandler implements ISkillHandler {
 
     public SkillHandler(Player player) {
         this.player = player;
-        // 【调试】新创建处理器
-        CorpseOrigin.LOGGER.info("【新创建】SkillHandler for player: {}",
-                player != null ? player.getName().getString() : "null");
+
+        if (player != null) {
+            CorpseOrigin.LOGGER.info("【新创建】SkillHandler for player: {}, 当前无技能数据",
+                    player.getName().getString());
+        } else {
+            CorpseOrigin.LOGGER.info("【新创建】SkillHandler for player: null (等待反序列化)");
+        }
     }
 
     /**
      * 设置玩家引用（用于反序列化后）
      */
     public void setPlayer(Player player) {
-        this.player = player;
-        // 【调试】设置玩家引用时检查数据
-        CorpseOrigin.LOGGER.info("【设置玩家】Player: {}, 当前技能数量: {}, 进化点: {}",
-                player.getName().getString(), learnedSkills.size(), evolutionPoints);
+        if (this.player == null && player != null) {
+            this.player = player;
+
+            CorpseOrigin.LOGGER.info("【设置玩家】Player: {}, 当前技能数量: {}, 进化点: {}",
+                    player.getName().getString(), learnedSkills.size(), evolutionPoints);
+
+            // 如果已有技能，重新应用被动效果
+            if (!learnedSkills.isEmpty() && !player.level().isClientSide) {
+                reapplyPassiveSkills();
+            }
+        } else if (this.player != player) {
+            // 这种情况不应该发生，但以防万一
+            CorpseOrigin.LOGGER.warn("尝试重新设置玩家引用，忽略");
+        }
     }
 
     /**
@@ -89,18 +112,44 @@ public class SkillHandler implements ISkillHandler {
         return player;
     }
 
+    /**
+     * 同步技能数据到客户端
+     */
     @Override
     public void syncToClient() {
-        if (player instanceof ServerPlayer serverPlayer && dirty) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            // 即使不脏也强制同步，确保客户端数据正确
             SyncSkillDataPacket packet = new SyncSkillDataPacket(
                     player.getId(),
                     new ArrayList<>(learnedSkills),
                     evolutionPoints,
                     new HashMap<>(cooldowns)
             );
+
+            CorpseOrigin.LOGGER.info("【同步到客户端】玩家 {}: {} 个技能, {} 进化点",
+                    player.getName().getString(), learnedSkills.size(), evolutionPoints);
+
             PacketDistributor.sendToPlayer(serverPlayer, packet);
             dirty = false;
-            CorpseOrigin.LOGGER.debug("同步玩家 {} 的技能数据到客户端", player.getName().getString());
+        }
+    }
+
+    /**
+     * 强制同步所有数据到客户端
+     */
+    public void forceSyncToClient() {
+        if (player instanceof ServerPlayer serverPlayer) {
+            SyncSkillDataPacket packet = new SyncSkillDataPacket(
+                    player.getId(),
+                    new ArrayList<>(learnedSkills),
+                    evolutionPoints,
+                    new HashMap<>(cooldowns)
+            );
+
+            CorpseOrigin.LOGGER.info("【强制同步】玩家 {}: {} 个技能, {} 进化点",
+                    player.getName().getString(), learnedSkills.size(), evolutionPoints);
+
+            PacketDistributor.sendToPlayer(serverPlayer, packet);
         }
     }
 
@@ -136,85 +185,82 @@ public class SkillHandler implements ISkillHandler {
 
     @Override
     public LearnResult learnSkill(ISkill skill) {
-        // 添加详细日志
-        CorpseOrigin.LOGGER.info("【学习技能】开始学习技能: {}", skill.getId());
-        CorpseOrigin.LOGGER.info("【学习技能】当前进化点: {}, 技能消耗: {}", evolutionPoints, skill.getCost());
-        CorpseOrigin.LOGGER.info("【学习技能】当前已学习技能: {}", learnedSkills);
-
         if (skill == null) {
-            CorpseOrigin.LOGGER.error("【学习技能】技能为 null！");
             return LearnResult.UNKNOWN_SKILL;
         }
 
-        // 检查是否已学习
         if (hasLearned(skill)) {
-            CorpseOrigin.LOGGER.info("【学习技能】技能已学习: {}", skill.getId());
             return LearnResult.ALREADY_LEARNED;
         }
 
-        // 检查是否是尸兄
         if (!PlayerCorpseData.isCorpse(player)) {
-            CorpseOrigin.LOGGER.info("【学习技能】玩家不是尸兄");
             return LearnResult.NOT_CORPSE;
         }
 
-        // 检查等级要求
         int playerLevel = PlayerCorpseData.getEvolutionLevel(player);
         if (playerLevel < skill.getRequiredLevel()) {
-            CorpseOrigin.LOGGER.info("【学习技能】等级不足: 需要 {}, 当前 {}",
-                    skill.getRequiredLevel(), playerLevel);
             return LearnResult.LEVEL_TOO_LOW;
         }
 
-        // 检查前置技能
         for (ResourceLocation prereq : skill.getPrerequisites()) {
             if (!hasLearned(prereq)) {
-                CorpseOrigin.LOGGER.info("【学习技能】缺少前置技能: {}", prereq);
                 return LearnResult.MISSING_PREREQUISITES;
             }
         }
 
-        // 检查进化点数
         if (evolutionPoints < skill.getCost()) {
-            CorpseOrigin.LOGGER.info("【学习技能】进化点不足: 需要 {}, 当前 {}",
-                    skill.getCost(), evolutionPoints);
             return LearnResult.INSUFFICIENT_POINTS;
         }
 
-        // 检查互斥技能
         for (ISkill learnedSkill : getLearnedSkills()) {
             if (isMutuallyExclusive(skill, learnedSkill)) {
-                CorpseOrigin.LOGGER.info("【学习技能】与技能互斥: {}", learnedSkill.getId());
                 return LearnResult.MUTUALLY_EXCLUSIVE;
             }
         }
 
-        // 学习技能
         try {
             learnedSkills.add(skill.getId());
             evolutionPoints -= skill.getCost();
 
-            CorpseOrigin.LOGGER.info("【学习技能】添加成功！当前技能集合: {}", learnedSkills);
-            CorpseOrigin.LOGGER.info("【学习技能】扣除 {} 点，剩余进化点: {}", skill.getCost(), evolutionPoints);
+            // 注意：这里不再调用 onLearn，因为属性会在下次登录时重新应用
+            // 或者如果你需要立即应用，确保先移除再添加
 
-            skill.onLearn(player);
-
-            // 如果是被动技能，立即激活
             if (skill.isPassive()) {
                 activeSkills.add(skill.getId());
-                skill.onActivate(player);
             }
 
             dirty = true;
             syncToClient();
 
-            CorpseOrigin.LOGGER.info("玩家 {} 学习了技能 {}, 剩余进化点: {}",
+            CorpseOrigin.LOGGER.info("玩家 {} 学习技能 {} 成功，剩余进化点: {}",
                     player.getName().getString(), skill.getId(), evolutionPoints);
+
             return LearnResult.SUCCESS;
         } catch (Exception e) {
             CorpseOrigin.LOGGER.error("学习技能 {} 时发生错误", skill.getId(), e);
             return LearnResult.ERROR;
         }
+    }
+
+    /**
+     * 重新应用所有被动技能（登录时调用）
+     */
+    public void reapplyPassiveSkills() {
+        if (player == null) return;
+
+        for (ResourceLocation skillId : learnedSkills) {
+            ISkill skill = SkillManager.getInstance().getSkill(skillId);
+            if (skill != null && skill.isPassive()) {
+                // 先移除再添加，避免重复
+                if (skill instanceof BaseSkill baseSkill) {
+                    baseSkill.removeAttributeModifiers(player);
+                    baseSkill.applyAttributeModifiers(player);
+                } else {
+                    skill.onLearn(player);
+                }
+            }
+        }
+        CorpseOrigin.LOGGER.info("重新应用 {} 个被动技能到玩家 {}", learnedSkills.size(), player.getName().getString());
     }
 
     @Override
@@ -434,15 +480,31 @@ public class SkillHandler implements ISkillHandler {
      * 从同步数据加载（客户端使用）
      */
     public void loadFromSyncData(List<ResourceLocation> skills, int points, Map<ResourceLocation, Integer> cds) {
+        CorpseOrigin.LOGGER.info("loadFromSyncData - 当前技能数量: {}, 新技能数量: {}",
+                learnedSkills.size(), skills.size());
+
+        // 清除现有数据
         learnedSkills.clear();
-        learnedSkills.addAll(skills);
-
-        evolutionPoints = points;
-
         cooldowns.clear();
+        activeSkills.clear();
+
+        // 加载新数据
+        learnedSkills.addAll(skills);
+        evolutionPoints = points;
         cooldowns.putAll(cds);
 
-        CorpseOrigin.LOGGER.debug("客户端加载技能数据: {} 个技能, {} 进化点", skills.size(), points);
+        // 自动将被动技能添加到激活列表
+        for (ResourceLocation skillId : learnedSkills) {
+            ISkill skill = SkillManager.getInstance().getSkill(skillId);
+            if (skill != null && skill.isPassive()) {
+                activeSkills.add(skillId);
+            }
+        }
+
+        CorpseOrigin.LOGGER.info("loadFromSyncData 完成 - 最终技能数量: {}, 进化点: {}",
+                learnedSkills.size(), evolutionPoints);
+
+        dirty = true;
     }
 
     @Override
@@ -459,23 +521,9 @@ public class SkillHandler implements ISkillHandler {
         // 保存进化点数
         tag.putInt(NBT_EVOLUTION_POINTS, evolutionPoints);
 
-        // 保存冷却
-        CompoundTag cooldownsTag = new CompoundTag();
-        for (Map.Entry<ResourceLocation, Integer> entry : cooldowns.entrySet()) {
-            cooldownsTag.putInt(entry.getKey().toString(), entry.getValue());
-        }
-        tag.put(NBT_COOLDOWNS, cooldownsTag);
-
-        // 保存激活的技能
-        ListTag activeList = new ListTag();
-        for (ResourceLocation skillId : activeSkills) {
-            activeList.add(StringTag.valueOf(skillId.toString()));
-        }
-        tag.put(NBT_ACTIVE_SKILLS, activeList);
-
-        CorpseOrigin.LOGGER.info("【saveToNBT】保存技能数据: {} 个技能, {} 进化点",
+        CorpseOrigin.LOGGER.info("【保存到NBT】玩家 {} 保存技能数据: {} 个技能, {} 进化点",
+                player != null ? player.getName().getString() : "未知",
                 learnedSkills.size(), evolutionPoints);
-        CorpseOrigin.LOGGER.info("【saveToNBT】技能列表: {}", learnedSkills);
 
         return tag;
     }
@@ -483,10 +531,7 @@ public class SkillHandler implements ISkillHandler {
     @Override
     public void loadFromNBT(CompoundTag tag) {
         learnedSkills.clear();
-        cooldowns.clear();
-        activeSkills.clear();
 
-        // 加载已学习技能
         if (tag.contains(NBT_LEARNED_SKILLS)) {
             ListTag skillsList = tag.getList(NBT_LEARNED_SKILLS, 8);
             for (int i = 0; i < skillsList.size(); i++) {
@@ -495,28 +540,11 @@ public class SkillHandler implements ISkillHandler {
             }
         }
 
-        // 加载进化点数
         evolutionPoints = tag.getInt(NBT_EVOLUTION_POINTS);
 
-        // 加载冷却
-        if (tag.contains(NBT_COOLDOWNS)) {
-            CompoundTag cooldownsTag = tag.getCompound(NBT_COOLDOWNS);
-            for (String key : cooldownsTag.getAllKeys()) {
-                cooldowns.put(ResourceLocation.parse(key), cooldownsTag.getInt(key));
-            }
-        }
-
-        // 加载激活的技能
-        if (tag.contains(NBT_ACTIVE_SKILLS)) {
-            ListTag activeList = tag.getList(NBT_ACTIVE_SKILLS, 8);
-            for (int i = 0; i < activeList.size(); i++) {
-                activeSkills.add(ResourceLocation.parse(activeList.getString(i)));
-            }
-        }
-
-        CorpseOrigin.LOGGER.info("【loadFromNBT】加载技能数据: {} 个技能, {} 进化点",
+        CorpseOrigin.LOGGER.info("【从NBT加载】玩家 {} 加载技能数据: {} 个技能, {} 进化点",
+                player != null ? player.getName().getString() : "未知",
                 learnedSkills.size(), evolutionPoints);
-        CorpseOrigin.LOGGER.info("【loadFromNBT】技能列表: {}", learnedSkills);
 
         this.dirty = true;
     }

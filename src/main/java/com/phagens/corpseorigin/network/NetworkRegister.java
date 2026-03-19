@@ -6,17 +6,15 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
-/**
- * 网络注册 - 只注册非技能相关的网络包
- * 技能相关的包在 NetworkPaketGL 中统一注册
- */
-@EventBusSubscriber(modid = CorpseOrigin.MODID)
+@EventBusSubscriber(modid = CorpseOrigin.MODID )
 public class NetworkRegister {
 
     @SubscribeEvent
     public static void register(final RegisterPayloadHandlersEvent event) {
         final PayloadRegistrar registrar = event.registrar(CorpseOrigin.MODID)
                 .versioned("1.0.0");
+
+        CorpseOrigin.LOGGER.info("NetworkRegister 正在注册网络包到通道: {}", CorpseOrigin.MODID);
 
         // 注册皮肤更新包 (客户端 → 服务端)
         registrar.playToServer(
@@ -32,6 +30,6 @@ public class NetworkRegister {
                 PlayerCorpseSyncPacket::handle
         );
 
-        CorpseOrigin.LOGGER.info("NetworkRegister 网络包注册完成 - 技能包由 NetworkPaketGL 处理");
+        CorpseOrigin.LOGGER.info("NetworkRegister 网络包注册完成 - 共注册了 2 个包");
     }
 }

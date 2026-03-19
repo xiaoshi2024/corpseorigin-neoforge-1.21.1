@@ -14,9 +14,10 @@ import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
- * 技能轮盘界面 - 专业版
+ * 技能轮盘界面
  */
 public class SkillRadialScreen extends GuiRadialMenu<ISkill> {
 
@@ -29,30 +30,31 @@ public class SkillRadialScreen extends GuiRadialMenu<ISkill> {
         this.skillHandler = SkillAttachment.getSkillHandler(player);
     }
 
+    // 修改 createRadialMenu 方法，添加调试日志
+
     private static RadialMenu<ISkill> createRadialMenu(Player player) {
         ISkillHandler handler = SkillAttachment.getSkillHandler(player);
         List<IRadialMenuSlot<ISkill>> slots = new ArrayList<>();
 
-        if (handler != null) {
-            CorpseOrigin.LOGGER.info("【轮盘菜单】玩家 {} 共有 {} 个已学习技能",
-                    player.getName().getString(), handler.getLearnedSkills().size());
+        CorpseOrigin.LOGGER.info("创建技能轮盘 - 玩家: {}, 处理器: {}",
+                player.getName().getString(), handler != null ? "存在" : "null");
 
-            int activatableCount = 0;
-            for (ISkill skill : handler.getLearnedSkills()) {
-                CorpseOrigin.LOGGER.info("  - 技能: {}, 可激活: {}",
+        if (handler != null) {
+            Set<ISkill> learnedSkills = handler.getLearnedSkills();
+            CorpseOrigin.LOGGER.info("玩家已学习 {} 个技能", learnedSkills.size());
+
+            for (ISkill skill : learnedSkills) {
+                CorpseOrigin.LOGGER.info("检查技能: {} - 可激活: {}",
                         skill.getId(), skill.isActivatable());
 
                 if (skill.isActivatable()) {
                     slots.add(new RadialMenuSlot<>(skill.getName(), skill));
-                    activatableCount++;
                 }
             }
-
-            CorpseOrigin.LOGGER.info("【轮盘菜单】找到 {} 个可激活技能", activatableCount);
         }
 
         if (slots.isEmpty()) {
-            CorpseOrigin.LOGGER.info("【轮盘菜单】没有可激活技能，显示默认提示");
+            CorpseOrigin.LOGGER.warn("没有可激活的技能，显示空槽位");
             slots.add(new RadialMenuSlot<>(
                     Component.translatable("skill.corpseorigin.no_activatable"), null));
         }
@@ -85,10 +87,8 @@ public class SkillRadialScreen extends GuiRadialMenu<ISkill> {
                 return;
             }
 
-            CorpseOrigin.LOGGER.debug("请求激活技能: {}", selectedSkill.getId());
-            // 发送网络包
             net.neoforged.neoforge.network.PacketDistributor.sendToServer(
-                    new com.phagens.corpseorigin.network.ActivateSkillPacket(selectedSkill.getId()));
+                    new ActivateSkillPacket(selectedSkill.getId()));
         }
     }
 
@@ -101,13 +101,11 @@ public class SkillRadialScreen extends GuiRadialMenu<ISkill> {
 
         boolean onCooldown = skillHandler.isOnCooldown(skill);
 
-        // 绘制技能图标
         ResourceLocation iconPath = skill.getIcon();
         if (iconPath != null) {
             graphics.pose().pushPose();
-            graphics.pose().translate(0, 0, 10); // 确保图标在顶层
+            graphics.pose().translate(0, 0, 10);
 
-            // 绘制16x16的技能图标
             graphics.blit(iconPath, x, y, 0, 0, 16, 16, 16, 16);
 
             graphics.pose().popPose();
@@ -115,12 +113,11 @@ public class SkillRadialScreen extends GuiRadialMenu<ISkill> {
             graphics.renderItem(getSkillItemIcon(skill), x, y);
         }
 
-        // 绘制冷却遮罩
         if (onCooldown) {
             int remaining = skillHandler.getCooldownRemaining(skill);
 
             graphics.pose().pushPose();
-            graphics.pose().translate(0, 0, 20); // 冷却遮罩在最顶层
+            graphics.pose().translate(0, 0, 20);
 
             graphics.fill(x, y, x + 16, y + 16, 0xAA000000);
 
@@ -190,7 +187,6 @@ public class SkillRadialScreen extends GuiRadialMenu<ISkill> {
             graphics.pose().pushPose();
             graphics.pose().translate(0, 0, Z_TEXT);
 
-            // 技能名称
             Component name = skill.getName();
             int textWidth = minecraft.font.width(name);
             int x = (this.width - textWidth) / 2;
@@ -201,7 +197,6 @@ public class SkillRadialScreen extends GuiRadialMenu<ISkill> {
 
             graphics.drawString(minecraft.font, name, x, y, 0xFFFFFF, true);
 
-            // 技能描述
             if (skill.getDescription() != null) {
                 Component desc = skill.getDescription();
                 int descWidth = minecraft.font.width(desc);
@@ -209,7 +204,6 @@ public class SkillRadialScreen extends GuiRadialMenu<ISkill> {
                 graphics.drawString(minecraft.font, desc, descX, y + 15, 0xAAAAAA, true);
             }
 
-            // 冷却信息
             if (skillHandler.isOnCooldown(skill)) {
                 int remaining = skillHandler.getCooldownRemaining(skill);
                 Component cooldownText = Component.translatable(

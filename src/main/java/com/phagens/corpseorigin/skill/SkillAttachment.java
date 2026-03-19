@@ -9,62 +9,54 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 import java.util.function.Supplier;
 
-/**
- * 技能数据附件 - 将技能处理器绑定到玩家
- */
 public class SkillAttachment {
 
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
             DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, CorpseOrigin.MODID);
 
-    /**
-     * 技能处理器附件 - 存储玩家的技能数据
-     */
     public static final Supplier<AttachmentType<SkillHandler>> SKILL_HANDLER = ATTACHMENT_TYPES.register(
             "skill_handler",
             () -> AttachmentType.<SkillHandler>builder(() -> new SkillHandler(null))
                     .serialize(SkillHandler.CODEC)
-                    .copyOnDeath()
+                    .copyOnDeath() // 这应该能工作，但我们还要加强
                     .build()
     );
 
     /**
-     * 获取玩家的技能处理器
+     * 获取玩家的技能处理器 - 增强版本
+     */
+    /**
+     * 获取玩家的技能处理器 - 修复客户端同步问题
      */
     public static ISkillHandler getSkillHandler(Player player) {
         if (player == null) return null;
 
         SkillHandler handler = player.getData(SKILL_HANDLER);
+
         if (handler == null) {
+            CorpseOrigin.LOGGER.debug("为玩家 {} 创建新的技能处理器", player.getName().getString());
             handler = new SkillHandler(player);
             player.setData(SKILL_HANDLER, handler);
-            CorpseOrigin.LOGGER.info("【SkillAttachment】为玩家 {} 创建新的技能处理器", player.getName().getString());
-        } else {
-            // 检查处理器中的数据
-            CorpseOrigin.LOGGER.info("【SkillAttachment】玩家 {} 已有技能处理器: {} 个技能, {} 进化点",
-                    player.getName().getString(),
-                    handler.getLearnedSkillIds().size(),
-                    handler.getEvolutionPoints());
+        } else if (handler.getPlayer() == null) {
+            handler.setPlayer(player);
 
-            if (handler.getPlayer() == null) {
-                handler.setPlayer(player);
-                CorpseOrigin.LOGGER.info("【SkillAttachment】重新设置玩家引用");
-            }
+            // 客户端和服务端都打印日志
+            if (player.level().isClientSide) {
+                CorpseOrigin.LOGGER.info("【客户端】为玩家 {} 设置技能处理器，已学习 {} 个技能，进化点: {}",
+                        player.getName().getString(),
+                        handler.getLearnedSkills().size(),
+                        handler.getEvolutionPoints());
+            } else {
+                CorpseOrigin.LOGGER.info("【服务端】为玩家 {} 设置技能处理器，已学习 {} 个技能，进化点: {}",
+                        player.getName().getString(),
+                        handler.getLearnedSkills().size(),
+                        handler.getEvolutionPoints());
 
-            // 如果是服务端，强制同步到客户端
-            if (!player.level().isClientSide) {
-                handler.markDirty();
-                handler.syncToClient();
-                CorpseOrigin.LOGGER.info("【SkillAttachment】强制同步技能数据到客户端");
+                // 只有在服务端才重新应用被动技能
+                handler.reapplyPassiveSkills();
             }
         }
-        return handler;
-    }
 
-    /**
-     * 设置玩家的技能处理器
-     */
-    public static void setSkillHandler(Player player, SkillHandler handler) {
-        player.setData(SKILL_HANDLER, handler);
+        return handler;
     }
 }

@@ -3,6 +3,8 @@ package com.phagens.corpseorigin.skill;
 import com.phagens.corpseorigin.CorpseOrigin;
 import com.phagens.corpseorigin.player.PlayerCorpseData;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
@@ -159,100 +161,122 @@ public class SkillEventHandler {
         }
     }
 
-    // 在 onPlayerLoggedIn 方法中添加更多日志
-    @SubscribeEvent
-    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        Player player = event.getEntity();
-
-        if (PlayerCorpseData.isCorpse(player)) {
-            // 这行代码会触发附件的加载
-            ISkillHandler handler = SkillAttachment.getSkillHandler(player);
-
-            if (handler != null) {
-                // 重新应用所有被动技能
-                int skillCount = 0;
-                for (ISkill skill : handler.getLearnedSkills()) {
-                    if (skill.isPassive()) {
-                        skill.onLearn(player);
-                    }
-                    skillCount++;
-                }
-
-                // 强制同步到客户端
-                if (handler instanceof SkillHandler skillHandler) {
-                    skillHandler.markDirty();
-                    skillHandler.syncToClient();
-                }
-
-                CorpseOrigin.LOGGER.info("===== 玩家 {} 技能数据加载 =====", player.getName().getString());
-                CorpseOrigin.LOGGER.info("已学习技能数量: {}", skillCount);
-                CorpseOrigin.LOGGER.info("进化点数: {}", handler.getEvolutionPoints());
-
-                // 列出所有已学习技能
-                for (ISkill skill : handler.getLearnedSkills()) {
-                    CorpseOrigin.LOGGER.info("  - {}", skill.getId());
-                }
-                CorpseOrigin.LOGGER.info("============================");
-            } else {
-                CorpseOrigin.LOGGER.error("玩家 {} 的技能处理器为 null!", player.getName().getString());
-            }
-        }
-    }
-
     /**
-     * 玩家重生事件 - 重新应用被动技能效果
+     * 玩家重生事件 - 确保技能数据同步到客户端
      */
     @SubscribeEvent
     public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
         Player player = event.getEntity();
 
-        if (PlayerCorpseData.isCorpse(player)) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            CorpseOrigin.LOGGER.info("玩家 {} 重生，准备同步技能数据", player.getName().getString());
+
+            // 延迟执行，确保所有数据加载完成
+            serverPlayer.server.execute(() -> {
+                try {
+                    Thread.sleep(100); // 等待100ms确保附件完全加载
+                } catch (InterruptedException e) {
+                    // ignore
+                }
+
+                ISkillHandler handler = SkillAttachment.getSkillHandler(player);
+
+                if (handler != null) {
+                    CorpseOrigin.LOGGER.info("重生后技能数据: {} 个技能, {} 进化点",
+                            handler.getLearnedSkills().size(),
+                            handler.getEvolutionPoints());
+
+                    // 重新应用被动技能
+                    if (handler instanceof SkillHandler skillHandler) {
+                        skillHandler.reapplyPassiveSkills();
+
+                        // 强制标记为脏数据并同步到客户端
+                        skillHandler.markDirty();
+                        skillHandler.syncToClient();
+
+                        CorpseOrigin.LOGGER.info("技能数据已同步到客户端");
+                    }
+                } else {
+                    CorpseOrigin.LOGGER.warn("玩家 {} 重生后没有技能处理器", player.getName().getString());
+                }
+            });
+        }
+    }
+
+    /**
+     * 玩家登录事件 - 确保技能数据正确加载
+     */
+    /**
+     * 玩家登录事件 - 确保技能数据正确同步到客户端
+     */
+    @SubscribeEvent
+    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        Player player = event.getEntity();
+
+        if (player instanceof ServerPlayer serverPlayer) {
             ISkillHandler handler = SkillAttachment.getSkillHandler(player);
 
             if (handler != null) {
-                // 重新应用所有被动技能
-                for (ISkill skill : handler.getLearnedSkills()) {
-                    if (skill.isPassive()) {
-                        skill.onLearn(player);
-                    }
-                }
+                CorpseOrigin.LOGGER.info("玩家 {} 登录，技能数据: {} 个技能, {} 进化点",
+                        player.getName().getString(),
+                        handler.getLearnedSkills().size(),
+                        handler.getEvolutionPoints());
 
-                handler.syncToClient();
+                // 重新应用被动技能
+                if (handler instanceof SkillHandler skillHandler) {
+                    skillHandler.reapplyPassiveSkills();
+
+                    // 延迟同步，确保客户端已完全加载
+                    serverPlayer.server.execute(() -> {
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            // ignore
+                        }
+                        skillHandler.forceSyncToClient();
+                    });
+                }
             }
         }
     }
 
     /**
-     * 玩家克隆事件 - 复制技能数据
+     * 玩家克隆事件 - 简化版，让附件系统自动处理
      */
     @SubscribeEvent
     public static void onPlayerClone(PlayerEvent.Clone event) {
         Player original = event.getOriginal();
         Player newPlayer = event.getEntity();
 
-        // 必须从原始玩家获取数据，因为新玩家还没有
-        original.revive(); // 临时复活以访问数据
+        CorpseOrigin.LOGGER.info("玩家克隆事件 - 原玩家: {}, 新玩家: {}, 是否死亡: {}",
+                original.getName().getString(),
+                newPlayer.getName().getString(),
+                event.isWasDeath());
 
-        try {
-            if (PlayerCorpseData.isCorpse(original)) {
-                ISkillHandler originalHandler = SkillAttachment.getSkillHandler(original);
-                ISkillHandler newHandler = SkillAttachment.getSkillHandler(newPlayer);
+        // 如果只是数据同步，不需要做任何事，copyOnDeath() 已经处理
 
-                if (originalHandler != null && newHandler != null) {
-                    // 复制进化点数
-                    newHandler.setEvolutionPoints(originalHandler.getEvolutionPoints());
-
-                    // 重新学习所有技能
-                    for (ISkill skill : originalHandler.getLearnedSkills()) {
-                        newHandler.learnSkill(skill);
-                    }
-
-                    CorpseOrigin.LOGGER.info("复制玩家 {} 的技能数据到新实体，共 {} 个技能",
-                            newPlayer.getName().getString(), originalHandler.getLearnedSkills().size());
+        // 但我们需要确保技能效果被重新应用
+        if (event.isWasDeath() && newPlayer instanceof ServerPlayer serverPlayer) {
+            serverPlayer.server.execute(() -> {
+                try {
+                    Thread.sleep(100); // 等待附件完成反序列化
+                } catch (InterruptedException e) {
+                    // ignore
                 }
-            }
-        } finally {
-            // 不需要真的复活玩家
+
+                ISkillHandler handler = SkillAttachment.getSkillHandler(newPlayer);
+                if (handler != null) {
+                    CorpseOrigin.LOGGER.info("重生后技能数据: {} 个技能, {} 进化点",
+                            handler.getLearnedSkills().size(),
+                            handler.getEvolutionPoints());
+
+                    // 重新应用被动技能
+                    if (handler instanceof SkillHandler skillHandler) {
+                        skillHandler.reapplyPassiveSkills();
+                        skillHandler.syncToClient();
+                    }
+                }
+            });
         }
     }
 
