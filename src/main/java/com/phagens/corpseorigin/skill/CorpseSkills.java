@@ -6,10 +6,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -335,7 +338,7 @@ public class CorpseSkills {
             player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 300, 1));
         }
     });
-    
+
     /**
      * 影袭 - 终极敏捷技能
      */
@@ -347,13 +350,36 @@ public class CorpseSkills {
                     .skillType(ISkill.SkillType.SUPREME_ABILITY)
                     .requiredLevel(5)
                     .prerequisites(id("evasion"), id("leap"))
-                    .cooldown(600) // 30秒
+                    .cooldown(600) // 30秒冷却
+                    .duration(100) // 添加持续时间，5秒（100 tick）
+            // 注意：不要加 .passive(true)！
     ) {
         @Override
         public void onActivate(Player player) {
-            // 向前瞬移并对路径上的敌人造成伤害
-            player.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 60, 0));
+            // 影袭效果
+            player.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 100, 0));
             player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 100, 2));
+
+            // 瞬移逻辑
+            if (!player.level().isClientSide) {
+                // 获取玩家看向的方向
+                Vec3 lookVec = player.getLookAngle();
+                // 向前传送5格
+                double newX = player.getX() + lookVec.x * 5;
+                double newY = player.getY();
+                double newZ = player.getZ() + lookVec.z * 5;
+
+                // 检查位置是否安全
+                player.teleportTo(newX, newY, newZ);
+
+                // 对传送路径上的敌人造成伤害
+                AABB area = player.getBoundingBox().inflate(5);
+                player.level().getEntities(player, area).forEach(entity -> {
+                    if (entity instanceof LivingEntity target && !(target instanceof Player)) {
+                        target.hurt(player.damageSources().playerAttack(player), 8.0f);
+                    }
+                });
+            }
         }
     });
     

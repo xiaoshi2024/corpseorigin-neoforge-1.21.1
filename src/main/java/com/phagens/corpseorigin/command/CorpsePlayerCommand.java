@@ -160,7 +160,201 @@ public class CorpsePlayerCommand {
                                         })
                                 )
                         )
+// 测试可激活技能 - 添加在 testskills 命令后面
+                        .then(Commands.literal("testactivatable")
+                                .then(Commands.argument("player", EntityArgument.player())
+                                        .executes(context -> {
+                                            ServerPlayer player = EntityArgument.getPlayer(context, "player");
 
+                                            if (!PlayerCorpseData.isCorpse(player)) {
+                                                context.getSource().sendFailure(
+                                                        net.minecraft.network.chat.Component.literal("该玩家不是尸兄")
+                                                );
+                                                return 0;
+                                            }
+
+                                            // 设置进化等级到5级
+                                            PlayerCorpseData.setEvolutionLevel(player, 5);
+
+                                            ISkillHandler skillHandler = SkillAttachment.getSkillHandler(player);
+
+                                            // 先学习所有前置被动技能
+                                            CorpseOrigin.LOGGER.info("===== 开始添加可激活技能测试 =====");
+
+                                            // 1. 基础技能（被动）- 必需的前置
+                                            if (!skillHandler.hasLearned(CorpseSkills.SHARP_CLAWS.getId())) {
+                                                skillHandler.learnSkill(CorpseSkills.SHARP_CLAWS);
+                                                CorpseOrigin.LOGGER.info("添加基础技能: 利爪 (被动)");
+                                            }
+
+                                            if (!skillHandler.hasLearned(CorpseSkills.HARDENED_SKIN.getId())) {
+                                                skillHandler.learnSkill(CorpseSkills.HARDENED_SKIN);
+                                                CorpseOrigin.LOGGER.info("添加基础技能: 硬化皮肤 (被动)");
+                                            }
+
+                                            if (!skillHandler.hasLearned(CorpseSkills.SWIFT_MOVEMENT.getId())) {
+                                                skillHandler.learnSkill(CorpseSkills.SWIFT_MOVEMENT);
+                                                CorpseOrigin.LOGGER.info("添加基础技能: 疾行 (被动)");
+                                            }
+
+                                            if (!skillHandler.hasLearned(CorpseSkills.REGENERATION.getId())) {
+                                                skillHandler.learnSkill(CorpseSkills.REGENERATION);
+                                                CorpseOrigin.LOGGER.info("添加基础技能: 再生 (被动)");
+                                            }
+
+                                            // 2. 力量分支前置
+                                            if (!skillHandler.hasLearned(CorpseSkills.GIANT_STRENGTH.getId())) {
+                                                skillHandler.learnSkill(CorpseSkills.GIANT_STRENGTH);
+                                                CorpseOrigin.LOGGER.info("添加力量技能: 巨力 (被动)");
+                                            }
+
+                                            if (!skillHandler.hasLearned(CorpseSkills.HEAVY_STRIKE.getId())) {
+                                                skillHandler.learnSkill(CorpseSkills.HEAVY_STRIKE);
+                                                CorpseOrigin.LOGGER.info("添加力量技能: 重击 (被动)");
+                                            }
+
+                                            // 3. 敏捷分支前置
+                                            if (!skillHandler.hasLearned(CorpseSkills.LEAP.getId())) {
+                                                skillHandler.learnSkill(CorpseSkills.LEAP);
+                                                CorpseOrigin.LOGGER.info("添加敏捷技能: 跳跃 (被动)");
+                                            }
+
+                                            if (!skillHandler.hasLearned(CorpseSkills.EVASION.getId())) {
+                                                skillHandler.learnSkill(CorpseSkills.EVASION);
+                                                CorpseOrigin.LOGGER.info("添加敏捷技能: 闪避 (被动)");
+                                            }
+
+                                            // 4. 特殊分支前置
+                                            if (!skillHandler.hasLearned(CorpseSkills.VENOM.getId())) {
+                                                skillHandler.learnSkill(CorpseSkills.VENOM);
+                                                CorpseOrigin.LOGGER.info("添加特殊技能: 毒液 (被动)");
+                                            }
+
+                                            // ===== 添加可激活技能 =====
+                                            CorpseOrigin.LOGGER.info("----- 添加可激活技能 -----");
+
+                                            // 力量分支可激活技能
+                                            if (!skillHandler.hasLearned(CorpseSkills.BERSERK.getId())) {
+                                                skillHandler.learnSkill(CorpseSkills.BERSERK);
+                                                CorpseOrigin.LOGGER.info("✓ 添加可激活技能: 狂暴 (可激活)");
+                                            }
+
+                                            // 特殊分支可激活技能
+                                            if (!skillHandler.hasLearned(CorpseSkills.FEAR_AURA.getId())) {
+                                                skillHandler.learnSkill(CorpseSkills.FEAR_AURA);
+                                                CorpseOrigin.LOGGER.info("✓ 添加可激活技能: 恐惧光环 (可激活)");
+                                            }
+
+                                            // 终极可激活技能
+                                            if (!skillHandler.hasLearned(CorpseSkills.CORPSE_KING_POWER.getId())) {
+                                                skillHandler.learnSkill(CorpseSkills.CORPSE_KING_POWER);
+                                                CorpseOrigin.LOGGER.info("✓ 添加可激活技能: 尸王之力 (可激活)");
+                                            }
+
+                                            if (!skillHandler.hasLearned(CorpseSkills.SHADOW_STRIKE.getId())) {
+                                                skillHandler.learnSkill(CorpseSkills.SHADOW_STRIKE);
+                                                CorpseOrigin.LOGGER.info("✓ 添加可激活技能: 影袭 (可激活)");
+                                            }
+
+                                            if (!skillHandler.hasLearned(CorpseSkills.IMMORTAL_BODY.getId())) {
+                                                skillHandler.learnSkill(CorpseSkills.IMMORTAL_BODY);
+                                                CorpseOrigin.LOGGER.info("✓ 添加可激活技能: 不死之身 (可激活)");
+                                            }
+
+                                            // 给一些进化点
+                                            skillHandler.addEvolutionPoints(50);
+
+                                            // 同步到客户端
+                                            skillHandler.syncToClient();
+
+                                            // 获取最终可激活技能数量
+                                            int activatableCount = 0;
+                                            StringBuilder activatableSkills = new StringBuilder();
+                                            for (var skill : skillHandler.getLearnedSkills()) {
+                                                if (skill.isActivatable()) {
+                                                    activatableCount++;
+                                                    activatableSkills.append("\n  §b- ").append(skill.getName().getString())
+                                                            .append(" §7(ID: ").append(skill.getId().getPath()).append(")");
+                                                }
+                                            }
+
+                                            CorpseOrigin.LOGGER.info("===== 测试完成 =====");
+                                            CorpseOrigin.LOGGER.info("总学习技能数: {}", skillHandler.getLearnedSkills().size());
+                                            CorpseOrigin.LOGGER.info("可激活技能数: {}", activatableCount);
+
+                                            // 发送成功消息
+                                            String message = String.format(
+                                                    "§a===== 可激活技能测试完成 =====\n" +
+                                                            "§e已学习技能总数: §f%d 个\n" +
+                                                            "§e可激活技能数量: §f%d 个\n" +
+                                                            "§a已添加的可激活技能:%s\n" +
+                                                            "§7按 §eR§7 键打开技能轮盘查看",
+                                                    skillHandler.getLearnedSkills().size(),
+                                                    activatableCount,
+                                                    activatableSkills.toString()
+                                            );
+
+                                            context.getSource().sendSuccess(
+                                                    () -> net.minecraft.network.chat.Component.literal(message), true
+                                            );
+
+                                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                                                    "§a你获得了所有可激活技能！按 R 键打开技能轮盘查看！"
+                                            ));
+
+                                            return 1;
+                                        })
+                                )
+                        )
+                        // 查看技能详情 - 添加在 testactivatable 命令后面
+                        .then(Commands.literal("skillinfo")
+                                .then(Commands.argument("player", EntityArgument.player())
+                                        .executes(context -> {
+                                            ServerPlayer player = EntityArgument.getPlayer(context, "player");
+
+                                            if (!PlayerCorpseData.isCorpse(player)) {
+                                                context.getSource().sendFailure(
+                                                        net.minecraft.network.chat.Component.literal("该玩家不是尸兄")
+                                                );
+                                                return 0;
+                                            }
+
+                                            ISkillHandler skillHandler = SkillAttachment.getSkillHandler(player);
+
+                                            StringBuilder info = new StringBuilder();
+                                            info.append("§6===== 玩家 ").append(player.getName().getString()).append(" 技能详情 =====\n");
+                                            info.append("§e进化点: §f").append(skillHandler.getEvolutionPoints()).append("\n");
+
+                                            int total = 0;
+                                            int passive = 0;
+                                            int activatable = 0;
+
+                                            for (var skill : skillHandler.getLearnedSkills()) {
+                                                total++;
+                                                if (skill.isPassive()) {
+                                                    passive++;
+                                                } else {
+                                                    activatable++;
+                                                }
+
+                                                info.append(String.format("§7[%s] §b%s §7- %s\n",
+                                                        skill.isPassive() ? "被动" : "主动",
+                                                        skill.getName().getString(),
+                                                        skill.getId().getPath()
+                                                ));
+                                            }
+
+                                            info.append("§e总计: §f").append(total).append(" 个技能 §7(被动: ").append(passive)
+                                                    .append(", 可激活: ").append(activatable).append(")");
+
+                                            context.getSource().sendSuccess(
+                                                    () -> net.minecraft.network.chat.Component.literal(info.toString()), false
+                                            );
+
+                                            return 1;
+                                        })
+                                )
+                        )
                         // 单独添加技能
                         .then(Commands.literal("addskill")
                                 .then(Commands.argument("player", EntityArgument.player())
