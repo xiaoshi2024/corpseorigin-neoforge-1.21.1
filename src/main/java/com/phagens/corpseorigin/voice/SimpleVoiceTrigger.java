@@ -24,11 +24,11 @@ public class SimpleVoiceTrigger {
     private static final boolean BIG_ENDIAN = false;
     
     // 音量阈值（用于检测是否有声音）
-    private static final double VOLUME_THRESHOLD = 0.02;
+    private static final double VOLUME_THRESHOLD = 0.005;
     // 最小录音时间（毫秒）
-    private static final int MIN_RECORDING_TIME = 800;
+    private static final int MIN_RECORDING_TIME = 500;
     // 最大录音时间（毫秒）
-    private static final int MAX_RECORDING_TIME = 3000;
+    private static final int MAX_RECORDING_TIME = 5000;
     
     private static SimpleVoiceTrigger instance;
     private final ExecutorService executor;
@@ -162,17 +162,17 @@ public class SimpleVoiceTrigger {
      */
     private void processRecording(byte[] audioData, long recordingTime) {
         if (recordingTime < MIN_RECORDING_TIME) {
-            LOGGER.warn("Recording too short: {} ms", recordingTime);
+            LOGGER.warn("Recording too short: {} ms (minimum: {} ms)", recordingTime, MIN_RECORDING_TIME);
             showMessage("message.corpseorigin.voice_too_short");
             return;
         }
         
         // 计算平均音量
         double volume = calculateVolume(audioData);
-        LOGGER.info("Recording volume: {}", volume);
+        LOGGER.info("Recording volume: {} (threshold: {})", volume, VOLUME_THRESHOLD);
         
         if (volume < VOLUME_THRESHOLD) {
-            LOGGER.warn("Recording volume too low: {}", volume);
+            LOGGER.warn("Recording volume too low: {} (threshold: {})", volume, VOLUME_THRESHOLD);
             showMessage("message.corpseorigin.voice_too_short");
             return;
         }
@@ -185,8 +185,11 @@ public class SimpleVoiceTrigger {
             LOGGER.warn("No voice templates found, using default volume matching");
             String matchedKeyword = matchByVolume(audioData);
             if (matchedKeyword != null && callback != null) {
+                LOGGER.info("Volume matched keyword: {}", matchedKeyword);
                 showVoiceRecognized(matchedKeyword);
                 callback.onTrigger(matchedKeyword);
+            } else {
+                LOGGER.warn("Volume matching failed to find a match");
             }
             return;
         }
@@ -199,7 +202,7 @@ public class SimpleVoiceTrigger {
             showVoiceRecognized(matchedSkill);
             callback.onTrigger(matchedSkill);
         } else {
-            LOGGER.warn("No template matched");
+            LOGGER.warn("No template matched for voice input");
             showMessage("message.corpseorigin.voice_not_recognized");
         }
     }
@@ -236,14 +239,16 @@ public class SimpleVoiceTrigger {
                 String.format("%.4f", trend));
         
         // 根据音量特征匹配技能
-        if (avgVolume > 0.08) {
-            return "berserk";
-        } else if (avgVolume > 0.06 && trend > 0.01) {
-            return "giant_strength";
-        } else if (avgVolume > 0.05) {
-            return "sharp_claws";
+        if (avgVolume > 0.05) {
+            return "狂暴";
+        } else if (avgVolume > 0.04 && trend > 0.005) {
+            return "巨力";
+        } else if (avgVolume > 0.03) {
+            return "利爪";
+        } else if (avgVolume > 0.02) {
+            return "硬化皮肤";
         } else {
-            return "berserk";
+            return "狂暴";
         }
     }
     

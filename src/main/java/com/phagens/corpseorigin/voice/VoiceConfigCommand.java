@@ -72,6 +72,20 @@ public class VoiceConfigCommand {
                             return 1;
                         })))
                 
+                // 测试语音系统
+                .then(Commands.literal("check")
+                    .executes(context -> {
+                        boolean available = VoiceTriggerIntegration.isVoiceSystemAvailable();
+                        if (available) {
+                            context.getSource().sendSuccess(
+                                () -> Component.literal("§a语音系统可用"), false);
+                        } else {
+                            context.getSource().sendFailure(
+                                Component.literal("§c语音系统不可用，请检查麦克风设置"));
+                        }
+                        return 1;
+                    }))
+                
                 // 列出所有语音绑定
                 .then(Commands.literal("list")
                     .executes(context -> {
@@ -127,7 +141,7 @@ public class VoiceConfigCommand {
                 .then(Commands.literal("record")
                     .executes(context -> {
                         // 显示可用的技能列表
-                        if (context.getSource().getLevel().isClientSide()) {
+                        if (context.getSource().isPlayer()) {
                             context.getSource().sendSuccess(
                                 () -> Component.translatable("message.corpseorigin.voice_record_available_skills"), false);
 
@@ -182,8 +196,8 @@ public class VoiceConfigCommand {
                             return builder.buildFuture();
                         })
                         .executes(context -> {
-                            // 检查是否在客户端
-                            if (context.getSource().getLevel().isClientSide()) {
+                            // 检查是否是玩家执行（单人游戏或多人游戏客户端）
+                            if (context.getSource().isPlayer()) {
                                 String inputSkillName = StringArgumentType.getString(context, "skill");
 
                                 // 验证技能ID是否有效
@@ -215,8 +229,8 @@ public class VoiceConfigCommand {
                                     () -> Component.translatable("message.corpseorigin.voice_record_start", skillToRecord),
                                     false);
 
-                                // 启动录制（2秒）
-                                VoiceTemplateManager.getInstance().recordTemplate(skillToRecord, 2000);
+                                // 启动录制（3秒）
+                            VoiceTemplateManager.getInstance().recordTemplate(skillToRecord, 3000);
 
                                 return 1;
                             } else {
@@ -229,7 +243,7 @@ public class VoiceConfigCommand {
                 // 查看模板状态（仅客户端）
                 .then(Commands.literal("templates")
                     .executes(context -> {
-                        if (context.getSource().getLevel().isClientSide()) {
+                        if (context.getSource().isPlayer()) {
                             VoiceTemplateManager manager = VoiceTemplateManager.getInstance();
                             int count = manager.getTemplateCount();
 

@@ -135,6 +135,8 @@
   "command.corpseorigin.voice.status_enabled": "  Enabled: %s",
   "command.corpseorigin.voice.status_threshold": "  Confidence Threshold: %s",
   "command.corpseorigin.voice.status_bindings": "  Bindings: %d",
+  "command.corpseorigin.voice.check_available": "§aVoice system available",
+  "command.corpseorigin.voice.check_unavailable": "§cVoice system unavailable, please check microphone settings",
 
   "message.corpseorigin.skill_tree_coming_soon": "Skill tree interface coming soon",
   "message.corpseorigin.evolution_points_gained": "§aDevoured %2$s, gained %1$d evolution points!",

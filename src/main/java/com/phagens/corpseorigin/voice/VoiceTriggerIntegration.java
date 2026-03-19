@@ -21,6 +21,10 @@ import net.neoforged.neoforge.common.NeoForge;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.TargetDataLine;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -102,14 +106,25 @@ public class VoiceTriggerIntegration {
      * 当语音触发技能时调用
      */
     private static void onVoiceSkillTriggered(String keyword) {
+        LOGGER.info("Voice skill triggered with keyword: {}", keyword);
+        
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null) return;
+        if (minecraft.player == null) {
+            LOGGER.warn("Player is null, cannot trigger skill");
+            return;
+        }
 
         // 获取玩家技能处理器
         ISkillHandler skillHandler = SkillAttachment.getSkillHandler(minecraft.player);
+        if (skillHandler == null) {
+            LOGGER.warn("Skill handler is null, cannot trigger skill");
+            return;
+        }
 
         // 查找匹配的技能
         String skillId = findSkillByKeyword(keyword);
+        LOGGER.info("Found skill ID: {} for keyword: {}", skillId, keyword);
+        
         if (skillId == null) {
             LOGGER.warn("Voice keyword '{}' not matched to any skill", keyword);
             minecraft.player.displayClientMessage(
@@ -157,8 +172,39 @@ public class VoiceTriggerIntegration {
      * 根据关键词查找技能ID
      */
     private static String findSkillByKeyword(String keyword) {
-        // 简化处理：直接返回关键词对应的技能ID
-        // 可以扩展为更复杂的映射逻辑
+        // 技能关键词到技能ID的映射
+        Map<String, String> keywordToSkillId = new HashMap<>();
+        keywordToSkillId.put("硬化皮肤", "hardened_skin");
+        keywordToSkillId.put("利爪", "sharp_claws");
+        keywordToSkillId.put("吞噬", "devour_enhancement");
+        keywordToSkillId.put("感知", "evolution_sense");
+        keywordToSkillId.put("巨力", "giant_strength");
+        keywordToSkillId.put("狂暴", "berserk");
+        keywordToSkillId.put("重击", "heavy_strike");
+        keywordToSkillId.put("疾行", "swift_movement");
+        keywordToSkillId.put("跳跃", "leap");
+        keywordToSkillId.put("闪避", "evasion");
+        keywordToSkillId.put("毒液", "venom");
+        keywordToSkillId.put("再生", "regeneration");
+        keywordToSkillId.put("恐惧", "fear_aura");
+        keywordToSkillId.put("不死", "immortal_body");
+        keywordToSkillId.put("尸王", "corpse_king_power");
+        keywordToSkillId.put("影袭", "shadow_strike");
+        
+        // 直接匹配关键词
+        String skillId = keywordToSkillId.get(keyword);
+        if (skillId != null) {
+            return "corpseorigin:" + skillId;
+        }
+        
+        // 尝试部分匹配
+        for (Map.Entry<String, String> entry : keywordToSkillId.entrySet()) {
+            if (keyword.contains(entry.getKey()) || entry.getKey().contains(keyword)) {
+                return "corpseorigin:" + entry.getValue();
+            }
+        }
+        
+        // 默认返回
         return "corpseorigin:" + keyword;
     }
 
@@ -195,6 +241,15 @@ public class VoiceTriggerIntegration {
      * 检查语音系统是否可用
      */
     public static boolean isVoiceSystemAvailable() {
-        return true; // 简化版总是可用
+        try {
+            AudioFormat format = new AudioFormat(16000, 16, 1, true, false);
+            DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
+            boolean available = AudioSystem.isLineSupported(info);
+            LOGGER.info("Voice system availability check: {}", available);
+            return available;
+        } catch (Exception e) {
+            LOGGER.error("Error checking voice system availability", e);
+            return false;
+        }
     }
 }

@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * 语音模板管理器
  * 允许玩家录制自己的语音模板，然后进行匹配
- * 仅在客户端运行
+ * 在客户端运行（包括单人游戏）
  */
 @OnlyIn(Dist.CLIENT)
 public class VoiceTemplateManager {
@@ -34,9 +34,17 @@ public class VoiceTemplateManager {
     private final Path templateDir;
     
     private VoiceTemplateManager() {
-        // 使用游戏目录下的 voice_templates 文件夹
-        this.templateDir = Paths.get(Minecraft.getInstance().gameDirectory.getAbsolutePath(), "voice_templates");
-        loadTemplates();
+        Path tempTemplateDir = null;
+        try {
+            // 使用游戏目录下的 voice_templates 文件夹
+            tempTemplateDir = Paths.get(Minecraft.getInstance().gameDirectory.getAbsolutePath(), "voice_templates");
+            loadTemplates(tempTemplateDir);
+            LOGGER.info("VoiceTemplateManager initialized with directory: {}", tempTemplateDir);
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize VoiceTemplateManager", e);
+            tempTemplateDir = Paths.get(Minecraft.getInstance().gameDirectory.getAbsolutePath(), "voice_templates");
+        }
+        this.templateDir = tempTemplateDir;
     }
     
     public static synchronized VoiceTemplateManager getInstance() {
@@ -49,14 +57,14 @@ public class VoiceTemplateManager {
     /**
      * 加载所有语音模板
      */
-    private void loadTemplates() {
+    private void loadTemplates(Path dir) {
         try {
-            if (!Files.exists(templateDir)) {
-                Files.createDirectories(templateDir);
-                LOGGER.info("Created voice template directory: {}", templateDir);
+            if (!Files.exists(dir)) {
+                Files.createDirectories(dir);
+                LOGGER.info("Created voice template directory: {}", dir);
             }
             
-            File[] files = templateDir.toFile().listFiles((dir, name) -> name.endsWith(".wav"));
+            File[] files = dir.toFile().listFiles((d, name) -> name.endsWith(".wav"));
             if (files != null) {
                 for (File file : files) {
                     String skillName = file.getName().replace(".wav", "");
@@ -74,11 +82,14 @@ public class VoiceTemplateManager {
      * 录制语音模板
      */
     public void recordTemplate(String skillName, int durationMs) {
+        LOGGER.info("Starting voice template recording for skill: {} (duration: {}ms)", skillName, durationMs);
+        
         try {
             AudioFormat format = new AudioFormat(SAMPLE_RATE, SAMPLE_SIZE_IN_BITS, CHANNELS, SIGNED, BIG_ENDIAN);
             DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
             
             if (!AudioSystem.isLineSupported(info)) {
+                LOGGER.error("Microphone not supported for format: {}", format);
                 showMessage("§c麦克风不支持");
                 return;
             }
@@ -88,6 +99,7 @@ public class VoiceTemplateManager {
             line.start();
             
             showMessage("§e开始录制 " + skillName + " 语音模板...");
+            LOGGER.info("Microphone opened and started recording");
             
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             byte[] buffer = new byte[4096];
@@ -104,6 +116,14 @@ public class VoiceTemplateManager {
             line.close();
             
             byte[] audioData = out.toByteArray();
+            LOGGER.info("Recording completed: {} bytes", audioData.length);
+            
+            // 检查录音长度
+            if (audioData.length < 1000) {
+                showMessage("§c录音时间太短或没有检测到声音");
+                LOGGER.warn("Recording too short: {} bytes", audioData.length);
+                return;
+            }
             
             // 保存模板
             Path filePath = templateDir.resolve(skillName + ".wav");
@@ -111,10 +131,10 @@ public class VoiceTemplateManager {
             templates.put(skillName, audioData);
             
             showMessage("§a语音模板 " + skillName + " 录制完成!");
-            LOGGER.info("Recorded voice template for skill: {} ({} bytes)", skillName, audioData.length);
+            LOGGER.info("Voice template saved for skill: {} ({} bytes)", skillName, audioData.length);
             
         } catch (Exception e) {
-            LOGGER.error("Failed to record voice template", e);
+            LOGGER.error("Failed to record voice template for skill: {}", skillName, e);
             showMessage("§c录制失败: " + e.getMessage());
         }
     }

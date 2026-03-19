@@ -135,6 +135,8 @@
   "command.corpseorigin.voice.status_enabled": "  启用: %s",
   "command.corpseorigin.voice.status_threshold": "  置信度阈值: %s",
   "command.corpseorigin.voice.status_bindings": "  绑定数量: %d",
+  "command.corpseorigin.voice.check_available": "§a语音系统可用",
+  "command.corpseorigin.voice.check_unavailable": "§c语音系统不可用，请检查麦克风设置",
 
   "message.corpseorigin.skill_tree_coming_soon": "技能树界面即将推出",
   "message.corpseorigin.evolution_points_gained": "§a吞噬 %2$s 获得 %1$d 进化点数！",
