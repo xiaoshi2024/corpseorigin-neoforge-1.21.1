@@ -168,12 +168,17 @@
   "gui.corpseorigin.locked": "§c未解锁",
   "gui.corpseorigin.prerequisites": "前置技能:",
   "gui.corpseorigin.evolution_points": "进化点: %d",
+  "gui.corpseorigin.evolution_level": "进化等级: %d",
+  "gui.corpseorigin.convert_experience": "转化经验",
 
   "message.corpseorigin.skill_not_found": "§c技能不存在",
   "message.corpseorigin.skill_already_learned": "§c你已经学习了这个技能",
   "message.corpseorigin.not_enough_points": "§c进化点数不足",
   "message.corpseorigin.missing_prerequisite": "§c缺少前置技能",
   "message.corpseorigin.skill_learned": "§a成功学习技能: %s",
+  "message.corpseorigin.evolution_point_gained": "§a你获得了 1 点进化点！",
+  "message.corpseorigin.experience_converted": "§a你的 5 级经验已转化为 1 点进化点！",
+  "message.corpseorigin.evolution_level_up": "§a你的进化等级提升至 %s 级！",
 
   "skilltype.corpseorigin.basic_evolution": "基础进化",
   "skilltype.corpseorigin.power_mutation": "力量变异",

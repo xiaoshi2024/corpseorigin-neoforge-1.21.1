@@ -68,11 +68,20 @@ public class SkillTreeScreen extends Screen {
         unlockButton = Button.builder(
                         Component.translatable("gui.corpseorigin.unlock"),
                         this::onUnlockButtonClicked)
-                .pos(this.width / 2 - 50, this.height - 40)
+                .pos(this.width / 2 - 110, this.height - 40)
                 .size(100, 20)
                 .build();
         this.addRenderableWidget(unlockButton);
         unlockButton.active = false;
+        
+        // 创建经验转化按钮
+        Button convertButton = Button.builder(
+                        Component.translatable("gui.corpseorigin.convert_experience"),
+                        this::onConvertButtonClicked)
+                .pos(this.width / 2 + 10, this.height - 40)
+                .size(100, 20)
+                .build();
+        this.addRenderableWidget(convertButton);
 
         // 创建详情面板
         detailsPanel = new SkillDetailsPanel(10, 30, 150, 120, DETAILS_TEXTURE);
@@ -212,7 +221,7 @@ public class SkillTreeScreen extends Screen {
     }
 
     private void renderEvolutionPoints(GuiGraphics graphics) {
-        if (skillHandler == null) return;
+        if (skillHandler == null || minecraft == null || minecraft.player == null) return;
 
         int points = skillHandler.getEvolutionPoints();
         Component text = Component.translatable("gui.corpseorigin.evolution_points", points);
@@ -225,6 +234,19 @@ public class SkillTreeScreen extends Screen {
 
         // 绘制文字
         graphics.drawString(this.font, text, x + 5, y + 6, 0xFFD700, true);
+        
+        // 显示尸兄等级
+        int evolutionLevel = com.phagens.corpseorigin.player.PlayerCorpseData.getEvolutionLevel(minecraft.player);
+        Component levelText = Component.translatable("gui.corpseorigin.evolution_level", evolutionLevel);
+        
+        int levelX = this.width - 120;
+        int levelY = 35;
+        
+        // 使用精灵绘制背景框
+        graphics.blit(DETAILS_TEXTURE, levelX, levelY, 0, 120, 110, 25, 256, 256);
+        
+        // 绘制文字
+        graphics.drawString(this.font, levelText, levelX + 5, levelY + 6, 0xFFD700, true);
     }
 
     @Override
@@ -289,6 +311,28 @@ public class SkillTreeScreen extends Screen {
                 widget.setState(newState);
             }
         }
+    }
+    
+    // 经验转化按钮点击事件
+    private void onConvertButtonClicked(Button button) {
+        if (minecraft == null || minecraft.player == null || skillHandler == null) return;
+        
+        // 检查玩家是否是尸族
+        if (!com.phagens.corpseorigin.player.PlayerCorpseData.isCorpse(minecraft.player)) {
+            minecraft.player.sendSystemMessage(Component.literal("§c只有尸族玩家才能转化经验！"));
+            return;
+        }
+        
+        // 检查玩家是否有足够的经验等级
+        if (minecraft.player.experienceLevel < 5) {
+            minecraft.player.sendSystemMessage(Component.literal("§c需要至少5级经验才能转化！"));
+            return;
+        }
+        
+        // 发送经验转化请求到服务器
+        net.neoforged.neoforge.network.PacketDistributor.sendToServer(
+                new com.phagens.corpseorigin.network.ExperienceConvertPacket()
+        );
     }
 
     private boolean isNodeUnlocked(ISkillNode node) {

@@ -72,7 +72,14 @@ public class NetworkPaketGL {
                 SkillUnlockPacket::handleOnServer
         );
 
-        CorpseOrigin.LOGGER.info("NetworkPaketGL 网络包注册完成，共注册了 5 个包");
+        // 注册经验转化包
+        registrar.playToServer(
+                com.phagens.corpseorigin.network.ExperienceConvertPacket.TYPE,
+                com.phagens.corpseorigin.network.ExperienceConvertPacket.STREAM_CODEC,
+                com.phagens.corpseorigin.network.ExperienceConvertPacket::handleOnServer
+        );
+
+        CorpseOrigin.LOGGER.info("NetworkPaketGL 网络包注册完成，共注册了 6 个包");
     }
 
     private static void handleOpenGongFuMenu(OpenGongFuMenuPacket packet, IPayloadContext context) {

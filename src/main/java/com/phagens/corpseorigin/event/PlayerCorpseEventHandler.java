@@ -14,10 +14,14 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerXpEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
+
+import static net.minecraft.core.registries.Registries.ENTITY_TYPE;
 
 @EventBusSubscriber(modid = CorpseOrigin.MODID)
 public class PlayerCorpseEventHandler {
@@ -166,6 +170,20 @@ public class PlayerCorpseEventHandler {
                     
                     player.heal(healAmount);
                     
+                    // 攻击村民时有概率获得进化点
+                    if (target instanceof net.minecraft.world.entity.npc.AbstractVillager) {
+                        // 0.05%的概率获得1点进化点
+                        if (player.getRandom().nextFloat() < 0.0005f) {
+                            com.phagens.corpseorigin.skill.ISkillHandler handler = com.phagens.corpseorigin.skill.SkillAttachment.getSkillHandler(player);
+                            if (handler != null) {
+                                handler.addEvolutionPoints(1);
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("message.corpseorigin.evolution_point_gained"));
+                                CorpseOrigin.LOGGER.info("尸族玩家 {} 攻击村民后获得 1 点进化点",
+                                        player.getName().getString());
+                            }
+                        }
+                    }
+                    
                     CorpseOrigin.LOGGER.debug("尸族玩家 {} 攻击 {} 恢复 {} 饥饿度和 {} 生命值",
                             player.getName().getString(), target.getName().getString(), 
                             newHunger - currentHunger, healAmount);
@@ -207,6 +225,8 @@ public class PlayerCorpseEventHandler {
         }
     }
     
+
+    
     /**
      * 判断是否是毒素效果
      */
@@ -220,5 +240,119 @@ public class PlayerCorpseEventHandler {
         return mobEffect == MobEffects.POISON.value() ||
                mobEffect == MobEffects.HUNGER.value() ||
                mobEffect.getCategory() == net.minecraft.world.effect.MobEffectCategory.HARMFUL;
+    }
+    
+    /**
+     * 尸族玩家击杀生物时增加击杀数并检查进化等级
+     */
+    @SubscribeEvent
+    public static void onLivingDeath(LivingDeathEvent event) {
+        if (event.getSource().getEntity() instanceof ServerPlayer player) {
+            if (PlayerCorpseData.isCorpse(player)) {
+                LivingEntity target = event.getEntity();
+                
+                // 只有击杀活物（非亡灵、非机械）才增加击杀数
+                if (isLivingCreature(target)) {
+                    // 增加击杀数
+                    PlayerCorpseData.addKill(player);
+                    
+                    // 检查是否是高阶生物
+                    if (isHighLevelCreature(target)) {
+                        int currentLevel = PlayerCorpseData.getEvolutionLevel(player);
+                        int newLevel = currentLevel + 1;
+                        
+                        // 确保进化等级不超过5级
+                        if (newLevel <= 5) {
+                            PlayerCorpseData.setEvolutionLevel(player, newLevel);
+                            syncCorpseStateToClient(player);
+                            
+                            // 发送进化等级提升提示
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                                    "§a你吞噬了高阶生物！进化等级提升至 " + newLevel + " 级！"
+                            ));
+                            
+                            CorpseOrigin.LOGGER.info("尸族玩家 {} 吞噬了高阶生物，进化等级提升至 {} 级",
+                                    player.getName().getString(), newLevel);
+                        }
+                    } else {
+                        // 检查是否需要基于击杀数提升进化等级
+                        checkEvolutionLevel(player);
+                    }
+                    
+                    CorpseOrigin.LOGGER.debug("尸族玩家 {} 击杀 {}，当前击杀数: {}",
+                            player.getName().getString(), target.getName().getString(), 
+                            PlayerCorpseData.getKills(player));
+                }
+            }
+        }
+    }
+    
+    /**
+     * 检查并提升进化等级
+     */
+    private static void checkEvolutionLevel(ServerPlayer player) {
+        int kills = PlayerCorpseData.getKills(player);
+        int currentLevel = PlayerCorpseData.getEvolutionLevel(player);
+        int newLevel = currentLevel;
+        
+        // 根据击杀数判断进化等级
+        if (kills >= 400 && currentLevel < 5) {
+            newLevel = 5;
+        } else if (kills >= 200 && currentLevel < 4) {
+            newLevel = 4;
+        } else if (kills >= 100 && currentLevel < 3) {
+            newLevel = 3;
+        } else if (kills >= 50 && currentLevel < 2) {
+            newLevel = 2;
+        }
+        
+        // 如果进化等级发生变化，更新等级并发送提示
+        if (newLevel > currentLevel) {
+            PlayerCorpseData.setEvolutionLevel(player, newLevel);
+            syncCorpseStateToClient(player);
+            
+            // 发送进化等级提升提示
+            player.sendSystemMessage(net.minecraft.network.chat.Component.translatable(
+                    "message.corpseorigin.evolution_level_up", newLevel
+            ));
+            
+            CorpseOrigin.LOGGER.info("尸族玩家 {} 进化等级提升至 {} 级，当前击杀数: {}",
+                    player.getName().getString(), newLevel, kills);
+        }
+    }
+    
+    /**
+     * 判断是否是高阶生物
+     */
+    private static boolean isHighLevelCreature(LivingEntity entity) {
+        // 检查是否是末影龙
+        if (entity instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon) {
+            return true;
+        }
+        
+        // 检查是否是凋灵
+        if (entity instanceof net.minecraft.world.entity.boss.wither.WitherBoss) {
+            return true;
+        }
+        
+        // 检查是否是监守者
+        if (entity instanceof net.minecraft.world.entity.monster.warden.Warden) {
+            return true;
+        }
+        
+        // 检查是否是龙右（尸族高阶生物）
+        if (entity instanceof com.phagens.corpseorigin.Entity.LongyouEntity) {
+            return true;
+        }
+        
+        // 检查实体等级（如果有）
+        if (entity instanceof net.minecraft.world.entity.monster.Enemy) {
+            // 对于敌人实体，检查其生命值
+            if (entity.getMaxHealth() >= 100.0f) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 }
