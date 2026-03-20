@@ -1,6 +1,7 @@
 package com.phagens.corpseorigin.skill;
 
 import com.phagens.corpseorigin.CorpseOrigin;
+import com.phagens.corpseorigin.skill.special.CorpseKingPowerSkill;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -318,8 +319,9 @@ public class CorpseSkills {
     
     /**
      * 尸王之力 - 终极力量技能
+     * 可以感染其他玩家并短暂控制被感染的玩家
      */
-    public static final ISkill CORPSE_KING_POWER = register(new SimpleSkill(
+    public static final ISkill CORPSE_KING_POWER = register(new CorpseKingPowerSkill(
             new BaseSkill.Builder(id("corpse_king_power"))
                     .name(Component.translatable("skill.corpseorigin.corpse_king_power"))
                     .description(Component.translatable("skill.corpseorigin.corpse_king_power.desc"))
@@ -327,17 +329,9 @@ public class CorpseSkills {
                     .skillType(ISkill.SkillType.SUPREME_ABILITY)
                     .requiredLevel(5)
                     .prerequisites(id("berserk"), id("heavy_strike"))
-                    .cooldown(1200) // 1分钟
-                    .duration(300) // 15秒
-    ) {
-        @Override
-        public void onActivate(Player player) {
-            player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 300, 2));
-            player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 300, 1));
-            player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 300, 1));
-            player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 300, 1));
-        }
-    });
+                    .cooldown(600) // 30秒基础冷却
+                    .duration(200) // 10秒控制持续时间
+    ));
 
     /**
      * 影袭 - 终极敏捷技能

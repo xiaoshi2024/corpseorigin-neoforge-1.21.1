@@ -113,6 +113,12 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
     private int lastHurtTick = -1000; // 上次被攻击的游戏刻
     private static final int HURT_MEMORY_DURATION = 200; // 被攻击记忆持续时间（10秒）
 
+    // 主人系统（被尸王收服后）
+    private UUID masterUUID = null; // 主人的UUID
+    private static final double FOLLOW_RANGE = 16.0D; // 跟随范围
+    private static final double TELEPORT_RANGE = 32.0D; // 传送范围
+    private int followCooldown = 0; // 跟随冷却
+
     // 振动系统
     private final DynamicGameEventListener<Listener> dynamicGameEventListener;
     private final VibrationSystem.User vibrationUser;
@@ -206,28 +212,56 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
         this.goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 16.0F));
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
-        
-        // 主动攻击活人
-        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, true));
-        
+
+        // 主动攻击活人（排除主人）
+        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, 0, true, false, this::shouldAttackPlayer));
+
         // 攻击其他生物
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, net.minecraft.world.entity.animal.Animal.class, true));
-        
+
         // 攻击其他怪物（包括其他尸兄），但排除龙右（真王）
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, net.minecraft.world.entity.Mob.class, 0, true, false, this::shouldAttackMob));
+    }
+
+    /**
+     * 判断是否应该攻击玩家
+     * 有主人的尸兄不会攻击主人
+     */
+    private boolean shouldAttackPlayer(net.minecraft.world.entity.LivingEntity entity) {
+        // 不攻击龙右（真王）
+        if (entity instanceof LongyouEntity) {
+            return false;
+        }
+
+        // 如果有主人，不攻击主人
+        if (this.masterUUID != null && entity instanceof Player player) {
+            if (player.getUUID().equals(this.masterUUID)) {
+                return false;
+            }
+        }
+
+        return true;
     }
     
     /**
      * 判断是否应该攻击某个生物
      * 尸兄不会攻击龙右（真王）
      * 尸兄不会主动攻击已成为尸兄的玩家（同类），除非极度饥饿或被攻击
+     * 有主人的尸兄不会攻击主人，会帮助主人攻击
      */
     private boolean shouldAttackMob(net.minecraft.world.entity.LivingEntity entity) {
         // 不攻击龙右（真王）
         if (entity instanceof LongyouEntity) {
             return false;
         }
-        
+
+        // 如果有主人，不攻击主人
+        if (this.masterUUID != null && entity instanceof Player player) {
+            if (player.getUUID().equals(this.masterUUID)) {
+                return false;
+            }
+        }
+
         // 检查目标是否已成为尸兄的玩家（同类）
         if (entity instanceof Player player) {
             if (com.phagens.corpseorigin.player.PlayerCorpseData.isCorpse(player)) {
@@ -236,18 +270,18 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
                 if (wasRecentlyHurt) {
                     return true; // 被攻击时反击同类玩家
                 }
-                
+
                 // 同类尸兄玩家，只有在极度饥饿时才攻击
                 boolean isHungry = this.hunger <= HUNGER_THRESHOLD_FOR_CANNIBALISM;
                 boolean notUnderKing = !isUnderZombieKingLeadership();
-                
+
                 // 只有在满足吞噬条件时才攻击同类玩家
                 if (!isHungry || !notUnderKing) {
                     return false; // 不饥饿或有尸王领导时不攻击同类
                 }
             }
         }
-        
+
         return true;
     }
 
@@ -310,6 +344,14 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
     
     @Override
     public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
+        // 检查攻击者是否是主人，如果是则不记录（不反击）
+        if (source.getEntity() instanceof Player player) {
+            if (this.masterUUID != null && player.getUUID().equals(this.masterUUID)) {
+                // 被主人攻击，不记录，不反击
+                return super.hurt(source, amount);
+            }
+        }
+
         // 记录被攻击的时间（用于反击逻辑）
         if (source.getEntity() instanceof net.minecraft.world.entity.LivingEntity) {
             lastHurtTick = this.tickCount;
@@ -342,9 +384,14 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
         compound.putInt("SpeechCooldown", this.speechCooldown);
         compound.putBoolean("IsGreedy", this.isGreedy);
         compound.putInt("GreedCooldown", this.greedCooldown);
-        
+
         // 保存被攻击记忆
         compound.putInt("LastHurtTick", this.lastHurtTick);
+
+        // 保存主人信息
+        if (this.masterUUID != null) {
+            compound.putUUID("MasterUUID", this.masterUUID);
+        }
     }
 
     @Override
@@ -404,7 +451,12 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
         if (compound.contains("LastHurtTick")) {
             this.lastHurtTick = compound.getInt("LastHurtTick");
         }
-        
+
+        // 读取主人信息
+        if (compound.contains("MasterUUID")) {
+            this.masterUUID = compound.getUUID("MasterUUID");
+        }
+
         // 读取完成后更新自定义名称
         if (!this.level().isClientSide) {
             updateCustomName();
@@ -466,6 +518,89 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
         if (!this.level().isClientSide && this.level() instanceof ServerLevel serverLevel) {
             VibrationSystem.Ticker.tick(serverLevel, this.vibrationData, this.vibrationUser);
         }
+
+        // 服务端：跟随主人
+        if (!this.level().isClientSide) {
+            tickFollowMaster();
+        }
+    }
+
+    /**
+     * 跟随主人的tick逻辑
+     */
+    private void tickFollowMaster() {
+        if (this.masterUUID == null) return;
+
+        // 减少跟随冷却
+        if (followCooldown > 0) {
+            followCooldown--;
+            return;
+        }
+
+        // 每10tick检查一次
+        if (this.tickCount % 10 != 0) return;
+
+        // 获取主人
+        if (!(this.level() instanceof ServerLevel serverLevel)) return;
+        Player master = serverLevel.getServer().getPlayerList().getPlayer(this.masterUUID);
+        if (master == null || !master.isAlive()) return;
+
+        double distanceToMaster = this.distanceToSqr(master);
+
+        // 如果距离太远，传送到主人身边
+        if (distanceToMaster > TELEPORT_RANGE * TELEPORT_RANGE) {
+            teleportToMaster(master);
+            return;
+        }
+
+        // 如果距离超出跟随范围，向主人移动
+        if (distanceToMaster > FOLLOW_RANGE * FOLLOW_RANGE) {
+            this.getNavigation().moveTo(master, 1.2D);
+            followCooldown = 20; // 1秒冷却
+        }
+    }
+
+    /**
+     * 传送到主人身边
+     */
+    private void teleportToMaster(Player master) {
+        // 寻找主人附近的安全位置
+        for (int i = 0; i < 10; i++) {
+            double angle = this.random.nextDouble() * Math.PI * 2;
+            double distance = 2 + this.random.nextDouble() * 2;
+            double targetX = master.getX() + Math.cos(angle) * distance;
+            double targetZ = master.getZ() + Math.sin(angle) * distance;
+            double targetY = master.getY();
+
+            // 检查位置是否安全
+            if (this.level().noCollision(this.getBoundingBox().move(targetX - this.getX(), targetY - this.getY(), targetZ - this.getZ()))) {
+                this.teleportTo(targetX, targetY, targetZ);
+                this.getNavigation().stop();
+                followCooldown = 40; // 2秒冷却
+                break;
+            }
+        }
+    }
+
+    /**
+     * 设置主人
+     */
+    public void setMaster(UUID masterUUID) {
+        this.masterUUID = masterUUID;
+    }
+
+    /**
+     * 获取主人UUID
+     */
+    public UUID getMasterUUID() {
+        return this.masterUUID;
+    }
+
+    /**
+     * 检查是否有主人
+     */
+    public boolean hasMaster() {
+        return this.masterUUID != null;
     }
     
     @Override

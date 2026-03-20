@@ -2,6 +2,7 @@ package com.phagens.corpseorigin.skill;
 
 import com.phagens.corpseorigin.CorpseOrigin;
 import com.phagens.corpseorigin.player.PlayerCorpseData;
+import com.phagens.corpseorigin.skill.special.CorpseKingPowerSkill;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -79,7 +80,10 @@ public class SkillEventHandler {
 
             LivingEntity target = event.getEntity();
 
-
+            // 尸王之力 - 攻击时控制玩家或收服尸兄
+            if (handler.hasLearned(CorpseSkills.CORPSE_KING_POWER.getId())) {
+                CorpseKingPowerSkill.onAttackTarget(player, target);
+            }
 
             // 毒液 - 攻击带毒
             if (handler.hasLearned(CorpseSkills.VENOM.getId())) {

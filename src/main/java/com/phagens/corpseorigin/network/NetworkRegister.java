@@ -30,6 +30,20 @@ public class NetworkRegister {
                 PlayerCorpseSyncPacket::handle
         );
 
-        CorpseOrigin.LOGGER.info("NetworkRegister 网络包注册完成 - 共注册了 2 个包");
+        // 注册尸王控制包 (客户端 → 服务端)
+        registrar.playToServer(
+                CorpseKingControlPacket.TYPE,
+                CorpseKingControlPacket.STREAM_CODEC,
+                CorpseKingControlPacket::handleServer
+        );
+
+        // 注册尸王控制状态同步包 (服务端 → 客户端)
+        registrar.playToClient(
+                CorpseKingSyncPacket.TYPE,
+                CorpseKingSyncPacket.STREAM_CODEC,
+                CorpseKingSyncPacket::handleClient
+        );
+
+        CorpseOrigin.LOGGER.info("NetworkRegister 网络包注册完成 - 共注册了 4 个包");
     }
 }
