@@ -38,6 +38,12 @@ public class SkillTreeScreen extends Screen {
     private double lastMouseX;
     private double lastMouseY;
 
+    // 缩放
+    private double scale = 1.0;
+    private static final double MIN_SCALE = 0.5;
+    private static final double MAX_SCALE = 2.0;
+    private static final double SCALE_STEP = 0.1;
+
     // 选中的技能
     private ISkill selectedSkill = null;
 
@@ -103,8 +109,8 @@ public class SkillTreeScreen extends Screen {
             if (node.getSkills().isEmpty()) continue;
 
             ISkill skill = node.getSkills().get(0);
-            int x = (int) (scrollX + node.getX() * NODE_SPACING_X) - NODE_SIZE / 2;
-            int y = (int) (scrollY + node.getY() * NODE_SPACING_Y) - NODE_SIZE / 2;
+            int x = getNodeScreenX(node);
+            int y = getNodeScreenY(node);
 
             SkillNodeWidget.NodeState state = getNodeState(node);
 
@@ -120,10 +126,19 @@ public class SkillTreeScreen extends Screen {
                     onNodeClicked(skill);
                 }
             };
+            widget.setScale((float) scale);
 
             nodeWidgets.put(node, widget);
             this.addRenderableWidget(widget);
         }
+    }
+
+    private int getNodeScreenX(ISkillNode node) {
+        return (int) (scrollX + node.getX() * NODE_SPACING_X * scale) - (int) (NODE_SIZE * scale) / 2;
+    }
+
+    private int getNodeScreenY(ISkillNode node) {
+        return (int) (scrollY + node.getY() * NODE_SPACING_Y * scale) - (int) (NODE_SIZE * scale) / 2;
     }
 
     private void updateNodePositions() {
@@ -132,9 +147,10 @@ public class SkillTreeScreen extends Screen {
         for (ISkillNode node : skillTree.getAllNodes()) {
             SkillNodeWidget widget = nodeWidgets.get(node);
             if (widget != null) {
-                int x = (int) (scrollX + node.getX() * NODE_SPACING_X) - NODE_SIZE / 2;
-                int y = (int) (scrollY + node.getY() * NODE_SPACING_Y) - NODE_SIZE / 2;
+                int x = getNodeScreenX(node);
+                int y = getNodeScreenY(node);
                 widget.setPosition(x, y);
+                widget.setScale((float) scale);
 
                 // 更新节点状态
                 SkillNodeWidget.NodeState newState = getNodeState(node);
@@ -201,10 +217,10 @@ public class SkillTreeScreen extends Screen {
             List<ISkillNode> parents = tree.getParentNodes(node);
 
             for (ISkillNode parent : parents) {
-                int x1 = (int) (scrollX + parent.getX() * NODE_SPACING_X);
-                int y1 = (int) (scrollY + parent.getY() * NODE_SPACING_Y);
-                int x2 = (int) (scrollX + node.getX() * NODE_SPACING_X);
-                int y2 = (int) (scrollY + node.getY() * NODE_SPACING_Y);
+                int x1 = (int) (scrollX + parent.getX() * NODE_SPACING_X * scale);
+                int y1 = (int) (scrollY + parent.getY() * NODE_SPACING_Y * scale);
+                int x2 = (int) (scrollX + node.getX() * NODE_SPACING_X * scale);
+                int y2 = (int) (scrollY + node.getY() * NODE_SPACING_Y * scale);
 
                 int color;
                 if (isNodeUnlocked(node)) {
@@ -276,6 +292,25 @@ public class SkillTreeScreen extends Screen {
             return true;
         }
         return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (scrollY != 0) {
+            double oldScale = scale;
+            double scaleDelta = scrollY > 0 ? SCALE_STEP : -SCALE_STEP;
+            scale = Math.clamp(scale + scaleDelta, MIN_SCALE, MAX_SCALE);
+
+            if (scale != oldScale) {
+                // 以鼠标位置为中心缩放
+                double scaleRatio = scale / oldScale;
+                this.scrollX = mouseX - (mouseX - this.scrollX) * scaleRatio;
+                this.scrollY = mouseY - (mouseY - this.scrollY) * scaleRatio;
+                updateNodePositions();
+            }
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
     // 修改 onUnlockButtonClicked 方法

@@ -158,7 +158,8 @@ public abstract class GuiRadialMenu<T> extends Screen {
         }
 
         double angle = Math.toDegrees(Math.atan2(dy, dx));
-        angle = (angle + 360 + 90) % 360; // 调整使0度朝上
+        // 调整角度使-90度(顶部)为0索引，顺时针增加
+        angle = (angle + 90 + 360) % 360;
 
         float anglePerSlot = 360.0f / slotCount;
         selectedItem = (int)(angle / anglePerSlot);
@@ -175,8 +176,10 @@ public abstract class GuiRadialMenu<T> extends Screen {
         float anglePerSlot = 360.0f / slotCount;
 
         for (int i = 0; i < slotCount; i++) {
-            float startAngle = i * anglePerSlot - anglePerSlot / 2;
-            float endAngle = startAngle + anglePerSlot;
+            // 修正角度计算，使索引0在顶部(-90度)，与图标绘制一致
+            float centerAngle = i * anglePerSlot - 90.0f;
+            float startAngle = centerAngle - anglePerSlot / 2;
+            float endAngle = centerAngle + anglePerSlot / 2;
 
             boolean isSelected = (i == selectedItem);
             IRadialMenuSlot<T> slot = radialMenuSlots.get(i);

@@ -13,6 +13,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -40,16 +41,14 @@ public class SkillRadialScreen extends GuiRadialMenu<ISkill> {
                 player.getName().getString(), handler != null ? "存在" : "null");
 
         if (handler != null) {
-            Set<ISkill> learnedSkills = handler.getLearnedSkills();
-            CorpseOrigin.LOGGER.info("玩家已学习 {} 个技能", learnedSkills.size());
+            // 使用有序列表存储可激活技能，确保顺序一致
+            List<ISkill> activatableSkills = getSortedActivatableSkills(handler);
+            CorpseOrigin.LOGGER.info("玩家有 {} 个可激活技能", activatableSkills.size());
 
-            for (ISkill skill : learnedSkills) {
-                CorpseOrigin.LOGGER.info("检查技能: {} - 可激活: {}",
-                        skill.getId(), skill.isActivatable());
-
-                if (skill.isActivatable()) {
-                    slots.add(new RadialMenuSlot<>(skill.getName(), skill));
-                }
+            for (ISkill skill : activatableSkills) {
+                CorpseOrigin.LOGGER.info("添加技能到轮盘: {} - ID: {}",
+                        skill.getName().getString(), skill.getId());
+                slots.add(new RadialMenuSlot<>(skill.getName(), skill));
             }
         }
 
@@ -67,18 +66,29 @@ public class SkillRadialScreen extends GuiRadialMenu<ISkill> {
         );
     }
 
-    private static void onSkillSelected(Player player, int index) {
-        ISkillHandler handler = SkillAttachment.getSkillHandler(player);
-        List<ISkill> activatableSkills = new ArrayList<>();
-
+    /**
+     * 获取排序后的可激活技能列表
+     */
+    private static List<ISkill> getSortedActivatableSkills(ISkillHandler handler) {
+        List<ISkill> skills = new ArrayList<>();
         for (ISkill skill : handler.getLearnedSkills()) {
             if (skill.isActivatable()) {
-                activatableSkills.add(skill);
+                skills.add(skill);
             }
         }
+        // 按技能ID排序，确保顺序一致
+        skills.sort(Comparator.comparing(ISkill::getId));
+        return skills;
+    }
+
+    private static void onSkillSelected(Player player, int index) {
+        ISkillHandler handler = SkillAttachment.getSkillHandler(player);
+        List<ISkill> activatableSkills = getSortedActivatableSkills(handler);
 
         if (index >= 0 && index < activatableSkills.size()) {
             ISkill selectedSkill = activatableSkills.get(index);
+
+            CorpseOrigin.LOGGER.info("选中技能: index={}, skill={}", index, selectedSkill.getId());
 
             if (handler.isOnCooldown(selectedSkill)) {
                 int remaining = handler.getCooldownRemaining(selectedSkill);

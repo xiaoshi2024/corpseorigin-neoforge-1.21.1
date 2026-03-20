@@ -6,6 +6,7 @@ import com.phagens.corpseorigin.client.gui.SkillTreeScreen;
 import com.phagens.corpseorigin.player.PlayerCorpseData;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -48,24 +49,39 @@ public class KeyBindings {
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
-        
+
         if (minecraft.player == null) {
             return;
         }
-        
+
         // 检查是否是尸兄
-        if (!PlayerCorpseData.isCorpse(minecraft.player)) {
-            return;
-        }
-        
+        boolean isCorpse = PlayerCorpseData.isCorpse(minecraft.player);
+
         // 技能轮盘按键
         if (SKILL_WHEEL.consumeClick()) {
-            openSkillWheel();
+            if (isCorpse) {
+                openSkillWheel();
+            } else {
+                showOrdinaryPlayerMessage(minecraft);
+            }
         }
-        
+
         // 技能树按键
         if (SKILL_TREE.consumeClick()) {
-            openSkillTree();
+            if (isCorpse) {
+                openSkillTree();
+            } else {
+                showOrdinaryPlayerMessage(minecraft);
+            }
+        }
+    }
+
+    /**
+     * 显示普通玩家提示信息
+     */
+    private static void showOrdinaryPlayerMessage(Minecraft minecraft) {
+        if (minecraft.player != null) {
+            minecraft.player.sendSystemMessage(Component.translatable("message.corpseorigin.ordinary_player"));
         }
     }
     

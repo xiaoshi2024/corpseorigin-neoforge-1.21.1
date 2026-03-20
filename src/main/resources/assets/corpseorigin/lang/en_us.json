@@ -138,6 +138,7 @@
   "command.corpseorigin.voice.check_available": "§aVoice system available",
   "command.corpseorigin.voice.check_unavailable": "§cVoice system unavailable, please check microphone settings",
 
+  "message.corpseorigin.ordinary_player": "§cYou are just an ordinary person",
   "message.corpseorigin.skill_tree_coming_soon": "Skill tree interface coming soon",
   "message.corpseorigin.evolution_points_gained": "§aDevoured %2$s, gained %1$d evolution points!",
   "message.corpseorigin.voice_recording_start": "§eVoice recording started... (Hold V key to speak)",
