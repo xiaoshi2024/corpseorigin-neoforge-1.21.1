@@ -42,42 +42,42 @@ public record ActivateSkillPacket(ResourceLocation skillId) implements CustomPac
                 ISkill skill = SkillManager.getInstance().getSkill(packet.skillId());
                 
                 if (skill == null) {
-                    CorpseOrigin.LOGGER.warn("玩家 {} 尝试激活未知技能 {}", 
+                    CorpseOrigin.LOGGER.warn("玩家 {} 尝试激活未知技能 {}",
                             serverPlayer.getName().getString(), packet.skillId());
                     return;
                 }
-                
+
                 ISkillHandler handler = SkillAttachment.getSkillHandler(serverPlayer);
-                
+
                 // 检查是否已学习此技能
                 if (!handler.hasLearned(skill)) {
-                    CorpseOrigin.LOGGER.warn("玩家 {} 尝试激活未学习的技能 {}", 
+                    CorpseOrigin.LOGGER.warn("玩家 {} 尝试激活未学习的技能 {}",
                             serverPlayer.getName().getString(), packet.skillId());
                     return;
                 }
-                
+
                 // 检查是否是可激活技能
                 if (!skill.isActivatable()) {
-                    CorpseOrigin.LOGGER.warn("玩家 {} 尝试激活被动技能 {}", 
+                    CorpseOrigin.LOGGER.warn("玩家 {} 尝试激活被动技能 {}",
                             serverPlayer.getName().getString(), packet.skillId());
                     return;
                 }
-                
+
                 // 检查冷却
                 if (handler.isOnCooldown(skill)) {
-                    CorpseOrigin.LOGGER.debug("玩家 {} 尝试激活冷却中的技能 {}", 
+                    CorpseOrigin.LOGGER.debug("玩家 {} 尝试激活冷却中的技能 {}",
                             serverPlayer.getName().getString(), packet.skillId());
                     return;
                 }
-                
+
                 // 激活技能
                 boolean success = handler.activateSkill(skill);
-                
+
                 if (success) {
-                    CorpseOrigin.LOGGER.debug("玩家 {} 成功激活技能 {}", 
+                    CorpseOrigin.LOGGER.debug("玩家 {} 成功激活技能 {}",
                             serverPlayer.getName().getString(), packet.skillId());
                 } else {
-                    CorpseOrigin.LOGGER.debug("玩家 {} 激活技能 {} 失败", 
+                    CorpseOrigin.LOGGER.debug("玩家 {} 激活技能 {} 失败",
                             serverPlayer.getName().getString(), packet.skillId());
                 }
             }

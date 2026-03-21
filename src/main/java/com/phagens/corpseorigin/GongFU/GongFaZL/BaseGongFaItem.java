@@ -24,10 +24,9 @@ public class BaseGongFaItem extends Item {
         super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
         GongFaData data = getDataFromItem(stack);
         if (data != null){
-           //翻译组件 支持多语种
-            Component nameComponent = Component.translatable(data.getName())
-                    .withStyle(style -> style.withBold(true).withColor(0xFFAA00));
-            tooltipComponents.add(nameComponent);
+            // 注意：物品名称已经在 getName() 中返回，MC 会自动显示在顶部
+            // 这里不需要再添加名称，只添加其他信息
+
             // 显示稀有度
             tooltipComponents.add(Component.literal(getRarityColor(data.getRarity()) +
                     "品级: " + getRarityName(data.getRarity())));
@@ -109,7 +108,9 @@ public class BaseGongFaItem extends Item {
         GongFaData data = getDataFromItem(stack);
         if (data != null && data.getName() != null) {
             // 使用翻译组件，自动根据游戏语言切换
+            // 格式：XXX + 功法（如：雷系功法）
             return Component.translatable(data.getName())
+                    .append(Component.literal("功法"))
                     .withStyle(style -> style.withBold(true).withColor(0xFFAA00));
         }
         return super.getName(stack);

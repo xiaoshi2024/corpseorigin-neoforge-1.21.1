@@ -1,8 +1,15 @@
 package com.phagens.corpseorigin.GongFU.Sceen;
 
+import com.phagens.corpseorigin.GongFU.GongFaZL.BaseGongFaItem;
+import com.phagens.corpseorigin.GongFU.GongFaZL.GongFaData;
+import com.phagens.corpseorigin.GongFU.GongFaZL.GongFaSkillManager;
 import com.phagens.corpseorigin.GongFU.MenuTypeRegister;
 import com.phagens.corpseorigin.GongFU.ModUtlis.GongFUDataUtlis;
+import com.phagens.corpseorigin.skill.ISkill;
+import com.phagens.corpseorigin.skill.ISkillHandler;
+import com.phagens.corpseorigin.skill.SkillAttachment;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.SimpleContainer;
@@ -144,6 +151,50 @@ public class GongFuMenu extends AbstractContainerMenu {
     public void removed(Player player) {
         super.removed(player);
         GongFUDataUtlis.applyGongFaAttributes(player);
+
+        // 学习/遗忘功法技能
+        if (!player.level().isClientSide) {
+            updateGongFuSkills(player);
+        }
+    }
+
+    /**
+     * 更新玩家的功法技能学习状态
+     */
+    private void updateGongFuSkills(Player player) {
+        ISkillHandler handler = SkillAttachment.getSkillHandler(player);
+        if (handler == null) return;
+
+        // 获取当前容器中的所有功法
+        java.util.Set<ResourceLocation> equippedGongFuSkills = new java.util.HashSet<>();
+        for (int i = 0; i < container.getContainerSize(); i++) {
+            ItemStack stack = container.getItem(i);
+            if (!stack.isEmpty() && stack.getItem() instanceof BaseGongFaItem gongFaItem) {
+                GongFaData data = gongFaItem.getDataFromItem(stack);
+                if (data != null) {
+                    ResourceLocation skillId = GongFaSkillManager.getInstance()
+                            .getGongFuSkillId(data.getTypeId(), data.getRarity(), data.getCeng());
+                    if (skillId != null) {
+                        equippedGongFuSkills.add(skillId);
+                        // 学习技能 - 使用 learnGongFuSkill 绕过尸兄检查
+                        if (!handler.hasLearned(skillId)) {
+                            if (handler instanceof com.phagens.corpseorigin.skill.SkillHandler skillHandler) {
+                                skillHandler.learnGongFuSkill(skillId);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 遗忘不再装备的功法技能
+        for (ISkill skill : handler.getLearnedSkills()) {
+            if (skill.getId().getPath().startsWith("gongfu_")) {
+                if (!equippedGongFuSkills.contains(skill.getId())) {
+                    handler.forgetSkill(skill);
+                }
+            }
+        }
     }
 
 

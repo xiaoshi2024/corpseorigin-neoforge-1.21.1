@@ -351,14 +351,16 @@ public abstract class GuiRadialMenu<T> extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        int number = keyCode - 48;
-        if (number >= 1 && number <= radialMenuSlots.size()) {
+        // 数字键 1-9 直接选择并释放对应技能
+        int number = keyCode - 48; // GLFW_KEY_1 = 49
+        if (number >= 1 && number <= Math.min(radialMenuSlots.size(), 9)) {
             selectedItem = number - 1;
             radialMenu.select(selectedItem);
             this.onClose();
             return true;
         }
 
+        // ESC 键关闭
         if (keyCode == 256) {
             this.onClose();
             return true;

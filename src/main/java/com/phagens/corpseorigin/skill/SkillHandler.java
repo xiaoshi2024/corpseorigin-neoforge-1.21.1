@@ -170,7 +170,7 @@ public class SkillHandler implements ISkillHandler {
                     new HashMap<>(cooldowns)
             );
 
-            CorpseOrigin.LOGGER.info("【同步到客户端】玩家 {}: {} 个技能, {} 进化点",
+            CorpseOrigin.LOGGER.debug("【同步到客户端】玩家 {}: {} 个技能, {} 进化点",
                     player.getName().getString(), learnedSkills.size(), evolutionPoints);
 
             PacketDistributor.sendToPlayer(serverPlayer, packet);
@@ -190,7 +190,7 @@ public class SkillHandler implements ISkillHandler {
                     new HashMap<>(cooldowns)
             );
 
-            CorpseOrigin.LOGGER.info("【强制同步】玩家 {}: {} 个技能, {} 进化点",
+            CorpseOrigin.LOGGER.debug("【强制同步】玩家 {}: {} 个技能, {} 进化点",
                     player.getName().getString(), learnedSkills.size(), evolutionPoints);
 
             PacketDistributor.sendToPlayer(serverPlayer, packet);
