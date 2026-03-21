@@ -59,9 +59,10 @@ public class CorpseKingControlHandler {
         controlled.setXRot((float) pitch);
         controlled.setYHeadRot((float) yaw);
 
-        // 如果被定身，强制停止移动
+        // 如果被定身，强制停止移动（完全锁定）
         if (CorpseKingPowerSkill.isPlayerFrozen(controlled)) {
-            controlled.setDeltaMovement(0, controlled.getDeltaMovement().y, 0);
+            controlled.setDeltaMovement(0, 0, 0);
+            controlled.hurtMarked = true; // 标记需要同步到客户端
         }
     }
 

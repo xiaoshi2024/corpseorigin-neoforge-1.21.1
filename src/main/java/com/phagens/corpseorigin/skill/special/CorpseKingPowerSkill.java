@@ -150,9 +150,8 @@ public class CorpseKingPowerSkill extends BaseSkill {
         // 给被控制玩家添加效果
         target.addEffect(new MobEffectInstance(MobEffects.GLOWING, PLAYER_CONTROL_DURATION, 0, false, false));
         target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, PLAYER_CONTROL_DURATION, 1, false, false));
-        // 定身效果（通过缓慢实现）
+        // 定身效果（通过缓慢实现禁止移动）
         target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, PLAYER_CONTROL_DURATION, 10, false, false));
-        target.addEffect(new MobEffectInstance(MobEffects.JUMP, PLAYER_CONTROL_DURATION, 128, false, false)); // 禁止跳跃
 
         // 播放效果
         level.sendParticles(
@@ -215,51 +214,31 @@ public class CorpseKingPowerSkill extends BaseSkill {
 
     /**
      * 将村民转化为尸兄并收为手下
+     * 使用BYeffect的感染方法，传递尸王UUID作为感染源
      */
     private static void convertVillagerToMinion(Player master, net.minecraft.world.entity.npc.Villager villager, ServerLevel level) {
-        CorpseOrigin.LOGGER.info("尸王 {} 将村民转化为尸兄手下", master.getName().getString());
+        CorpseOrigin.LOGGER.info("尸王 {} 感染村民", master.getName().getString());
 
-        // 播放转化效果
+        // 使用BYeffect的感染方法，传递尸王UUID作为感染源
+        // 这样转化后的尸兄会自动成为尸王的手下
+        com.phagens.corpseorigin.Effect.BYeffect.applyInfection(
+                villager,
+                level,
+                100, // 5秒
+                master.getUUID() // 感染源：尸王
+        );
+
+        // 播放感染效果
         level.sendParticles(
                 ParticleTypes.WITCH,
                 villager.getX(), villager.getY() + 1, villager.getZ(),
-                50, 0.5, 1, 0.5, 0.1
+                30, 0.5, 1, 0.5, 0.1
         );
         level.playSound(null, villager.blockPosition(),
                 SoundEvents.ZOMBIE_INFECT, SoundSource.PLAYERS, 1.0F, 0.8F);
 
-        // 创建尸兄实体
-        LowerLevelZbEntity zbEntity = new LowerLevelZbEntity(
-                com.phagens.corpseorigin.register.EntityRegistry.LOWER_LEVEL_ZB.get(),
-                level
-        );
-
-        // 设置位置和属性
-        zbEntity.moveTo(villager.getX(), villager.getY(), villager.getZ(), villager.getYRot(), villager.getXRot());
-        zbEntity.setMaster(master.getUUID());
-
-        // 移除村民
-        villager.discard();
-
-        // 添加尸兄到世界
-        level.addFreshEntity(zbEntity);
-
-        // 添加到手下列表
-        zombieMinions.computeIfAbsent(master.getUUID(), k -> new HashSet<>()).add(zbEntity.getUUID());
-
-        // 播放收服效果
-        level.sendParticles(
-                ParticleTypes.HEART,
-                zbEntity.getX(), zbEntity.getY() + 1, zbEntity.getZ(),
-                10, 0.5, 0.5, 0.5, 0.1
-        );
-
         // 发送消息
-        master.sendSystemMessage(Component.literal("§4§l你将村民转化为尸兄手下！它现在听从你的命令！"));
-
-        // 保存到数据
-        CorpseKingData data = CorpseKingData.get(level);
-        data.addMinion(master.getUUID(), zbEntity.getUUID());
+        master.sendSystemMessage(Component.literal("§c§l你感染了村民！等待转化..."));
     }
 
     /**
@@ -279,13 +258,11 @@ public class CorpseKingPowerSkill extends BaseSkill {
         if (info.frozen) {
             // 重新定身
             target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, info.getRemainingTicks(), 10, false, false));
-            target.addEffect(new MobEffectInstance(MobEffects.JUMP, info.getRemainingTicks(), 128, false, false));
             controller.sendSystemMessage(Component.literal("§c你定住了 " + target.getName().getString()));
             target.sendSystemMessage(Component.literal("§c你被尸王定住了！"));
         } else {
             // 解除定身（但仍有虚弱效果）
             target.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
-            target.removeEffect(MobEffects.JUMP);
             controller.sendSystemMessage(Component.literal("§a你解除了 " + target.getName().getString() + " 的定身"));
             target.sendSystemMessage(Component.literal("§a定身解除了，但你仍被控制！"));
         }
@@ -305,7 +282,6 @@ public class CorpseKingPowerSkill extends BaseSkill {
         if (!info.frozen) {
             info.frozen = true;
             target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, info.getRemainingTicks(), 10, false, false));
-            target.addEffect(new MobEffectInstance(MobEffects.JUMP, info.getRemainingTicks(), 128, false, false));
         }
     }
 
@@ -388,7 +364,6 @@ public class CorpseKingPowerSkill extends BaseSkill {
                     controlled.removeEffect(MobEffects.GLOWING);
                     controlled.removeEffect(MobEffects.WEAKNESS);
                     controlled.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
-                    controlled.removeEffect(MobEffects.JUMP);
                 }
                 if (controller != null) {
                     controller.sendSystemMessage(Component.literal("§7控制效果已结束"));

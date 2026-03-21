@@ -12,6 +12,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -33,6 +34,8 @@ import software.bernie.geckolib.animation.AnimationState;
 import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, VibrationSystem {
@@ -66,6 +69,7 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
     protected static final RawAnimation IDLE_ANIM = RawAnimation.begin().thenLoop("idle");
     protected static final RawAnimation ATTACK_ANIM = RawAnimation.begin().thenPlay("attack");
     protected static final RawAnimation SHIEYE_ANIM = RawAnimation.begin().thenPlay("shieye");
+    protected static final RawAnimation SPECIAL_ANIM = RawAnimation.begin().thenPlay("special");
 
     // 同步数据
     private static final EntityDataAccessor<String> DATA_PLAYER_NAME =
@@ -77,6 +81,12 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
     private static final EntityDataAccessor<Boolean> DATA_PLAYING_SHIEYE =
             SynchedEntityData.defineId(LowerLevelZbEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
+            SynchedEntityData.defineId(LowerLevelZbEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_PLAYING_SPECIAL =
+            SynchedEntityData.defineId(LowerLevelZbEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_SPECIAL_TICKS =
+            SynchedEntityData.defineId(LowerLevelZbEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_COMMAND_STATE =
             SynchedEntityData.defineId(LowerLevelZbEntity.class, EntityDataSerializers.INT);
 
     private UUID playerSkinId;
@@ -118,6 +128,38 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
     private static final double FOLLOW_RANGE = 16.0D; // 跟随范围
     private static final double TELEPORT_RANGE = 32.0D; // 传送范围
     private int followCooldown = 0; // 跟随冷却
+
+    // 尸兄命令状态
+    public enum CommandState {
+        FOLLOW(0),      // 跟随主人（默认）
+        ATTACK(1),      // 主动攻击
+        DEFEND(2),      // 防御模式（不主动攻击）
+        STAY(3);        // 停留原地
+
+        private final int code;
+
+        CommandState(int code) {
+            this.code = code;
+        }
+
+        public int getCode() {
+            return code;
+        }
+
+        public static CommandState fromCode(int code) {
+            for (CommandState state : values()) {
+                if (state.code == code) {
+                    return state;
+                }
+            }
+            return FOLLOW;
+        }
+    }
+
+    private CommandState currentCommand = CommandState.FOLLOW; // 当前命令状态
+
+    // 定身系统：记录被此尸兄定身的实体及其定身结束时间
+    private final Map<UUID, Long> immobilizedEntities = new HashMap<>();
 
     // 振动系统
     private final DynamicGameEventListener<Listener> dynamicGameEventListener;
@@ -202,6 +244,9 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
         builder.define(DATA_SKIN_STATE, ZbSkinState.NOT_LOADED.getCode());
         builder.define(DATA_PLAYING_SHIEYE, false);
         builder.define(DATA_VARIANT, Variant.NORMAL.getCode());
+        builder.define(DATA_PLAYING_SPECIAL, false);
+        builder.define(DATA_SPECIAL_TICKS, 0);
+        builder.define(DATA_COMMAND_STATE, CommandState.FOLLOW.getCode());
     }
 
     @Override
@@ -308,11 +353,16 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
     }
 
     private <E extends LowerLevelZbEntity> software.bernie.geckolib.animation.PlayState controlAnimation(AnimationState<E> event) {
+        // 如果正在播放 special 动画，继续播放
+        if (this.entityData.get(DATA_PLAYING_SPECIAL)) {
+            return event.setAndContinue(SPECIAL_ANIM);
+        }
+
         // 如果正在播放 shieye 动画，继续播放
         if (this.entityData.get(DATA_PLAYING_SHIEYE)) {
             return event.setAndContinue(SHIEYE_ANIM);
         }
-        
+
         // 如果正在攻击，播放攻击动画
         if (this.getAttackAnim(event.getPartialTick()) > 0) {
             // 攻击时有30%几率触发 shieye 动画
@@ -322,12 +372,12 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
             }
             return event.setAndContinue(ATTACK_ANIM);
         }
-        
+
         // 移动时播放行走动画
         if (event.isMoving()) {
             return event.setAndContinue(WALK_ANIM);
         }
-        
+
         // 默认播放待机动画
         return event.setAndContinue(IDLE_ANIM);
     }
@@ -352,9 +402,30 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
             }
         }
 
-        // 记录被攻击的时间（用于反击逻辑）
-        if (source.getEntity() instanceof net.minecraft.world.entity.LivingEntity) {
-            lastHurtTick = this.tickCount;
+        // NORMAL变种在special动画期间防御远程攻击（类似盾牌）
+        if (this.entityData.get(DATA_PLAYING_SPECIAL) && getVariant() == Variant.NORMAL) {
+            if (source.is(DamageTypeTags.IS_PROJECTILE)) {
+                // 播放防御音效
+                if (this.level() instanceof ServerLevel level) {
+                    level.playSound(null, this.blockPosition(),
+                            net.minecraft.sounds.SoundEvents.SHIELD_BLOCK, net.minecraft.sounds.SoundSource.HOSTILE, 1.0F, 1.0F);
+                    // 播放盾牌防御粒子
+                    level.sendParticles(
+                            net.minecraft.core.particles.ParticleTypes.CRIT,
+                            this.getX(), this.getY() + 1, this.getZ(),
+                            10, 0.5, 0.5, 0.5, 0.1
+                    );
+                }
+                return false; // 完全防御远程攻击
+            }
+        }
+
+        // 防御模式下不记录被攻击（不反击）
+        if (getCommand() != CommandState.DEFEND) {
+            // 记录被攻击的时间（用于反击逻辑）
+            if (source.getEntity() instanceof net.minecraft.world.entity.LivingEntity) {
+                lastHurtTick = this.tickCount;
+            }
         }
         return super.hurt(source, amount);
     }
@@ -471,12 +542,23 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
         if (shieyeCooldown > 0) {
             shieyeCooldown--;
         }
-        
+
         // 处理 shieye 动画计时器
         if (!this.level().isClientSide && this.entityData.get(DATA_PLAYING_SHIEYE)) {
             shieyeAnimationTicks--;
             if (shieyeAnimationTicks <= 0) {
                 this.entityData.set(DATA_PLAYING_SHIEYE, false);
+            }
+        }
+
+        // 处理 special 动画计时器
+        if (!this.level().isClientSide && this.entityData.get(DATA_PLAYING_SPECIAL)) {
+            int specialTicks = this.entityData.get(DATA_SPECIAL_TICKS);
+            specialTicks--;
+            this.entityData.set(DATA_SPECIAL_TICKS, specialTicks);
+            if (specialTicks <= 0) {
+                this.entityData.set(DATA_PLAYING_SPECIAL, false);
+                onSpecialAnimationEnd();
             }
         }
 
@@ -507,6 +589,9 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
             
             // 服务端：视力随等级变化
             updateVisionRange();
+
+            // 服务端：随机触发special技能
+            tickSpecialSkill();
         }
 
         // 客户端：加载皮肤
@@ -523,6 +608,87 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
         if (!this.level().isClientSide) {
             tickFollowMaster();
         }
+
+        // 服务端：更新命令行为
+        if (!this.level().isClientSide) {
+            updateCommandBehavior();
+        }
+
+        // 服务端：更新定身实体
+        if (!this.level().isClientSide) {
+            tickImmobilizedEntities();
+        }
+    }
+
+    /**
+     * special技能随机触发逻辑
+     * 根据命令状态决定触发哪种效果：
+     * - 防御模式：大概率发动防御效果（NORMAL变种效果）
+     * - 进攻模式：大概率发动定身效果（CRACKED变种效果）
+     * - 其他模式：正常随机触发
+     */
+    private void tickSpecialSkill() {
+        // 如果已经在播放special动画，不触发
+        if (this.entityData.get(DATA_PLAYING_SPECIAL)) return;
+
+        CommandState command = getCommand();
+        float triggerChance = 0.001F; // 基础几率 0.1%
+
+        // 根据命令状态调整触发几率和效果
+        switch (command) {
+            case DEFEND:
+                // 防御模式：大概率发动防御效果（5%几率）
+                if (this.random.nextFloat() < 0.05F) {
+                    triggerDefenseSpecial();
+                }
+                break;
+
+            case ATTACK:
+                // 进攻模式：大概率发动定身效果（5%几率）
+                if (this.random.nextFloat() < 0.05F) {
+                    triggerAttackSpecial();
+                }
+                break;
+
+            case FOLLOW:
+            case STAY:
+            default:
+                // 其他模式：正常随机触发（0.1%几率）
+                if (this.random.nextFloat() < triggerChance) {
+                    triggerSpecialAnimation();
+                }
+                break;
+        }
+    }
+
+    /**
+     * 防御模式下的special技能 - 防御效果
+     */
+    private void triggerDefenseSpecial() {
+        if (this.level().isClientSide) return;
+
+        this.entityData.set(DATA_PLAYING_SPECIAL, true);
+        this.entityData.set(DATA_SPECIAL_TICKS, 100); // 5秒
+
+        // 防御模式总是发动防御效果（类似NORMAL变种）
+        applyNormalSpecialEffect();
+
+        CorpseOrigin.LOGGER.info("尸兄 {} 在防御模式下发动防御技能", this.getId());
+    }
+
+    /**
+     * 进攻模式下的special技能 - 定身效果
+     */
+    private void triggerAttackSpecial() {
+        if (this.level().isClientSide) return;
+
+        this.entityData.set(DATA_PLAYING_SPECIAL, true);
+        this.entityData.set(DATA_SPECIAL_TICKS, 100); // 5秒
+
+        // 进攻模式总是发动定身效果（类似CRACKED变种）
+        applyCrackedSpecialEffect();
+
+        CorpseOrigin.LOGGER.info("尸兄 {} 在进攻模式下发动定身技能", this.getId());
     }
 
     /**
@@ -1007,6 +1173,154 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
         this.shieyeCooldown = 200; // 10秒冷却时间
         this.shieyeAnimationTicks = 60; // 3秒 = 60 ticks，动画持续时间
     }
+
+    /**
+     * 触发 special 动画
+     * CRACKED变种：定身效果
+     * NORMAL变种：防御效果
+     */
+    public void triggerSpecialAnimation() {
+        if (this.level().isClientSide) return;
+        if (this.entityData.get(DATA_PLAYING_SPECIAL)) return; // 已经在播放
+
+        this.entityData.set(DATA_PLAYING_SPECIAL, true);
+        this.entityData.set(DATA_SPECIAL_TICKS, 100); // 5秒 = 100 ticks
+
+        Variant variant = getVariant();
+        if (variant == Variant.CRACKED) {
+            // CRACKED变种：定身效果 - 冻结附近敌人
+            applyCrackedSpecialEffect();
+        } else {
+            // NORMAL变种：防御效果 - 减少受到的伤害
+            applyNormalSpecialEffect();
+        }
+    }
+
+    /**
+     * CRACKED变种的特殊效果：定身附近2格内的敌人
+     * 真正的定身：禁止移动、禁止跳跃、锁定位置
+     */
+    private void applyCrackedSpecialEffect() {
+        if (!(this.level() instanceof ServerLevel level)) return;
+
+        // 获取附近的目标（2格范围内）
+        double range = 2.0D;
+        var nearbyEntities = level.getEntitiesOfClass(
+                net.minecraft.world.entity.LivingEntity.class,
+                this.getBoundingBox().inflate(range),
+                entity -> entity != this && !(entity instanceof LowerLevelZbEntity)
+        );
+
+        long currentTime = level.getGameTime();
+
+        // 对敌人施加定身效果
+        for (var entity : nearbyEntities) {
+            if (entity instanceof Player player) {
+                // 如果是玩家主人，不施加效果
+                if (this.masterUUID != null && player.getUUID().equals(this.masterUUID)) {
+                    continue;
+                }
+            }
+
+            // 施加缓慢效果（禁止移动）
+            entity.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                    net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, 60, 10, false, true
+            ));
+
+            // 记录定身状态：锁定3秒（60 tick）
+            immobilizedEntities.put(entity.getUUID(), currentTime + 60);
+
+            // 播放粒子效果
+            level.sendParticles(
+                    net.minecraft.core.particles.ParticleTypes.SOUL,
+                    entity.getX(), entity.getY() + 1, entity.getZ(),
+                    20, 0.5, 0.5, 0.5, 0.1
+            );
+        }
+
+        // 播放音效
+        level.playSound(null, this.blockPosition(),
+                net.minecraft.sounds.SoundEvents.EVOKER_CAST_SPELL, net.minecraft.sounds.SoundSource.HOSTILE, 1.0F, 0.5F);
+    }
+
+    /**
+     * 更新定身实体：强制锁定位置
+     */
+    private void tickImmobilizedEntities() {
+        if (!(this.level() instanceof ServerLevel level)) return;
+
+        long currentTime = level.getGameTime();
+
+        // 遍历所有被定身的实体
+        immobilizedEntities.entrySet().removeIf(entry -> {
+            UUID entityId = entry.getKey();
+            long unlockTime = entry.getValue();
+
+            // 如果定身时间已过，移除
+            if (currentTime >= unlockTime) {
+                return true;
+            }
+
+            // 获取实体并强制锁定位置
+            net.minecraft.world.entity.Entity entity = level.getEntity(entityId);
+            if (entity instanceof net.minecraft.world.entity.LivingEntity livingEntity) {
+                // 强制停止移动
+                livingEntity.setDeltaMovement(0, 0, 0);
+                livingEntity.hurtMarked = true; // 标记需要同步
+
+                // 如果是玩家，额外设置位置（防止客户端预测移动）
+                if (livingEntity instanceof Player player) {
+                    // 强制玩家在原地
+                    player.setDeltaMovement(0, 0, 0);
+                }
+            } else {
+                // 实体不存在或已死亡，移除记录
+                return true;
+            }
+
+            return false;
+        });
+    }
+
+    /**
+     * NORMAL变种的特殊效果：防御增强
+     */
+    private void applyNormalSpecialEffect() {
+        if (!(this.level() instanceof ServerLevel level)) return;
+
+        // 添加防御效果
+        this.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 100, 1, false, true
+        ));
+        this.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                net.minecraft.world.effect.MobEffects.ABSORPTION, 100, 0, false, true
+        ));
+
+        // 播放粒子效果
+        level.sendParticles(
+                net.minecraft.core.particles.ParticleTypes.TOTEM_OF_UNDYING,
+                this.getX(), this.getY() + 1, this.getZ(),
+                30, 0.5, 1, 0.5, 0.1
+        );
+
+        // 播放音效
+        level.playSound(null, this.blockPosition(),
+                net.minecraft.sounds.SoundEvents.IRON_GOLEM_REPAIR, net.minecraft.sounds.SoundSource.HOSTILE, 1.0F, 1.0F);
+    }
+
+    /**
+     * special动画结束时的回调
+     */
+    private void onSpecialAnimationEnd() {
+        // 动画结束，可以在这里添加后续效果
+    }
+
+    /**
+     * 检查是否正在播放special动画
+     */
+    public boolean isPlayingSpecial() {
+        return this.entityData.get(DATA_PLAYING_SPECIAL);
+    }
     
     /**
      * 更新视力范围
@@ -1098,5 +1412,229 @@ public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vib
                item == net.minecraft.world.item.Items.EMERALD_BLOCK ||
                item == net.minecraft.world.item.Items.GOLDEN_APPLE ||
                item == net.minecraft.world.item.Items.ENCHANTED_GOLDEN_APPLE;
+    }
+
+    // ==================== 尸兄命令系统 ====================
+
+    /**
+     * 设置命令状态
+     * @param command 命令状态
+     */
+    public void setCommand(CommandState command) {
+        this.currentCommand = command;
+        this.entityData.set(DATA_COMMAND_STATE, command.getCode());
+
+        // 根据命令执行相应行为
+        switch (command) {
+            case STAY:
+                // 停止移动
+                this.getNavigation().stop();
+                break;
+            case ATTACK:
+                // 主动攻击模式 - 增加攻击欲望
+                break;
+            case DEFEND:
+                // 防御模式 - 停止攻击，只防御
+                this.setTarget(null);
+                break;
+            case FOLLOW:
+            default:
+                // 跟随模式 - 默认行为
+                break;
+        }
+
+        CorpseOrigin.LOGGER.info("尸兄 {} 命令状态变更为: {}", this.getId(), command.name());
+    }
+
+    /**
+     * 获取当前命令状态
+     */
+    public CommandState getCommand() {
+        return CommandState.fromCode(this.entityData.get(DATA_COMMAND_STATE));
+    }
+
+    /**
+     * 主人对尸兄执行命令
+     * @param master 主人玩家
+     * @param command 命令
+     * @return 是否成功执行
+     */
+    public boolean executeCommand(Player master, CommandState command) {
+        // 检查是否是主人
+        if (this.masterUUID == null || !this.masterUUID.equals(master.getUUID())) {
+            return false;
+        }
+
+        // 设置命令
+        setCommand(command);
+
+        // 播放命令确认音效
+        if (this.level() instanceof ServerLevel level) {
+            level.playSound(null, this.blockPosition(),
+                    net.minecraft.sounds.SoundEvents.NOTE_BLOCK_PLING.value(),
+                    net.minecraft.sounds.SoundSource.HOSTILE, 1.0F, 1.0F);
+        }
+
+        // 发送消息给主人
+        String message = switch (command) {
+            case FOLLOW -> "§a尸兄开始跟随你！";
+            case ATTACK -> "§c尸兄进入攻击模式！";
+            case DEFEND -> "§b尸兄进入防御模式！";
+            case STAY -> "§7尸兄停留在原地！";
+        };
+        master.sendSystemMessage(net.minecraft.network.chat.Component.literal(message));
+
+        return true;
+    }
+
+    /**
+     * 检查尸兄是否接受命令（有主人且主人在附近）
+     */
+    public boolean canAcceptCommand(Player player) {
+        if (this.masterUUID == null) return false;
+        if (!this.masterUUID.equals(player.getUUID())) return false;
+
+        // 检查主人是否在32格范围内
+        return this.distanceToSqr(player) <= 32.0D * 32.0D;
+    }
+
+    /**
+     * 根据当前命令状态更新行为
+     * 在tick中调用
+     */
+    private void updateCommandBehavior() {
+        CommandState command = getCommand();
+
+        switch (command) {
+            case STAY:
+                // 停留模式：停止导航，不主动移动，不主动攻击
+                if (this.getNavigation().isInProgress()) {
+                    this.getNavigation().stop();
+                }
+                // 清除当前目标，停止攻击
+                if (this.getTarget() != null) {
+                    this.setTarget(null);
+                }
+                break;
+
+            case DEFEND:
+                // 防御模式：完全被动，不主动攻击，被攻击也不反击
+                // 立即清除当前目标
+                if (this.getTarget() != null) {
+                    this.setTarget(null);
+                }
+                // 停止导航
+                if (this.getNavigation().isInProgress()) {
+                    this.getNavigation().stop();
+                }
+                break;
+
+            case ATTACK:
+                // 攻击模式：主动寻找并攻击附近敌人
+                if (this.tickCount % 20 == 0 && this.getTarget() == null) {
+                    // 每1秒寻找一次目标
+                    findAndAttackTarget();
+                }
+                break;
+
+            case FOLLOW:
+            default:
+                // 跟随模式：默认行为，由tickFollowMaster处理
+                break;
+        }
+    }
+
+    /**
+     * 攻击模式下寻找并攻击目标
+     */
+    private void findAndAttackTarget() {
+        if (!(this.level() instanceof ServerLevel level)) return;
+
+        // 寻找最近的敌对生物或玩家
+        var nearbyEntities = level.getEntitiesOfClass(
+                net.minecraft.world.entity.LivingEntity.class,
+                this.getBoundingBox().inflate(16.0D),
+                entity -> {
+                    if (entity == this) return false;
+                    if (entity instanceof LowerLevelZbEntity) return false;
+                    if (entity instanceof Player player) {
+                        // 不攻击主人
+                        if (this.masterUUID != null && player.getUUID().equals(this.masterUUID)) {
+                            return false;
+                        }
+                    }
+                    return shouldAttackMob(entity);
+                }
+        );
+
+        if (!nearbyEntities.isEmpty()) {
+            // 设置最近的目标
+            net.minecraft.world.entity.LivingEntity closest = nearbyEntities.get(0);
+            double minDistance = this.distanceToSqr(closest);
+            for (var entity : nearbyEntities) {
+                double dist = this.distanceToSqr(entity);
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    closest = entity;
+                }
+            }
+            this.setTarget(closest);
+        }
+    }
+
+    /**
+     * 玩家与尸兄互动（右键点击）
+     * Shift+右键：切换命令状态
+     */
+    @Override
+    public net.minecraft.world.InteractionResult mobInteract(Player player, net.minecraft.world.InteractionHand hand) {
+        // 只处理主手交互，避免触发两次
+        if (hand != net.minecraft.world.InteractionHand.MAIN_HAND) {
+            return net.minecraft.world.InteractionResult.PASS;
+        }
+
+        // 检查是否是主人
+        if (this.masterUUID == null || !this.masterUUID.equals(player.getUUID())) {
+            return super.mobInteract(player, hand);
+        }
+
+        // 获取当前命令状态（使用getCommand确保同步）
+        CommandState currentCmd = getCommand();
+
+        // Shift+右键切换命令
+        if (player.isShiftKeyDown()) {
+            // 切换到下一个命令状态
+            CommandState nextCommand = switch (currentCmd) {
+                case FOLLOW -> CommandState.ATTACK;
+                case ATTACK -> CommandState.DEFEND;
+                case DEFEND -> CommandState.STAY;
+                case STAY -> CommandState.FOLLOW;
+            };
+
+            // 执行命令
+            executeCommand(player, nextCommand);
+
+            // 播放互动音效
+            if (this.level() instanceof ServerLevel level) {
+                level.playSound(null, this.blockPosition(),
+                        net.minecraft.sounds.SoundEvents.NOTE_BLOCK_PLING.value(),
+                        net.minecraft.sounds.SoundSource.HOSTILE, 1.0F, 1.5F);
+            }
+
+            return net.minecraft.world.InteractionResult.SUCCESS;
+        }
+
+        // 普通右键显示当前状态
+        String state = switch (currentCmd) {
+            case FOLLOW -> "§a跟随";
+            case ATTACK -> "§c攻击";
+            case DEFEND -> "§b防御（被动）";
+            case STAY -> "§7停留";
+        };
+        player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                "§e尸兄状态: " + state + " §7(Shift+右键切换)"
+        ));
+
+        return net.minecraft.world.InteractionResult.SUCCESS;
     }
 }

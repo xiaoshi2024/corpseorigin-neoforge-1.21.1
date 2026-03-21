@@ -2,6 +2,7 @@ package com.phagens.corpseorigin.Effect;
 
 import com.phagens.corpseorigin.CorpseOrigin;
 import com.phagens.corpseorigin.Entity.LowerLevelZbEntity;
+import com.phagens.corpseorigin.data.CorpseKingData;
 import com.phagens.corpseorigin.network.PlayerCorpseSyncPacket;
 import com.phagens.corpseorigin.player.PlayerCorpseData;
 import com.phagens.corpseorigin.register.EffectRegister;
@@ -20,7 +21,14 @@ import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public class BYeffect extends MobEffect {
+
+    // 存储感染源：被感染者UUID -> 感染者（尸王）UUID
+    private static final Map<UUID, UUID> infectionSource = new HashMap<>();
 
     public BYeffect(MobEffectCategory category, int color) {
         super(category, color);
@@ -63,6 +71,9 @@ public class BYeffect extends MobEffect {
         else if (livingEntity instanceof ServerPlayer player) {
             convertPlayerToCorpse(player);
         }
+        
+        // 转化完成后清除感染源记录
+        infectionSource.remove(livingEntity.getUUID());
     }
 
     /**
@@ -95,6 +106,26 @@ public class BYeffect extends MobEffect {
             zb.setCustomName(villager.getCustomName());
             zb.setCustomNameVisible(villager.isCustomNameVisible());
 
+            // 检查是否有感染源（尸王），如果有则设置为手下
+            UUID sourceUUID = infectionSource.get(villager.getUUID());
+            if (sourceUUID != null) {
+                zb.setMaster(sourceUUID);
+                // 添加到尸王的手下列表
+                CorpseKingData data = CorpseKingData.get(serverLevel);
+                data.addMinion(sourceUUID, zb.getUUID());
+                
+                // 通知尸王
+                Player master = serverLevel.getServer().getPlayerList().getPlayer(sourceUUID);
+                if (master != null) {
+                    master.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                            "§a§l你感染的村民已转化为尸兄手下！"
+                    ));
+                }
+                
+                CorpseOrigin.LOGGER.info("村民 {} 转化为尸兄，已成为尸王 {} 的手下", 
+                        villagerName, sourceUUID);
+            }
+
             // 移除村民
             villager.remove(Entity.RemovalReason.CHANGED_DIMENSION);
 
@@ -114,6 +145,14 @@ public class BYeffect extends MobEffect {
      * 静态方法：给实体添加感染效果（带随机延迟）
      */
     public static void applyInfection(LivingEntity target, ServerLevel serverLevel) {
+        applyInfection(target, serverLevel, null);
+    }
+
+    /**
+     * 静态方法：给实体添加感染效果（带随机延迟）
+     * 带感染源版本
+     */
+    public static void applyInfection(LivingEntity target, ServerLevel serverLevel, UUID sourceUUID) {
         if (target == null || serverLevel == null) return;
 
         // 检查目标是否已经被感染，避免重复感染
@@ -128,6 +167,11 @@ public class BYeffect extends MobEffect {
             CorpseOrigin.LOGGER.debug("玩家 {} 已经是尸兄，跳过感染",
                     player.getName().getString());
             return;
+        }
+
+        // 记录感染源
+        if (sourceUUID != null) {
+            infectionSource.put(target.getUUID(), sourceUUID);
         }
 
         // 随机延迟3-15秒（60-300 ticks）
@@ -151,6 +195,14 @@ public class BYeffect extends MobEffect {
      * 静态方法：给实体添加感染效果（自定义延迟）
      */
     public static void applyInfection(LivingEntity target, ServerLevel serverLevel, int durationTicks) {
+        applyInfection(target, serverLevel, durationTicks, null);
+    }
+
+    /**
+     * 静态方法：给实体添加感染效果（自定义延迟）
+     * 带感染源版本
+     */
+    public static void applyInfection(LivingEntity target, ServerLevel serverLevel, int durationTicks, UUID sourceUUID) {
         if (target == null || serverLevel == null) return;
 
         // 检查目标是否已经被感染，避免重复感染
@@ -165,6 +217,11 @@ public class BYeffect extends MobEffect {
             CorpseOrigin.LOGGER.debug("玩家 {} 已经是尸兄，跳过感染",
                     player.getName().getString());
             return;
+        }
+
+        // 记录感染源
+        if (sourceUUID != null) {
+            infectionSource.put(target.getUUID(), sourceUUID);
         }
 
         // 添加效果 - 使用 EffectRegister.QIANS
@@ -239,5 +296,19 @@ public class BYeffect extends MobEffect {
         }
         
         return false;
+    }
+
+    /**
+     * 获取感染源
+     */
+    public static UUID getInfectionSource(UUID targetUUID) {
+        return infectionSource.get(targetUUID);
+    }
+
+    /**
+     * 清除感染源记录
+     */
+    public static void clearInfectionSource(UUID targetUUID) {
+        infectionSource.remove(targetUUID);
     }
 }

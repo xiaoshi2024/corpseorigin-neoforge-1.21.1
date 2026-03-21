@@ -14,5 +14,7 @@ public class CommandEventHandler {
         SummonZbCommand.register(event.getDispatcher());
         // 注册玩家尸体指令
         CorpsePlayerCommand.register(event.getDispatcher());
+        // 注册尸兄手下命令系统
+        MinionCommand.register(event.getDispatcher());
     }
 }
