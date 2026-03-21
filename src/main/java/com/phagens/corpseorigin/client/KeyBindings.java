@@ -57,6 +57,15 @@ public class KeyBindings {
         // 检查是否是尸兄
         boolean isCorpse = PlayerCorpseData.isCorpse(minecraft.player);
 
+        if (SKILL_WHEEL.consumeClick()) {
+            openSkillWheel();
+            // Deleted: if (isCorpse) {
+            // Deleted:     openSkillWheel();
+            // Deleted: } else {
+            // Deleted:     showOrdinaryPlayerMessage(minecraft);
+            // Deleted: }
+        }
+
         // 技能轮盘按键
         if (SKILL_WHEEL.consumeClick()) {
             if (isCorpse) {

@@ -24,6 +24,10 @@ public class BaseGongFaItem extends Item {
         super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
         GongFaData data = getDataFromItem(stack);
         if (data != null){
+           //翻译组件 支持多语种
+            Component nameComponent = Component.translatable(data.getName())
+                    .withStyle(style -> style.withBold(true).withColor(0xFFAA00));
+            tooltipComponents.add(nameComponent);
             // 显示稀有度
             tooltipComponents.add(Component.literal(getRarityColor(data.getRarity()) +
                     "品级: " + getRarityName(data.getRarity())));
@@ -41,7 +45,7 @@ public class BaseGongFaItem extends Item {
         }
     }
 
-    public GongFaData getDataFromItem(ItemStack stack) {
+    public static GongFaData getDataFromItem(ItemStack stack) {
         //getOrDEfault 从物品获取数据组件 不存在返回默认
         // 值 1 新的数据组件系统存储物品自定义的NBT数据  2 空的自定义数据    //copytype复制一份tag对象 避免重复
         CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
@@ -100,5 +104,14 @@ public class BaseGongFaItem extends Item {
         };
     }
 
-
+    @Override
+    public Component getName(ItemStack stack) {
+        GongFaData data = getDataFromItem(stack);
+        if (data != null && data.getName() != null) {
+            // 使用翻译组件，自动根据游戏语言切换
+            return Component.translatable(data.getName())
+                    .withStyle(style -> style.withBold(true).withColor(0xFFAA00));
+        }
+        return super.getName(stack);
+    }
 }

@@ -1,10 +1,20 @@
 package com.phagens.corpseorigin.event.player;
 
 import com.phagens.corpseorigin.CorpseOrigin;
+import com.phagens.corpseorigin.GongFU.GongFaZL.BaseGongFaItem;
+import com.phagens.corpseorigin.GongFU.GongFaZL.GongFaData;
+import com.phagens.corpseorigin.GongFU.GongFaZL.GongFaSkillManager;
+import com.phagens.corpseorigin.GongFU.ModUtlis.GongFUDataUtlis;
 import com.phagens.corpseorigin.Item.YaoJi.Sagent;
+import com.phagens.corpseorigin.skill.ISkillHandler;
+import com.phagens.corpseorigin.skill.SkillAttachment;
+import com.phagens.corpseorigin.skill.SkillHandler;
+import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -56,9 +66,67 @@ public class playerDie {
         Player player = event.getEntity();
         if (!player.level().isClientSide) {
             applyGongFaAttributes(player);
+            if (player.tickCount % 100 == 0) {
+                checkAndLearnGongFuSkills(player);
+            }
         }
     }
 
+    private static void checkAndLearnGongFuSkills(Player player) {
+        // 获取玩家的技能处理器
+        ISkillHandler handler = SkillAttachment.getSkillHandler(player);
+        if (handler == null) {
+            return;  // 没有技能处理器（可能是普通人）
+        }
 
+        // 获取修行容器中的所有物品
+        NonNullList<ItemStack> gongFuItems = GongFUDataUtlis.getGongFuItems(player);
+
+        for (ItemStack stack : gongFuItems) {
+            // 检查是否是功法物品
+            if (!stack.isEmpty() && stack.getItem() instanceof BaseGongFaItem gongFaItem) {
+                // 从物品中读取功法数据
+                GongFaData data = gongFaItem.getDataFromItem(stack);
+                if (data == null) {
+                    continue;  // 没有有效的功法数据
+                }
+
+                // 获取对应的技能 ID
+                ResourceLocation skillId = GongFaSkillManager.getInstance()
+                        .getGongFuSkillId(data.getTypeId(), data.getRarity(), data.getCeng());
+
+                if (skillId == null) {
+                    CorpseOrigin.LOGGER.warn("未找到功法技能 ID: {}_{}_{}",
+                            data.getTypeId(), data.getRarity(), data.getCeng());
+                    continue;  // 技能未注册
+                }
+
+                // 检查是否已经学习了该技能
+                if (!handler.hasLearned(skillId)) {
+                    // 尝试学习技能
+                    var result = ((SkillHandler) handler).learnGongFuSkill(skillId);
+
+                    if (result == ISkillHandler.LearnResult.SUCCESS ||
+                            result == ISkillHandler.LearnResult.ALREADY_LEARNED) {
+                        // 发送提示消息给玩家
+                        String skillNames = String.join(", ", data.getSkills());
+                        player.sendSystemMessage(Component.literal(
+                                "§a§l✦ 习得功法技艺：§r§6" + skillNames +
+                                        " §7(§e" + data.getName() + "§7)"
+                        ));
+
+                        CorpseOrigin.LOGGER.info("玩家 {} 自动习得功法技能：{} -> {}",
+                                player.getName().getString(), data.getTypeId(), skillId);
+                    } else {
+                        CorpseOrigin.LOGGER.warn("玩家 {} 学习功法技能失败：{} - {}",
+                                player.getName().getString(), data.getTypeId(), result);
+                    }
+                }
+            }
+        }
+    }
 
 }
+
+
+

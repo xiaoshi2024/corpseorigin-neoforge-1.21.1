@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils;
 import com.phagens.corpseorigin.GongFU.GongFaZL.BaseGongFaItem;
 import com.phagens.corpseorigin.GongFU.GongFaZL.GongFaData;
 import com.phagens.corpseorigin.GongFU.GongFaZL.GongFaDataFactory;
+import com.phagens.corpseorigin.GongFU.JsonLoader.GongFaJsonLoader;
 import com.phagens.corpseorigin.GongFU.MenuTypeRegister;
 import com.phagens.corpseorigin.GongFU.PackGongFu.NetworkPaketGL;
 import com.phagens.corpseorigin.event.player.playerDie;
@@ -32,10 +33,16 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.slf4j.Logger;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 import static com.phagens.corpseorigin.register.Moditems.QI_XING_GUAN_ITEM;
 
@@ -76,17 +83,50 @@ public class CorpseOrigin {
                 output.accept(Moditems.BYWATER_BUCKET.get());
                 output.accept(Moditems.BYWATER_BOTTLE.get());
                 output.accept(Moditems.S_AGENT.get());output.accept(Moditems.NULL_S_AGENT.get());
-                output.accept(GongFaDataFactory.createGongFaItem(leiXi,5,"copy_5"));
-                output.accept(GongFaDataFactory.createGongFaItem(leiXi,3,"copy_9"));
-                output.accept(GongFaDataFactory.createGongFaItem(leiXi,1,"copy_5"));
+                addGongFaItemsToCreativeTab(output);
 
             }).build());
+    /**
+     * 将 JSON 加载的所有功法物品添加到创造标签页
+     */
+    private static void addGongFaItemsToCreativeTab(CreativeModeTab.Output output) {
+        BaseGongFaItem leiXi = (BaseGongFaItem) Moditems.LEI_XI_GONG_FA.get();
+
+        // 获取所有加载的功法数据
+        Map<String, GongFaData> allData = GongFaJsonLoader.getAllGongFaData();
+        if (allData.isEmpty()) {
+            // 如果 JSON 还没加载，使用默认数据（向后兼容）
+            CorpseOrigin.LOGGER.warn("JSON 功法数据为空");
+        }
+
+        // 按稀有度和层数排序，确保显示顺序一致
+        List<GongFaData> sortedData = new ArrayList<>(allData.values());
+        // 先按稀有度排序
+        // 稀有度相同按层数排序
+        sortedData.sort(Comparator.comparingInt(GongFaData::getRarity).thenComparing(GongFaData::getCeng));
+
+        // 添加所有功法物品到创造标签页
+        for (GongFaData data : sortedData) {
+            try {
+                ItemStack stack = GongFaDataFactory.createGongFaItem(leiXi, data.getRarity(), data.getCeng());
+                output.accept(stack);
+                CorpseOrigin.LOGGER.debug("添加功法物品到创造标签页：{} (稀有度：{}, 层数：{})",
+                        data.getTypeId(), data.getRarity(), data.getCeng());
+            } catch (Exception e) {
+                CorpseOrigin.LOGGER.error("创建功法物品失败：{}", data.getTypeId(), e);
+            }
+        }
+        CorpseOrigin.LOGGER.info("已从 JSON 加载 {} 个功法物品到创造标签页", sortedData.size());
+    }
 
     // The constructor for the mod class is the first code that is run when your mod is loaded.
     // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
     public CorpseOrigin(IEventBus modEventBus, ModContainer modContainer) {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
+
+        //json解析
+        NeoForge.EVENT_BUS.addListener(CorpseOrigin::addReloadListeners);
 
         // 先注册附件系统 - 重要！
         SkillAttachment.ATTACHMENT_TYPES.register(modEventBus);
@@ -131,6 +171,10 @@ public class CorpseOrigin {
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+    }
+
+    private static void addReloadListeners(AddReloadListenerEvent event) {
+        GongFaJsonLoader.register(event);
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {

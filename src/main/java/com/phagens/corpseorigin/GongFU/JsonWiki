@@ -1,0 +1,21 @@
+模板
+{
+  "type_id": "REX",
+  "name": "gongfa.corpseorigin.jzz",
+  "rarity": 5,
+  "ceng": "copy_5",
+  "attributes": {
+    "attack_damage": 12.0,
+    "movement_speed": 0.2,
+    "max_health": 25.0,
+    "knockback_resistance": 0.3
+  },
+  "skills": ["奥特曼"]
+}
+
+暂时支持属性
+"attack_damage" -> "攻击力";
+"movement_speed" -> "移速";
+"max_health" -> "生命值";
+"armor" -> "护甲";
+"knockback_resistance"->"抗性";

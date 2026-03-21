@@ -14,7 +14,7 @@ import java.util.*;
 /**
  * 技能基础实现类
  */
-public abstract class BaseSkill implements ISkill {
+public class BaseSkill implements ISkill {
 
     protected final ResourceLocation id;
     protected final Component name;
@@ -253,6 +253,15 @@ public abstract class BaseSkill implements ISkill {
 
         public ResourceLocation getId() {
             return id;
+        }
+
+
+
+        /**
+         * 构建技能对象（简化版本，用于匿名内部类）
+         */
+        public BaseSkill build() {
+            return new BaseSkill(this) {};
         }
     }
 }

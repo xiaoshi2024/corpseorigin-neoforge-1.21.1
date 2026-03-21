@@ -164,6 +164,7 @@ dependencies {
     // TarsosDSP for audio processing - 使用additionalRuntimeClasspath
     additionalRuntimeClasspath(implementation('be.tarsos.dsp:core:2.5'))
     additionalRuntimeClasspath(implementation('be.tarsos.dsp:jvm:2.5'))
+    implementation 'org.openjdk.nashorn:nashorn-core:15.4'
 
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime

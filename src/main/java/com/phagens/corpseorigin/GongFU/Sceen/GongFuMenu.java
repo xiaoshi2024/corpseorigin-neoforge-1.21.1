@@ -145,4 +145,6 @@ public class GongFuMenu extends AbstractContainerMenu {
         super.removed(player);
         GongFUDataUtlis.applyGongFaAttributes(player);
     }
+
+
 }

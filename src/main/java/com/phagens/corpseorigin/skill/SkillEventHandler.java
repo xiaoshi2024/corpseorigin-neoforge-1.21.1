@@ -33,18 +33,29 @@ public class SkillEventHandler {
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         Player player = event.getEntity();
 
-        if (player.level().isClientSide) return; // 只在服务端处理
-
-        if (!PlayerCorpseData.isCorpse(player)) {
-            return;
-        }
-
         ISkillHandler handler = SkillAttachment.getSkillHandler(player);
         if (handler == null) return;
 
         // 更新技能冷却
         if (handler instanceof SkillHandler skillHandler) {
             skillHandler.updateCooldowns();
+        }
+
+        if (!player.level().isClientSide) {
+            // 每 20tick（1 秒）处理一次被动效果
+            if (player.tickCount % 20 == 0) {
+                // 进化感知 - 夜视效果
+                if (handler.hasLearned(CorpseSkills.EVOLUTION_SENSE.getId())) {
+                    player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 400, 0, false, false));
+                }
+
+                // 快速再生 - 生命恢复
+                if (handler.hasLearned(CorpseSkills.REGENERATION.getId())) {
+                    if (player.getHealth() < player.getMaxHealth()) {
+                        player.heal(0.5f);
+                    }
+                }
+            }
         }
 
         // 每20tick（1秒）处理一次被动效果

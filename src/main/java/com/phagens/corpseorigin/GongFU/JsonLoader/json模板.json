@@ -1,0 +1,23 @@
+{
+  "type_id": "REX",
+  "rarity": 1,
+  "ceng": "copy_1",
+  "attributes": {
+    "attack_damage": 2.0,
+    "movement_speed": 0.05
+  },
+  "skills": ["奥特曼"]
+
+
+
+
+
+
+
+
+
+
+
+
+
+}

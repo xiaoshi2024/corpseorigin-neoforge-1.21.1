@@ -38,6 +38,17 @@ public class SkillManager {
         }
         return INSTANCE;
     }
+
+    /**
+     * 注销技能
+     */
+    public void unregisterSkill(ResourceLocation id) {
+        ISkill removed = skills.remove(id);
+        if (removed != null) {
+            skillsByType.get(removed.getSkillType()).remove(removed);
+            CorpseOrigin.LOGGER.debug("注销技能：{}", id);
+        }
+    }
     
     /**
      * 注册技能

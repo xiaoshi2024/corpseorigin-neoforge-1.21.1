@@ -3,6 +3,7 @@ package com.phagens.corpseorigin.client.gui;
 import com.phagens.corpseorigin.CorpseOrigin;
 import com.phagens.corpseorigin.client.gui.radialmenu.*;
 import com.phagens.corpseorigin.network.ActivateSkillPacket;
+import com.phagens.corpseorigin.player.PlayerCorpseData;
 import com.phagens.corpseorigin.skill.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -71,9 +72,19 @@ public class SkillRadialScreen extends GuiRadialMenu<ISkill> {
      */
     private static List<ISkill> getSortedActivatableSkills(ISkillHandler handler) {
         List<ISkill> skills = new ArrayList<>();
+
+        boolean isCorpse = PlayerCorpseData.isCorpse(handler.getPlayer());
+
         for (ISkill skill : handler.getLearnedSkills()) {
             if (skill.isActivatable()) {
-                skills.add(skill);
+                if (!isCorpse) {
+                    // 检查是否是功法技能（ID 以 gongfu_开头）
+                    if (skill.getId().getPath().startsWith("gongfu_")) {
+                        skills.add(skill);
+                    }
+                } else {
+                    skills.add(skill);
+                }
             }
         }
         // 按技能ID排序，确保顺序一致

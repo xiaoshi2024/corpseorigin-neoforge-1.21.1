@@ -112,6 +112,50 @@ public class SkillHandler implements ISkillHandler {
         return player;
     }
 
+    public  LearnResult getNbtLearnedSkills(ResourceLocation skillId) {
+        ISkill skill = SkillManager.getInstance().getSkill(skillId);
+        if (skill == null) {
+            return LearnResult.UNKNOWN_SKILL;
+        }
+        return learnSkill(skill);
+    }
+
+
+    /**
+     * 学习功法技能（绕过尸兄检查）
+     * 只用于功法系统，不需要进化点，不需要尸兄身份
+     */
+    public LearnResult learnGongFuSkill(ResourceLocation skillId) {
+        ISkill skill = SkillManager.getInstance().getSkill(skillId);
+        if (skill == null) {
+            return LearnResult.UNKNOWN_SKILL;
+        }
+
+        if (hasLearned(skill)) {
+            return LearnResult.ALREADY_LEARNED;
+        }
+
+        // ⭐ 不检查 isCorpse，允许普通人学习功法技能
+
+        // 不检查等级、进化点、前置技能等
+        // 功法技能只要有功法物品就能学
+
+        try {
+            learnedSkills.add(skill.getId());
+
+            dirty = true;
+            syncToClient();
+
+            CorpseOrigin.LOGGER.info("玩家 {} 学习功法技能 {} 成功",
+                    player.getName().getString(), skill.getId());
+
+            return LearnResult.SUCCESS;
+        } catch (Exception e) {
+            CorpseOrigin.LOGGER.error("学习功法技能 {} 时发生错误", skill.getId(), e);
+            return LearnResult.ERROR;
+        }
+    }
+
     /**
      * 同步技能数据到客户端
      */
@@ -553,6 +597,7 @@ public class SkillHandler implements ISkillHandler {
      * 更新冷却（每tick调用）
      */
     public void updateCooldowns() {
+        boolean hasChanges = false;
         Iterator<Map.Entry<ResourceLocation, Integer>> iterator = cooldowns.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<ResourceLocation, Integer> entry = iterator.next();
@@ -560,9 +605,25 @@ public class SkillHandler implements ISkillHandler {
             if (newCooldown <= 0) {
                 iterator.remove();
                 dirty = true;
+                hasChanges = true;
             } else {
                 entry.setValue(newCooldown);
+                hasChanges = true;
             }
+        }
+        if (hasChanges) {
+            dirty = true;
+        }
+        if (player != null && player.tickCount % 20 == 0 && !cooldowns.isEmpty()) {
+            syncToClient();
+
+//            // 每 5 秒打印一次调试信息
+//            if (player.tickCount % 20 == 0) {
+//                CorpseOrigin.LOGGER.info("【冷却同步】玩家 {}: {} 个技能在冷却",
+//                        player.getName().getString(), cooldowns.size());
+//                cooldowns.forEach((id, time) ->
+//                        CorpseOrigin.LOGGER.info("  - {}: {} tick", id, time,(time + 19) / 20));
+//            }
         }
     }
 
