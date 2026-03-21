@@ -41,9 +41,12 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
 
     private static final EntityDataAccessor<Boolean> DATA_PLAYING_SHIEYE =
             SynchedEntityData.defineId(LongyouEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_PLAYING_AURA_SKILL =
+            SynchedEntityData.defineId(LongyouEntity.class, EntityDataSerializers.BOOLEAN);
 
     private int shieyeCooldown = 0;
     private int shieyeAnimationTicks = 0;
+    private int auraSkillTicks = 0;
 
     // 龙右的智能系统
     private int intelligenceCheckCooldown = 0;
@@ -88,6 +91,7 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(DATA_PLAYING_SHIEYE, false);
+        builder.define(DATA_PLAYING_AURA_SKILL, false);
     }
 
     @Override
@@ -144,44 +148,25 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
     private PlayState auraSkillController(AnimationState<LongyouEntity> state) {
         LongyouEntity entity = state.getAnimatable();
 
-        // 触发气场技能（外部调用triggerAuraSkill()时生效）
-        if (entity.shouldTriggerAuraSkill) {
+        // 触发气场技能
+        if (entity.entityData.get(DATA_PLAYING_AURA_SKILL)) {
             // 播放串联动画：idle_anger → aura_blast → contempt_end
             state.getController().setAnimation(RawAnimation.begin()
-                    .thenPlay("longyou_look_at")
                     .thenPlay("idle_anger")
                     .thenPlay("aura_blast")
                     .thenPlay("contempt_end"));
-            // 动画播放完毕后重置触发标记
-            if (state.getController().getAnimationState().equals(AnimationController.State.STOPPED)) {
-                entity.shouldTriggerAuraSkill = false;
-            }
             return PlayState.CONTINUE;
         }
 
-        // 未触发时，常驻播放头部转向
-        state.getController().setAnimation(RawAnimation.begin().thenPlay("longyou_look_at"));
-        return PlayState.CONTINUE;
+        // 未触发时，停止此控制器，让主控制器处理
+        return PlayState.STOP;
     }
-
-    // 触发技能的开关变量
-    private boolean shouldTriggerAuraSkill = false;
 
     // 外部调用：触发气场技能（比如被远程攻击时调用）
     public void triggerAuraSkill() {
-        if (!this.level().isClientSide() && !this.shouldTriggerAuraSkill) {
-            this.shouldTriggerAuraSkill = true;
-            // 客户端同步（确保动画在客户端播放）
-            this.level().broadcastEntityEvent(this, (byte) 1);
-        }
-    }
-
-    // 客户端同步处理
-    @Override
-    public void handleEntityEvent(byte id) {
-        super.handleEntityEvent(id);
-        if (id == 1) {
-            this.shouldTriggerAuraSkill = true;
+        if (!this.level().isClientSide() && !this.entityData.get(DATA_PLAYING_AURA_SKILL)) {
+            this.entityData.set(DATA_PLAYING_AURA_SKILL, true);
+            this.auraSkillTicks = 80; // 约4秒动画时间
         }
     }
 
@@ -271,6 +256,14 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
             shieyeAnimationTicks--;
             if (shieyeAnimationTicks <= 0) {
                 this.entityData.set(DATA_PLAYING_SHIEYE, false);
+            }
+        }
+
+        // 光环技能动画计时
+        if (!this.level().isClientSide && this.entityData.get(DATA_PLAYING_AURA_SKILL)) {
+            auraSkillTicks--;
+            if (auraSkillTicks <= 0) {
+                this.entityData.set(DATA_PLAYING_AURA_SKILL, false);
             }
         }
 
