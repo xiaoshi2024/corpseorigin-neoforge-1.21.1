@@ -63,7 +63,14 @@
 								"up": {"uv": [48, 48], "uv_size": [8, 4]},
 								"down": {"uv": [0, 56], "uv_size": [8, -4]}
 							}
-						},
+						}
+					]
+				},
+				{
+					"name": "Body Layer",
+					"parent": "Body",
+					"pivot": [0, 0, 0],
+					"cubes": [
 						{
 							"origin": [-4, 12, -2],
 							"size": [8, 12, 4],
@@ -265,6 +272,11 @@
 					]
 				},
 				{
+					"name": "rightItem",
+					"parent": "Right Arm",
+					"pivot": [-6, 11, 1]
+				},
+				{
 					"name": "Left Arm",
 					"parent": "Waist",
 					"pivot": [5, 22, 0],
@@ -311,7 +323,14 @@
 								"up": {"uv": [52, 40], "uv_size": [4, 4]},
 								"down": {"uv": [52, 48], "uv_size": [4, -4]}
 							}
-						},
+						}
+					]
+				},
+				{
+					"name": "Right Leg Layer",
+					"parent": "Right Leg",
+					"pivot": [-1.9, 11, 0],
+					"cubes": [
 						{
 							"origin": [-3.9, 0, -2],
 							"size": [4, 12, 4],
@@ -342,7 +361,14 @@
 								"up": {"uv": [0, 56], "uv_size": [4, 4]},
 								"down": {"uv": [4, 60], "uv_size": [4, -4]}
 							}
-						},
+						}
+					]
+				},
+				{
+					"name": "Left Leg Layer",
+					"parent": "Left Leg",
+					"pivot": [1.9, 11, 0],
+					"cubes": [
 						{
 							"origin": [-0.1, 0, -2],
 							"size": [4, 12, 4],

@@ -2,15 +2,16 @@ package com.phagens.corpseorigin.Entity;
 
 import com.phagens.corpseorigin.CorpseOrigin;
 import com.phagens.corpseorigin.Effect.BYeffect;
+import com.phagens.corpseorigin.event.custom.WeaponBreakEvent;
 import com.phagens.corpseorigin.register.EntityRegistry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
@@ -18,13 +19,15 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ProjectileWeaponItem;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.NeoForge;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.*;
 import software.bernie.geckolib.animation.AnimationState;
-import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.*;
@@ -132,7 +135,56 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, "controller", 5, this::controlAnimation));
+        // 注册气场技能控制器
+        controllers.add(new AnimationController<>(this, "controller.animation.longyou.aura_skill", 0, this::auraSkillController));
+
     }
+
+    // 动画控制器状态处理
+    private PlayState auraSkillController(AnimationState<LongyouEntity> state) {
+        LongyouEntity entity = state.getAnimatable();
+
+        // 触发气场技能（外部调用triggerAuraSkill()时生效）
+        if (entity.shouldTriggerAuraSkill) {
+            // 播放串联动画：idle_anger → aura_blast → contempt_end
+            state.getController().setAnimation(RawAnimation.begin()
+                    .thenPlay("longyou_look_at")
+                    .thenPlay("idle_anger")
+                    .thenPlay("aura_blast")
+                    .thenPlay("contempt_end"));
+            // 动画播放完毕后重置触发标记
+            if (state.getController().getAnimationState().equals(AnimationController.State.STOPPED)) {
+                entity.shouldTriggerAuraSkill = false;
+            }
+            return PlayState.CONTINUE;
+        }
+
+        // 未触发时，常驻播放头部转向
+        state.getController().setAnimation(RawAnimation.begin().thenPlay("longyou_look_at"));
+        return PlayState.CONTINUE;
+    }
+
+    // 触发技能的开关变量
+    private boolean shouldTriggerAuraSkill = false;
+
+    // 外部调用：触发气场技能（比如被远程攻击时调用）
+    public void triggerAuraSkill() {
+        if (!this.level().isClientSide() && !this.shouldTriggerAuraSkill) {
+            this.shouldTriggerAuraSkill = true;
+            // 客户端同步（确保动画在客户端播放）
+            this.level().broadcastEntityEvent(this, (byte) 1);
+        }
+    }
+
+    // 客户端同步处理
+    @Override
+    public void handleEntityEvent(byte id) {
+        super.handleEntityEvent(id);
+        if (id == 1) {
+            this.shouldTriggerAuraSkill = true;
+        }
+    }
+
 
     private <E extends LongyouEntity> software.bernie.geckolib.animation.PlayState controlAnimation(AnimationState<E> event) {
         if (this.entityData.get(DATA_PLAYING_SHIEYE)) {
@@ -160,9 +212,45 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
     }
 
     @Override
-    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
-        // 记录被攻击的时间
-        lastHurtTick = this.tickCount;
+    public boolean hurt(DamageSource source, float amount) {
+        // 1.21.1 正确判断远程投射物攻击（NeoForge 兼容）
+        boolean isRangedAttack = source != null && source.is(DamageTypeTags.IS_PROJECTILE);
+
+        // 仅服务端处理
+        if (isRangedAttack && this.level() != null && !this.level().isClientSide()) {
+            this.triggerAuraSkill();
+
+            Entity attackerEntity = source.getEntity();
+            if (attackerEntity instanceof LivingEntity attacker && attacker.isAlive()) {
+                // 震飞攻击者逻辑（保留原有代码，NeoForge 无变更）
+                if (this.position() != null && attacker.position() != null) {
+                    Vec3 pushDir = this.position().subtract(attacker.position()).normalize().scale(1.5);
+                    attacker.setDeltaMovement(pushDir.x, 0.5, pushDir.z);
+                    attacker.hurtMarked = true;
+                    attacker.hasImpulse = true;
+                }
+
+                // ========== 触发 NeoForge 自定义事件（核心修改） ==========
+                ItemStack mainHandItem = attacker.getItemBySlot(EquipmentSlot.MAINHAND);
+                ItemStack offHandItem = attacker.getItemBySlot(EquipmentSlot.OFFHAND);
+
+                // 主手远程武器
+                if (!mainHandItem.isEmpty() && mainHandItem.getItem() instanceof ProjectileWeaponItem) {
+                    WeaponBreakEvent breakEvent = new WeaponBreakEvent(attacker, EquipmentSlot.MAINHAND);
+                    NeoForge.EVENT_BUS.post(breakEvent); // NeoForge 事件总线
+                }
+                // 副手远程武器
+                else if (!offHandItem.isEmpty() && offHandItem.getItem() instanceof ProjectileWeaponItem) {
+                    WeaponBreakEvent breakEvent = new WeaponBreakEvent(attacker, EquipmentSlot.OFFHAND);
+                    NeoForge.EVENT_BUS.post(breakEvent); // NeoForge 事件总线
+                }
+            }
+        }
+
+        // 原有逻辑（保留）
+        if (this.tickCount >= 0) {
+            lastHurtTick = this.tickCount;
+        }
         return super.hurt(source, amount);
     }
 
