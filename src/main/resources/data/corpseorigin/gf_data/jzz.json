@@ -1,0 +1,14 @@
+{
+  "type_id": "REX",
+  "name": "gongfa.corpseorigin.jzz",
+  "rarity": 5,
+  "ceng": "copy_5",
+  "attributes": {
+    "attack_damage": 12.0,
+    "movement_speed": 0.2,
+    "max_health": 25.0,
+    "knockback_resistance": 0.3
+  },
+  "skills": ["奥特曼"],
+  "cooldown": 300
+}
