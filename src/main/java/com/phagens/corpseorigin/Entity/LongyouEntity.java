@@ -4,10 +4,12 @@ import com.phagens.corpseorigin.CorpseOrigin;
 import com.phagens.corpseorigin.Effect.BYeffect;
 import com.phagens.corpseorigin.event.custom.WeaponBreakEvent;
 import com.phagens.corpseorigin.register.EntityRegistry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
@@ -201,33 +203,65 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
         // 1.21.1 正确判断远程投射物攻击（NeoForge 兼容）
         boolean isRangedAttack = source != null && source.is(DamageTypeTags.IS_PROJECTILE);
 
-        // 仅服务端处理
-        if (isRangedAttack && this.level() != null && !this.level().isClientSide()) {
+        // 仅服务端处理 - 任何攻击都播放动画
+        if (this.level() != null && !this.level().isClientSide()) {
+            // 播放气场技能动画（任何攻击都要播放）
             this.triggerAuraSkill();
 
-            Entity attackerEntity = source.getEntity();
-            if (attackerEntity instanceof LivingEntity attacker && attacker.isAlive()) {
-                // 震飞攻击者逻辑（保留原有代码，NeoForge 无变更）
-                if (this.position() != null && attacker.position() != null) {
-                    Vec3 pushDir = this.position().subtract(attacker.position()).normalize().scale(1.5);
-                    attacker.setDeltaMovement(pushDir.x, 0.5, pushDir.z);
-                    attacker.hurtMarked = true;
-                    attacker.hasImpulse = true;
-                }
+            // 远程攻击特殊处理
+            if (isRangedAttack) {
+                Entity attackerEntity = source.getEntity();
+                if (attackerEntity instanceof LivingEntity attacker && attacker.isAlive()) {
+                    // 获取攻击者手持物品
+                    ItemStack mainHandItem = attacker.getItemBySlot(EquipmentSlot.MAINHAND);
+                    ItemStack offHandItem = attacker.getItemBySlot(EquipmentSlot.OFFHAND);
 
-                // ========== 触发 NeoForge 自定义事件（核心修改） ==========
-                ItemStack mainHandItem = attacker.getItemBySlot(EquipmentSlot.MAINHAND);
-                ItemStack offHandItem = attacker.getItemBySlot(EquipmentSlot.OFFHAND);
+                    // 检查是否可以防御（普通枪械/弓弩，且弓弩力量附魔不超过2级）
+                    boolean canDefendMainHand = canDefendAgainstRanged(mainHandItem);
+                    boolean canDefendOffHand = canDefendAgainstRanged(offHandItem);
 
-                // 主手远程武器
-                if (!mainHandItem.isEmpty() && mainHandItem.getItem() instanceof ProjectileWeaponItem) {
-                    WeaponBreakEvent breakEvent = new WeaponBreakEvent(attacker, EquipmentSlot.MAINHAND);
-                    NeoForge.EVENT_BUS.post(breakEvent); // NeoForge 事件总线
-                }
-                // 副手远程武器
-                else if (!offHandItem.isEmpty() && offHandItem.getItem() instanceof ProjectileWeaponItem) {
-                    WeaponBreakEvent breakEvent = new WeaponBreakEvent(attacker, EquipmentSlot.OFFHAND);
-                    NeoForge.EVENT_BUS.post(breakEvent); // NeoForge 事件总线
+                    // 如果无法防御（力量3级以上），只播放动画，不执行防御逻辑
+                    if (!canDefendMainHand && !canDefendOffHand) {
+                        CorpseOrigin.LOGGER.info("[龙右] 攻击者武器太强（力量3+），无法防御，但播放气场动画！");
+                        // 继续执行 super.hurt 让伤害通过
+                    } else {
+                        // 可以防御，执行震飞和武器破坏逻辑
+                        // 震飞攻击者逻辑（保留原有代码，NeoForge 无变更）
+                        if (this.position() != null && attacker.position() != null) {
+                            Vec3 pushDir = this.position().subtract(attacker.position()).normalize().scale(1.5);
+                            attacker.setDeltaMovement(pushDir.x, 0.5, pushDir.z);
+                            attacker.hurtMarked = true;
+                            attacker.hasImpulse = true;
+                        }
+
+                        // ========== 触发 NeoForge 自定义事件（核心修改） ==========
+                        // 主手远程武器（原版弓箭，且力量附魔<=2级）
+                        if (!mainHandItem.isEmpty() && mainHandItem.getItem() instanceof ProjectileWeaponItem && canDefendMainHand) {
+                            WeaponBreakEvent breakEvent = new WeaponBreakEvent(attacker, EquipmentSlot.MAINHAND);
+                            NeoForge.EVENT_BUS.post(breakEvent); // NeoForge 事件总线
+                        }
+                        // 副手远程武器（原版弓箭，且力量附魔<=2级）
+                        else if (!offHandItem.isEmpty() && offHandItem.getItem() instanceof ProjectileWeaponItem && canDefendOffHand) {
+                            WeaponBreakEvent breakEvent = new WeaponBreakEvent(attacker, EquipmentSlot.OFFHAND);
+                            NeoForge.EVENT_BUS.post(breakEvent); // NeoForge 事件总线
+                        }
+
+                        // ========== Point Blank 枪械处理 ==========
+                        // 检测主手是否为 Point Blank 枪械
+                        if (!mainHandItem.isEmpty() && isPointBlankGun(mainHandItem)) {
+                            CorpseOrigin.LOGGER.info("[龙右] 检测到玩家使用 Point Blank 枪械攻击，震碎枪械！");
+                            WeaponBreakEvent breakEvent = new WeaponBreakEvent(attacker, EquipmentSlot.MAINHAND);
+                            breakEvent.setDurabilityZero(true); // 直接移除
+                            NeoForge.EVENT_BUS.post(breakEvent);
+                        }
+                        // 检测副手是否为 Point Blank 枪械
+                        else if (!offHandItem.isEmpty() && isPointBlankGun(offHandItem)) {
+                            CorpseOrigin.LOGGER.info("[龙右] 检测到玩家使用 Point Blank 枪械攻击，震碎枪械！");
+                            WeaponBreakEvent breakEvent = new WeaponBreakEvent(attacker, EquipmentSlot.OFFHAND);
+                            breakEvent.setDurabilityZero(true); // 直接移除
+                            NeoForge.EVENT_BUS.post(breakEvent);
+                        }
+                    }
                 }
             }
         }
@@ -598,6 +632,59 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
      */
     public boolean shouldInitiateAttack() {
         return shouldAttack();
+    }
+
+    /**
+     * 检测物品是否为 Point Blank 枪械
+     */
+    private boolean isPointBlankGun(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+
+        ResourceLocation registryName = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        if (registryName != null) {
+            return "pointblank".equals(registryName.getNamespace());
+        }
+        return false;
+    }
+
+    /**
+     * 检查是否可以防御该远程武器
+     * - 普通枪械（Point Blank）：可以防御
+     * - 原版弓弩：力量附魔<=2级可以防御，>=3级无法防御
+     * - 其他远程武器：无法防御
+     */
+    private boolean canDefendAgainstRanged(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+
+        // Point Blank 枪械可以防御
+        if (isPointBlankGun(stack)) {
+            return true;
+        }
+
+        // 原版弓弩检查附魔等级
+        if (stack.getItem() instanceof ProjectileWeaponItem) {
+            // 获取力量附魔等级 (1.21 API)
+            int powerLevel = 0;
+            var enchantments = stack.getEnchantments();
+            if (enchantments != null) {
+                for (var entry : enchantments.entrySet()) {
+                    if (entry.getKey().is(net.minecraft.world.item.enchantment.Enchantments.POWER)) {
+                        powerLevel = entry.getIntValue();
+                        break;
+                    }
+                }
+            }
+            // 力量3级以上无法防御
+            if (powerLevel >= 3) {
+                CorpseOrigin.LOGGER.info("[龙右] 检测到力量{}级弓弩，无法防御！", powerLevel);
+                return false;
+            }
+            // 力量0-2级可以防御
+            return true;
+        }
+
+        // 其他远程武器无法防御
+        return false;
     }
 
     /**

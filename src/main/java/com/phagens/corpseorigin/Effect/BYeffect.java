@@ -1,3 +1,32 @@
+/**
+ * 尸兄感染效果类 - 核心转化机制
+ *
+ * 【功能说明】
+ * 1. 村民转化：感染效果结束时，村民转化为尸兄实体
+ * 2. 玩家转化：感染效果结束时，玩家转化为尸族并获得技能系统
+ * 3. 感染源追踪：记录是谁传播的感染，用于建立主从关系
+ *
+ * 【转化流程】
+ * 1. 应用感染效果（随机延迟3-15秒或自定义时间）
+ * 2. 效果持续期间显示感染图标
+ * 3. 效果结束时执行转化逻辑
+ * 4. 村民 -> 尸兄实体（会继承原村民名字）
+ * 5. 玩家 -> 尸族状态 + 初始技能 + 进化点
+ *
+ * 【感染源系统】
+ * - 记录感染者UUID -> 感染源UUID的映射
+ * - 用于建立尸王与手下尸兄的主从关系
+ * - 尸王可以感知到自己感染转化的尸兄
+ *
+ * 【关联系统】
+ * - LowerLevelZbEntity: 转化后的尸兄实体
+ * - PlayerCorpseData: 玩家尸族状态管理
+ * - CorpseKingData: 尸王数据存储
+ * - SkillAttachment: 玩家技能系统
+ *
+ * @author Phagens
+ * @version 1.0
+ */
 package com.phagens.corpseorigin.Effect;
 
 import com.phagens.corpseorigin.CorpseOrigin;
@@ -25,15 +54,29 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * 尸兄感染效果
+ * 继承MobEffect实现自定义的感染转化逻辑
+ */
 public class BYeffect extends MobEffect {
 
-    // 存储感染源：被感染者UUID -> 感染者（尸王）UUID
+    /** 存储感染源映射：被感染者UUID -> 感染者（尸王）UUID */
     private static final Map<UUID, UUID> infectionSource = new HashMap<>();
 
+    /**
+     * 构造函数
+     *
+     * @param category 效果类别（通常为HARMFUL）
+     * @param color 效果颜色（用于粒子效果）
+     */
     public BYeffect(MobEffectCategory category, int color) {
         super(category, color);
     }
 
+    /**
+     * 效果被添加到实体时的处理
+     * 记录日志用于调试
+     */
     @Override
     public void onEffectAdded(LivingEntity livingEntity, int amplifier) {
         super.onEffectAdded(livingEntity, amplifier);
@@ -43,16 +86,29 @@ public class BYeffect extends MobEffect {
         }
     }
 
+    /**
+     * 判断是否应该在本tick应用效果
+     * 只在效果的最后1 tick返回true，确保转化只执行一次
+     *
+     * @param duration 剩余持续时间
+     * @param amplifier 效果等级
+     * @return 是否应用效果
+     */
     @Override
     public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
-        // 只在效果的最后1 tick返回true，这样applyEffectTick会在最后1 tick执行
         return duration == 1;
     }
 
+    /**
+     * 应用效果tick
+     * 在效果结束时执行转化逻辑
+     *
+     * @param livingEntity 目标实体
+     * @param amplifier 效果等级
+     * @return 是否成功应用
+     */
     @Override
     public boolean applyEffectTick(LivingEntity livingEntity, int amplifier) {
-        // 这个方法会在shouldApplyEffectTickThisTick返回true时执行
-        // 在效果的最后1 tick执行转化
         if (!livingEntity.level().isClientSide && livingEntity.level() instanceof ServerLevel serverLevel) {
             performTransformation(livingEntity, serverLevel);
         }
@@ -61,23 +117,38 @@ public class BYeffect extends MobEffect {
 
     /**
      * 执行转化逻辑
+     * 根据实体类型决定转化方式
+     *
+     * @param livingEntity 要被转化的实体
+     * @param serverLevel 服务器世界
      */
     private void performTransformation(LivingEntity livingEntity, ServerLevel serverLevel) {
-        // 只处理村民转化为尸兄
+        // 村民转化为尸兄
         if (livingEntity instanceof Villager villager) {
             convertVillagerToZb(villager, serverLevel);
         }
-        // 玩家感染逻辑 - 转化为尸族
+        // 玩家转化为尸族
         else if (livingEntity instanceof ServerPlayer player) {
             convertPlayerToCorpse(player);
         }
-        
+
         // 转化完成后清除感染源记录
         infectionSource.remove(livingEntity.getUUID());
     }
 
     /**
-     * 将村民转化为尸兄
+     * 将村民转化为尸兄实体
+     *
+     * 【转化过程】
+     * 1. 创建新的尸兄实体
+     * 2. 复制位置和旋转信息
+     * 3. 随机设置变种（30%概率为裂口尸兄）
+     * 4. 设置皮肤名称（继承村民名字）
+     * 5. 检查感染源，建立主从关系
+     * 6. 移除原村民，添加尸兄到世界
+     *
+     * @param villager 要被转化的村民
+     * @param serverLevel 服务器世界
      */
     private void convertVillagerToZb(Villager villager, ServerLevel serverLevel) {
         // 检查实体是否已注册
@@ -102,7 +173,7 @@ public class BYeffect extends MobEffect {
             String villagerName = villager.getName().getString();
             zb.setPlayerSkinName(villagerName);
 
-            // 复制村民的一些属性（可选）
+            // 复制村民的一些属性
             zb.setCustomName(villager.getCustomName());
             zb.setCustomNameVisible(villager.isCustomNameVisible());
 
@@ -113,7 +184,7 @@ public class BYeffect extends MobEffect {
                 // 添加到尸王的手下列表
                 CorpseKingData data = CorpseKingData.get(serverLevel);
                 data.addMinion(sourceUUID, zb.getUUID());
-                
+
                 // 通知尸王
                 Player master = serverLevel.getServer().getPlayerList().getPlayer(sourceUUID);
                 if (master != null) {
@@ -121,8 +192,8 @@ public class BYeffect extends MobEffect {
                             "§a§l你感染的村民已转化为尸兄手下！"
                     ));
                 }
-                
-                CorpseOrigin.LOGGER.info("村民 {} 转化为尸兄，已成为尸王 {} 的手下", 
+
+                CorpseOrigin.LOGGER.info("村民 {} 转化为尸兄，已成为尸王 {} 的手下",
                         villagerName, sourceUUID);
             }
 
@@ -142,15 +213,22 @@ public class BYeffect extends MobEffect {
     }
 
     /**
-     * 静态方法：给实体添加感染效果（带随机延迟）
+     * 静态方法：给实体添加感染效果（带随机延迟3-15秒）
+     *
+     * @param target 目标实体
+     * @param serverLevel 服务器世界
      */
     public static void applyInfection(LivingEntity target, ServerLevel serverLevel) {
         applyInfection(target, serverLevel, null);
     }
 
     /**
-     * 静态方法：给实体添加感染效果（带随机延迟）
-     * 带感染源版本
+     * 静态方法：给实体添加感染效果（带随机延迟3-15秒）
+     * 带感染源版本，用于建立主从关系
+     *
+     * @param target 目标实体
+     * @param serverLevel 服务器世界
+     * @param sourceUUID 感染源UUID（尸王）
      */
     public static void applyInfection(LivingEntity target, ServerLevel serverLevel, UUID sourceUUID) {
         if (target == null || serverLevel == null) return;
@@ -177,9 +255,9 @@ public class BYeffect extends MobEffect {
         // 随机延迟3-15秒（60-300 ticks）
         int duration = 60 + serverLevel.getRandom().nextInt(241);
 
-        // 添加效果 - 使用 EffectRegister.QIANS
+        // 添加感染效果
         target.addEffect(new MobEffectInstance(
-                EffectRegister.QIANS,  // 使用注册的效果 Holder
+                EffectRegister.QIANS,
                 duration,
                 0,                      // 放大器
                 false,                  // 不显示粒子
@@ -193,6 +271,10 @@ public class BYeffect extends MobEffect {
 
     /**
      * 静态方法：给实体添加感染效果（自定义延迟）
+     *
+     * @param target 目标实体
+     * @param serverLevel 服务器世界
+     * @param durationTicks 持续时间（tick）
      */
     public static void applyInfection(LivingEntity target, ServerLevel serverLevel, int durationTicks) {
         applyInfection(target, serverLevel, durationTicks, null);
@@ -201,6 +283,11 @@ public class BYeffect extends MobEffect {
     /**
      * 静态方法：给实体添加感染效果（自定义延迟）
      * 带感染源版本
+     *
+     * @param target 目标实体
+     * @param serverLevel 服务器世界
+     * @param durationTicks 持续时间（tick）
+     * @param sourceUUID 感染源UUID（尸王）
      */
     public static void applyInfection(LivingEntity target, ServerLevel serverLevel, int durationTicks, UUID sourceUUID) {
         if (target == null || serverLevel == null) return;
@@ -224,9 +311,9 @@ public class BYeffect extends MobEffect {
             infectionSource.put(target.getUUID(), sourceUUID);
         }
 
-        // 添加效果 - 使用 EffectRegister.QIANS
+        // 添加感染效果
         target.addEffect(new MobEffectInstance(
-                EffectRegister.QIANS,  // 使用注册的效果 Holder
+                EffectRegister.QIANS,
                 durationTicks,
                 0,
                 false,
@@ -240,6 +327,17 @@ public class BYeffect extends MobEffect {
 
     /**
      * 将玩家转化为尸族
+     *
+     * 【转化过程】
+     * 1. 设置玩家为尸族状态
+     * 2. 初始化技能系统
+     * 3. 自动解锁初始技能（硬化皮肤）
+     * 4. 给予5点初始进化点
+     * 5. 同步数据到客户端
+     * 6. 播放转化特效
+     * 7. 发送提示消息
+     *
+     * @param player 要被转化的玩家
      */
     private void convertPlayerToCorpse(ServerPlayer player) {
         // 设置玩家为尸族状态
@@ -247,29 +345,29 @@ public class BYeffect extends MobEffect {
 
         // 初始化技能系统
         ISkillHandler skillHandler = SkillAttachment.getSkillHandler(player);
-        
+
         // 自动解锁初始技能（硬化皮肤）
         if (!skillHandler.hasLearned(CorpseSkills.HARDENED_SKIN.getId())) {
             skillHandler.learnSkill(CorpseSkills.HARDENED_SKIN);
             CorpseOrigin.LOGGER.info("玩家 {} 解锁初始技能：硬化皮肤", player.getName().getString());
         }
-        
-        // 给予一些初始进化点
+
+        // 给予初始进化点
         skillHandler.addEvolutionPoints(5);
-        
+
         // 同步技能数据到客户端
         skillHandler.syncToClient();
 
-        // 同步到客户端
+        // 同步尸族状态到客户端
         PlayerCorpseSyncPacket packet = new PlayerCorpseSyncPacket(
                 player.getId(), true, 1, PlayerCorpseData.getCorpseData(player)
         );
-        PacketDistributor.sendToPlayer(player, packet);
-        PacketDistributor.sendToPlayersTrackingEntity(player, packet);
+        // 发送给所有在线玩家，确保所有人都能看到尸兄状态
+        PacketDistributor.sendToAllPlayers(packet);
 
         // 播放转化特效
         player.level().broadcastEntityEvent(player, (byte) 35);
-        
+
         // 发送提示消息
         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                 "§c§l你已被感染成为尸兄！§r\n" +
@@ -282,24 +380,29 @@ public class BYeffect extends MobEffect {
 
     /**
      * 检查目标是否可以被感染
-     * 已经是尸兄的玩家不会被感染
+     *
+     * @param target 目标实体
+     * @return 是否可以被感染
      */
     public static boolean canInfect(LivingEntity target) {
         // 村民可以被感染
         if (target instanceof Villager) {
             return true;
         }
-        
+
         // 玩家可以被感染，但已经是尸兄的玩家除外
         if (target instanceof Player player) {
             return !PlayerCorpseData.isCorpse(player);
         }
-        
+
         return false;
     }
 
     /**
      * 获取感染源
+     *
+     * @param targetUUID 被感染者UUID
+     * @return 感染源UUID（尸王）
      */
     public static UUID getInfectionSource(UUID targetUUID) {
         return infectionSource.get(targetUUID);
@@ -307,6 +410,8 @@ public class BYeffect extends MobEffect {
 
     /**
      * 清除感染源记录
+     *
+     * @param targetUUID 被感染者UUID
      */
     public static void clearInfectionSource(UUID targetUUID) {
         infectionSource.remove(targetUUID);

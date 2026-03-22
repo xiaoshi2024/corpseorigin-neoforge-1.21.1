@@ -13,6 +13,27 @@ import java.util.UUID;
 
 /**
  * 尸王控制处理器 - 处理被控制玩家的行为
+ *
+ * 【功能说明】
+ * 1. 每tick更新控制状态（清理过期控制）
+ * 2. 强制被控制玩家看向控制者方向
+ * 3. 处理定身效果（完全锁定移动）
+ * 4. 提供接口检查玩家是否可以自主行动
+ *
+ * 【控制效果】
+ * - 视角锁定：被控制玩家强制看向控制者看向的方向
+ * - 移动锁定：定身状态下完全禁止移动
+ * - 状态同步：通过hurtMarked标记强制同步到客户端
+ *
+ * 【事件处理】
+ * - PlayerTickEvent.Pre: 每tick处理控制逻辑
+ *
+ * 【关联系统】
+ * - CorpseKingPowerSkill: 提供控制状态查询和更新
+ * - CorpseKingData: 控制数据持久化
+ *
+ * @author Phagens
+ * @version 1.0
  */
 @EventBusSubscriber(modid = CorpseOrigin.MODID)
 public class CorpseKingControlHandler {

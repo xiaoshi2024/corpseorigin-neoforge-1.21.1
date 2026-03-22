@@ -44,6 +44,13 @@ public class NetworkRegister {
                 CorpseKingSyncPacket::handleClient
         );
 
-        CorpseOrigin.LOGGER.info("NetworkRegister 网络包注册完成 - 共注册了 4 个包");
+        // 注册功法容器同步包 (客户端 → 服务端)
+        registrar.playToServer(
+                SyncGongFuContainerPacket.TYPE,
+                SyncGongFuContainerPacket.STREAM_CODEC,
+                SyncGongFuContainerPacket::handleServer
+        );
+
+        CorpseOrigin.LOGGER.info("NetworkRegister 网络包注册完成 - 共注册了 5 个包");
     }
 }

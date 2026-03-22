@@ -4,6 +4,7 @@ import com.phagens.corpseorigin.CorpseOrigin;
 import com.phagens.corpseorigin.Entity.EntityAI.Vibrationsys.ModVibrationUser;
 import com.phagens.corpseorigin.client.skin.ZbSkinLoader;
 import com.phagens.corpseorigin.client.skin.ZbSkinState;
+import com.phagens.corpseorigin.compat.vampirism.IVampirismCompat;
 import com.phagens.corpseorigin.network.ZbSkinUpdatePacket;
 import com.phagens.corpseorigin.register.ModSounds;
 import net.minecraft.nbt.CompoundTag;
@@ -38,7 +39,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class  LowerLevelZbEntity extends PathfinderMob implements GeoEntity, VibrationSystem {
+/**
+ * 尸兄实体类
+ * 实现了Vampirism模组的IBiteableEntity接口（通过IEntity扩展）
+ * 允许吸血鬼玩家吸食尸兄的血液
+ */
+public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, VibrationSystem {
     // 变种类型枚举
     public enum Variant {
         NORMAL(0),

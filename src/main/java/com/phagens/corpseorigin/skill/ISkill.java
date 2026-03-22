@@ -9,7 +9,32 @@ import java.util.List;
 
 /**
  * 技能接口 - 定义尸兄技能的基本属性和行为
- * 参考《尸兄》原作中的各种能力设定
+ *
+ * 【功能说明】
+ * 1. 定义技能的基本属性：ID、名称、描述、图标、消耗等
+ * 2. 定义技能类型：被动/主动、进化类型
+ * 3. 定义技能生命周期：学习、遗忘、激活
+ * 4. 支持前置技能、等级要求、冷却时间等机制
+ *
+ * 【技能类型体系】
+ * - BASIC_EVOLUTION: 基础进化 - 所有尸兄都能获得的基础能力
+ * - POWER_MUTATION: 力量型变异 - 偏向物理攻击和防御
+ * - AGILITY_MUTATION: 敏捷型变异 - 偏向速度和闪避
+ * - SPECIAL_MUTATION: 特殊型变异 - 特殊能力如毒素、再生等
+ * - DIVINE_ABILITY: 神级能力 - 高级进化能力
+ * - SUPREME_ABILITY: 超神级能力 - 终极能力
+ *
+ * 【技能分类】
+ * - 被动技能(isPassive=true): 自动生效，无需手动激活
+ * - 主动技能(isActivatable=true): 需要手动触发，有冷却时间
+ *
+ * 【关联系统】
+ * - BaseSkill: 接口的基础实现类
+ * - CorpseSkills: 具体的技能定义
+ * - ISkillHandler: 管理玩家的技能状态
+ *
+ * @author Phagens
+ * @version 1.0
  */
 public interface ISkill {
     

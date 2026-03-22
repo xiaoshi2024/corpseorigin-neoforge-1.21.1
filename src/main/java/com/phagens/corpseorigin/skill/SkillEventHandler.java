@@ -22,6 +22,38 @@ import java.util.UUID;
 
 /**
  * 技能事件处理器 - 处理被动技能效果
+ *
+ * 【功能说明】
+ * 1. 处理被动技能的持续效果（每tick/每秒）
+ * 2. 处理攻击相关的被动技能（毒液、重击、吞噬强化）
+ * 3. 处理防御相关的被动技能（闪避）
+ * 4. 处理玩家登录/重生/克隆事件，确保数据同步
+ * 5. 管理技能冷却时间的更新
+ *
+ * 【被动技能处理】
+ * - 进化感知：每20tick刷新夜视效果
+ * - 快速再生：每20tick恢复生命值
+ * - 毒液：攻击时给目标添加中毒效果
+ * - 重击：攻击时添加击退效果
+ * - 吞噬强化：攻击活物时恢复生命和饥饿
+ * - 闪避：受到伤害时25%几率闪避
+ * - 尸王之力：攻击时触发控制效果
+ *
+ * 【事件处理】
+ * - PlayerTickEvent: 更新冷却、处理持续被动效果
+ * - LivingDamageEvent.Pre: 处理攻击者效果
+ * - LivingDamageEvent.Post: 处理防御者效果（闪避）
+ * - PlayerRespawnEvent: 重生后同步数据
+ * - PlayerLoggedInEvent: 登录后同步数据
+ * - PlayerCloneEvent: 克隆/死亡后恢复数据
+ *
+ * 【关联系统】
+ * - CorpseSkills: 技能定义
+ * - SkillAttachment: 数据获取
+ * - CorpseKingPowerSkill: 尸王之力特殊处理
+ *
+ * @author Phagens
+ * @version 1.0
  */
 @EventBusSubscriber(modid = CorpseOrigin.MODID)
 public class SkillEventHandler {

@@ -1,6 +1,7 @@
 package com.phagens.corpseorigin.event;
 
 import com.phagens.corpseorigin.CorpseOrigin;
+import com.phagens.corpseorigin.Entity.LongyouEntity;
 import com.phagens.corpseorigin.event.custom.WeaponBreakEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -22,6 +23,7 @@ import java.util.UUID;
 /**
  * Point Blank 枪械模组事件处理器
  * 监听枪械射击事件并触发 WeaponBreakEvent
+ * 只在攻击龙右（尸王）时触发枪械损毁
  */
 @EventBusSubscriber(modid = CorpseOrigin.MODID)
 public class PointBlankGunEventHandler {
@@ -65,19 +67,27 @@ public class PointBlankGunEventHandler {
     }
 
     /**
-     * 监听伤害事件 - Point Blank 射击造成伤害时触发
+     * 监听伤害事件 - 只在攻击龙右（尸王）时触发枪械损毁
      */
     @SubscribeEvent
     public static void onLivingDamage(LivingDamageEvent.Post event) {
+        // 获取被攻击的实体
+        LivingEntity target = event.getEntity();
+
+        // 只处理攻击龙右（尸王）的情况
+        if (!(target instanceof LongyouEntity)) {
+            return;
+        }
+
         // 获取伤害来源
         if (!(event.getSource().getEntity() instanceof Player player)) return;
         if (player.level().isClientSide()) return;
 
         ItemStack mainHand = player.getMainHandItem();
 
-        // 检查是否使用 Point Blank 枪械造成伤害
+        // 检查是否使用 Point Blank 枪械攻击龙右
         if (isPointBlankGun(mainHand)) {
-            CorpseOrigin.LOGGER.info("[PointBlank检测] 玩家使用枪械造成伤害，准备触发 WeaponBreakEvent");
+            CorpseOrigin.LOGGER.info("[PointBlank检测] 玩家使用枪械攻击龙右，准备触发 WeaponBreakEvent");
 
             UUID playerId = player.getUUID();
             long currentTime = System.currentTimeMillis();

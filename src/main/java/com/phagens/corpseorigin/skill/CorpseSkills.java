@@ -19,18 +19,47 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 尸兄技能定义
- * 基于《尸兄》原作中的各种能力
+ * 尸兄技能定义类 - 基于《尸兄》原作中的各种能力
+ *
+ * 【功能说明】
+ * 1. 定义所有尸兄可学习的技能
+ * 2. 按类型分类：基础进化、力量型、敏捷型、特殊型、神级、超神级
+ * 3. 每个技能都有独特的效果和激活逻辑
+ * 4. 支持被动技能（自动生效）和主动技能（手动激活）
+ *
+ * 【技能体系】
+ * 第1层 - 基础进化：硬化皮肤、利爪、吞噬强化、进化感知
+ * 第2层 - 初级变异：巨力、疾行、再生、毒液
+ * 第3层 - 进阶技能：狂暴、重击、跳跃、闪避、恐惧光环
+ * 第4层 - 神级能力：不死之身
+ * 第5层 - 终极能力：尸王之力、影袭
+ *
+ * 【技能类型】
+ * - 被动技能：通过属性修饰符或事件监听实现
+ * - 主动技能：通过onActivate方法实现即时效果
+ * - 持续技能：激活后在持续时间内生效
+ *
+ * 【关联系统】
+ * - BaseSkill: 技能基类
+ * - CorpseSkillTree: 技能树组织
+ * - SkillEventHandler: 被动技能事件处理
+ * - CorpseKingPowerSkill: 特殊技能实现
+ *
+ * @author Phagens
+ * @version 1.0
  */
 public class CorpseSkills {
-    
-    // 技能注册表
+
+    /** 技能注册表，存储所有定义的技能 */
     private static final Map<ResourceLocation, ISkill> SKILLS = new HashMap<>();
-    
+
     // ==================== 基础进化技能 ====================
-    
+
     /**
      * 硬化皮肤 - 增加护甲值
+     * 类型：被动技能
+     * 效果：+4护甲值
+     * 消耗：1进化点
      */
     public static final ISkill HARDENED_SKIN = register(new SimpleSkill(
             new BaseSkill.Builder(id("hardened_skin"))
@@ -51,6 +80,9 @@ public class CorpseSkills {
     
     /**
      * 利爪 - 增加攻击伤害
+     * 类型：被动技能
+     * 效果：+3攻击伤害
+     * 消耗：1进化点
      */
     public static final ISkill SHARP_CLAWS = register(new SimpleSkill(
             new BaseSkill.Builder(id("sharp_claws"))
@@ -60,17 +92,21 @@ public class CorpseSkills {
                     .skillType(ISkill.SkillType.BASIC_EVOLUTION)
                     .requiredLevel(1)
                     .passive(true)
-                    .attributeModifier(Attributes.ATTACK_DAMAGE, 
+                    .attributeModifier(Attributes.ATTACK_DAMAGE,
                             new AttributeModifier(id("sharp_claws"), 3.0, AttributeModifier.Operation.ADD_VALUE))
     ) {
         @Override
         public void onActivate(Player player) {
-            // 被动技能
+            // 被动技能，无需激活逻辑
         }
     });
-    
+
     /**
      * 吞噬强化 - 攻击时恢复更多生命值
+     * 类型：被动技能
+     * 效果：攻击活物时恢复1.5生命值，+8饥饿度
+     * 消耗：2进化点
+     * 触发：攻击事件（SkillEventHandler处理）
      */
     public static final ISkill DEVOUR_ENHANCEMENT = register(new SimpleSkill(
             new BaseSkill.Builder(id("devour_enhancement"))
@@ -83,12 +119,16 @@ public class CorpseSkills {
     ) {
         @Override
         public void onActivate(Player player) {
-            // 被动效果在攻击事件处理
+            // 被动效果在攻击事件处理（SkillEventHandler）
         }
     });
-    
+
     /**
      * 进化感知 - 获得夜视能力
+     * 类型：被动技能
+     * 效果：永久夜视效果
+     * 消耗：2进化点
+     * 触发：每20tick自动刷新夜视效果
      */
     public static final ISkill EVOLUTION_SENSE = register(new SimpleSkill(
             new BaseSkill.Builder(id("evolution_sense"))
@@ -101,7 +141,7 @@ public class CorpseSkills {
     ) {
         @Override
         public void onActivate(Player player) {
-            // 被动效果在tick事件中处理
+            // 被动效果在tick事件中处理（SkillEventHandler）
         }
     });
     
@@ -378,39 +418,49 @@ public class CorpseSkills {
     });
     
     /**
-     * 注册技能
+     * 注册技能到技能管理器
+     *
+     * @param skill 要注册的技能
+     * @return 注册后的技能
      */
     private static ISkill register(ISkill skill) {
         SKILLS.put(skill.getId(), skill);
         SkillManager.getInstance().registerSkill(skill);
         return skill;
     }
-    
+
     /**
      * 创建资源位置
+     *
+     * @param path 路径
+     * @return 资源位置
      */
     private static ResourceLocation id(String path) {
         return ResourceLocation.fromNamespaceAndPath(CorpseOrigin.MODID, path);
     }
-    
+
     /**
-     * 获取所有技能
+     * 获取所有已注册的技能
+     *
+     * @return 技能映射表（副本）
      */
     public static Map<ResourceLocation, ISkill> getAllSkills() {
         return new HashMap<>(SKILLS);
     }
-    
+
     /**
      * 简单技能实现类
+     * 继承BaseSkill，用于定义简单的技能
      */
     public static abstract class SimpleSkill extends BaseSkill {
         public SimpleSkill(Builder builder) {
             super(builder);
         }
     }
-    
+
     /**
      * 初始化所有技能
+     * 在模组初始化时调用，记录注册的技能数量
      */
     public static void init() {
         CorpseOrigin.LOGGER.info("注册了 {} 个尸兄技能", SKILLS.size());

@@ -8,7 +8,30 @@ import java.util.List;
 
 /**
  * 技能树接口 - 定义完整的技能进化路线
- * 参考《尸兄》中的进化体系
+ *
+ * 【功能说明】
+ * 1. 定义完整的技能进化体系，包含多个技能节点
+ * 2. 支持多种进化路线（尸兄/修仙/混合）
+ * 3. 提供技能树的UI展示信息（名称、描述、图标）
+ * 4. 管理技能节点的层级关系
+ *
+ * 【技能树类型】
+ * - CORPSE_EVOLUTION: 尸兄进化路线 - 感染变异体系
+ * - CULTIVATION: 修仙路线 - 人类修炼体系（未来扩展）
+ * - HYBRID: 混合路线 - 尸兄修仙混合体系（未来扩展）
+ *
+ * 【数据结构】
+ * - 根节点(rootNode): 技能树的起点
+ * - 节点集合: 包含技能树中的所有节点
+ * - 层级系统: 节点按层级组织，表示进化阶段
+ *
+ * 【关联系统】
+ * - SkillTree: 接口的实现类
+ * - CorpseSkillTree/CorpseEvolutionTree: 具体的技能树定义
+ * - ISkillNode: 技能树的组成单元
+ *
+ * @author Phagens
+ * @version 1.0
  */
 public interface ISkillTree {
     

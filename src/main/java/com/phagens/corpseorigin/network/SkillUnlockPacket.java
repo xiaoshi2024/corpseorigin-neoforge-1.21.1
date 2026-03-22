@@ -66,7 +66,7 @@ public record SkillUnlockPacket(ResourceLocation skillId) implements CustomPacke
                 }
 
                 // 消耗进化点数并学习技能
-                handler.consumeEvolutionPoints(skill.getCost());
+                // 注意：learnSkill 内部会扣除进化点，这里不需要再调用 consumeEvolutionPoints
                 handler.learnSkill(skill);
 
                 // 发送成功消息

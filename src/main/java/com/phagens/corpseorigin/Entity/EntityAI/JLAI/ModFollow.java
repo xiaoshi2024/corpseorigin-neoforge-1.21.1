@@ -1,3 +1,31 @@
+/**
+ * 尸兄追击AI目标类 - 自定义近战攻击逻辑
+ *
+ * 【功能说明】
+ * 1. 目标追踪：持续追踪并接近目标实体
+ * 2. 路径计算：智能重新计算路径，避免卡顿
+ * 3. 攻击冷却：管理攻击间隔和冷却时间
+ * 4. 寻路惩罚：寻路失败时增加延迟，避免频繁计算
+ * 5. 视线检测：可选择是否追踪看不见的目标
+ *
+ * 【工作原理】
+ * - canUse(): 每20tick检查一次是否可以开始追击
+ * - canContinueToUse(): 每tick检查是否应该继续追击
+ * - tick(): 每tick更新路径、检查攻击条件并执行攻击
+ * - 寻路失败惩罚：连续寻路失败会增加攻击冷却时间
+ *
+ * 【重要参数】
+ * - attackInterval: 20 tick = 1秒攻击间隔
+ * - COOLDOWN_BETWEEN_CAN_USE_CHECKS: 20 tick检查间隔
+ * - failedPathFindingPenalty: 寻路失败惩罚累计值
+ *
+ * 【关联系统】
+ * - ModEntityJL: 尸兄基础实体类，使用此AI
+ * - PathfinderMob: Minecraft寻路生物基类
+ *
+ * @author Phagens
+ * @version 1.0
+ */
 package com.phagens.corpseorigin.Entity.EntityAI.JLAI;
 
 import net.minecraft.world.entity.EntitySelector;
@@ -10,32 +38,62 @@ import net.minecraft.world.level.pathfinder.Path;
 
 import java.util.EnumSet;
 
-
+/**
+ * 尸兄追击AI目标
+ * 继承Goal实现自定义追击和攻击逻辑
+ */
 public class ModFollow extends Goal {
-    protected final PathfinderMob mob;   //生物引用 指向指向攻击的生物实体访问生物能力和状态
-    private final double spend; //生物的移动倍率调节
-    private final boolean followingTarget; //控制是否追踪看不见的目标
-    private Path path;//路径计算
-    private double pathedTargetX;//目标的xyz坐标
+    /** 生物引用，指向要控制的生物实体 */
+    protected final PathfinderMob mob;
+    /** 移动速度倍率调节 */
+    private final double spend;
+    /** 控制是否追踪看不见的目标 */
+    private final boolean followingTarget;
+    /** 当前路径 */
+    private Path path;
+    /** 目标X坐标 */
+    private double pathedTargetX;
+    /** 目标Y坐标 */
     private double pathedTargetY;
+    /** 目标Z坐标 */
     private double pathedTargetZ;
-    private int ticksUntilNextPathRecalculation;//控制多久重新计算路径
-    private int ticksUntilNextAttack;   //冷却倒计时
-    private final int attackInterval = 20;  // 攻击间隔
-    private long lastCanUseCheck;       //限制canuse 检查的间隔
+    /** 距离下次路径重新计算的tick数 */
+    private int ticksUntilNextPathRecalculation;
+    /** 攻击冷却倒计时 */
+    private int ticksUntilNextAttack;
+    /** 攻击间隔（tick） */
+    private final int attackInterval = 20;
+    /** 限制canUse检查的时间戳 */
+    private long lastCanUseCheck;
+    /** canUse检查的最小间隔 */
     private static final long COOLDOWN_BETWEEN_CAN_USE_CHECKS = 20L;
-    private int failedPathFindingPenalty = 0;  //寻路失败累计的延迟惩罚
-    private boolean canPenalize = false;      //是否启用惩罚
+    /** 寻路失败累计的延迟惩罚 */
+    private int failedPathFindingPenalty = 0;
+    /** 是否启用惩罚机制 */
+    private boolean canPenalize = false;
 
-
+    /**
+     * 构造函数
+     *
+     * @param mob 要控制的生物实体
+     * @param spend 移动速度倍率
+     * @param followingTarget 是否追踪看不见的目标
+     */
     public ModFollow(PathfinderMob mob, double spend, boolean followingTarget) {
         this.mob = mob;
-        this.spend = spend;//移动速度调节
-        this.followingTarget = followingTarget;  //是否追踪看不见目标
-        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK)); //设置AI  允许移动 与观察
+        this.spend = spend;
+        this.followingTarget = followingTarget;
+        // 设置AI标志：允许移动和观察
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
-    //判断目标还在不 还打不
+    /**
+     * 判断是否应继续追击
+     * 检查目标是否仍然有效
+     *
+     * @return 是否继续追击
+     */
+    @Override
     public boolean canContinueToUse() {
         LivingEntity livingentity = this.mob.getTarget();
         if (livingentity == null) {
@@ -45,36 +103,44 @@ public class ModFollow extends Goal {
         } else if (!this.followingTarget) {
             return !this.mob.getNavigation().isDone();
         } else {
-            return !this.mob.isWithinRestriction(livingentity.blockPosition()) ? false : !(livingentity instanceof Player) || !livingentity.isSpectator() && !((Player)livingentity).isCreative();
+            // 检查目标是否超出限制范围，以及是否为创造/旁观模式玩家
+            return !this.mob.isWithinRestriction(livingentity.blockPosition()) ? false : !(livingentity instanceof Player) || !livingentity.isSpectator() && !((Player) livingentity).isCreative();
         }
     }
 
+    /**
+     * 判断是否可以开始追击
+     * 每20tick检查一次，避免频繁计算
+     *
+     * @return 是否可以开始追击
+     */
     @Override
     public boolean canUse() {
-        long i =this.mob.level().getGameTime();
-        if (i - this.lastCanUseCheck<20L){
+        long i = this.mob.level().getGameTime();
+        // 检查是否满足最小检查间隔
+        if (i - this.lastCanUseCheck < 20L) {
             return false;
-        }else {
-            this.lastCanUseCheck = i;  // 1️更新检查时间戳
+        } else {
+            this.lastCanUseCheck = i;  // 更新检查时间戳
             LivingEntity livingentity = this.mob.getTarget();  // 获取目标
-            if (livingentity == null) {//判断是否为空
+            if (livingentity == null) {
                 return false;
-            } else if (!livingentity.isAlive()) {//判断是否死了
+            } else if (!livingentity.isAlive()) {
                 return false;
             } else if (this.canPenalize) {
-                if (--this.ticksUntilNextPathRecalculation <= 0) { //递减路径重计算倒计时 检查是不是要重写计算路
-                    this.path = this.mob.getNavigation().createPath(livingentity, 0);  //getNavigation()火炮去生物导航 createpath 计算到实体路径 0精度
-                    this.ticksUntilNextPathRecalculation = 4 + this.mob.getRandom().nextInt(7);//重置路径计算倒计时 4-10个刻
-                    return this.path != null;  //如果存在路径就走
-                }else {
+                // 启用惩罚机制时的路径计算
+                if (--this.ticksUntilNextPathRecalculation <= 0) {
+                    this.path = this.mob.getNavigation().createPath(livingentity, 0);
+                    this.ticksUntilNextPathRecalculation = 4 + this.mob.getRandom().nextInt(7);
+                    return this.path != null;
+                } else {
                     return true;
-              }
-            }else {
+                }
+            } else {
+                // 正常路径计算
                 this.path = this.mob.getNavigation().createPath(livingentity, 0);
-                return this.path != null ? true : this.mob.isWithinMeleeAttackRange(livingentity);
+                return this.path != null || this.mob.isWithinMeleeAttackRange(livingentity);
             }
-
-
         }
     }
 

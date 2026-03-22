@@ -23,6 +23,44 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 import static net.minecraft.core.registries.Registries.ENTITY_TYPE;
 
+/**
+ * 尸兄玩家事件处理器 - 处理尸兄玩家的特殊行为和属性
+ *
+ * 【功能说明】
+ * 1. 尸兄玩家属性修改：增加护甲、攻击伤害、移动速度、最大生命值
+ * 2. 攻击活物时恢复生命值和饥饿度（吞噬机制）
+ * 3. 尸兄玩家死亡时掉落尸丹
+ * 4. 击杀生物获得进化点
+ *
+ * 【属性修改】
+ * - 护甲值：+4（Armor）
+ * - 攻击伤害：+3（Attack Damage）
+ * - 移动速度：+20%（Movement Speed）
+ * - 最大生命值：+10（Max Health）
+ *
+ * 【吞噬机制】
+ * - 攻击活物时恢复1.5生命值
+ * - 恢复8点饥饿度
+ * - 仅对尸兄玩家生效
+ * - 攻击玩家时不触发
+ *
+ * 【尸丹掉落】
+ * - 尸兄玩家死亡时掉落尸丹
+ * - 尸丹可用于制作药剂或提升修为
+ *
+ * 【进化点获取】
+ * - 击杀生物获得1-3点进化点
+ * - 通过SkillEventHandler处理
+ *
+ * 【关联系统】
+ * - PlayerCorpseData: 尸兄状态管理
+ * - CorpseSkills: 技能系统
+ * - Moditems.SHI_DAN: 尸丹物品
+ * - SkillAttachment: 技能数据管理
+ *
+ * @author Phagens
+ * @version 1.0
+ */
 @EventBusSubscriber(modid = CorpseOrigin.MODID)
 public class PlayerCorpseEventHandler {
 
@@ -85,8 +123,8 @@ public class PlayerCorpseEventHandler {
                 player.getId(), isCorpse, corpseType, corpseData
         );
 
-        PacketDistributor.sendToPlayer(player, packet);
-        PacketDistributor.sendToPlayersTrackingEntity(player, packet);
+        // 发送给所有在线玩家，确保所有人都能看到尸兄状态
+        PacketDistributor.sendToAllPlayers(packet);
     }
 
     private static void updateCorpseBehavior(ServerPlayer player) {

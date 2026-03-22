@@ -27,10 +27,44 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.phagens.corpseorigin.GongFU.ModUtlis.GongFUDataUtlis.applyGongFaAttributes;
 
-//兼容修行
+/**
+ * 玩家死亡事件处理器 - 处理玩家死亡时的数据保存和重生恢复
+ *
+ * 【功能说明】
+ * 1. 玩家死亡时保存功法数据到服务器内存缓存
+ * 2. 玩家重生时从缓存恢复功法数据
+ * 3. 死亡时移除所有CorpseOrigin添加的属性修饰符
+ * 4. 每100tick检查并自动学习功法技能
+ *
+ * 【数据保存机制】
+ * - 使用ConcurrentHashMap作为服务器内存缓存
+ * - 死亡时保存GongFuContainer NBT数据
+ * - 重生时恢复到新玩家实体
+ * - 恢复后清理缓存
+ *
+ * 【属性清理】
+ * - 死亡时调用Sagent.removeAllPlayerAttributes()
+ * - 移除所有药剂和功法添加的属性修饰符
+ *
+ * 【自动学习】
+ * - 每100tick（5秒）检查一次
+ * - 遍历玩家功法容器中的所有功法物品
+ * - 根据功法数据自动学习对应的技能
+ * - 发送提示消息给玩家
+ *
+ * 【关联系统】
+ * - GongFUDataUtlis: 功法数据工具类
+ * - GongFaSkillManager: 功法技能管理
+ * - SkillAttachment: 技能数据管理
+ * - Sagent: 药剂系统
+ *
+ * @author Phagens
+ * @version 1.0
+ */
 @EventBusSubscriber(modid = CorpseOrigin.MODID)
 public class playerDie {
-    // 服务器级别的内存缓存
+
+    /** 服务器级别的内存缓存 - 存储死亡玩家的功法数据 */
     private static final Map<UUID, CompoundTag> DEATH_BACKUP = new ConcurrentHashMap<>();
     @SubscribeEvent
     public static void onPlayerDeath(LivingDeathEvent event) {

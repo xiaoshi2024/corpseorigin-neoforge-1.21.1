@@ -46,8 +46,8 @@ public class CorpsePlayerCommand {
                                                     PlayerCorpseSyncPacket packet = new PlayerCorpseSyncPacket(
                                                             player.getId(), true, type, PlayerCorpseData.getCorpseData(player)
                                                     );
-                                                    PacketDistributor.sendToPlayer(player, packet);
-                                                    PacketDistributor.sendToPlayersTrackingEntity(player, packet);
+                                                    // 发送给所有在线玩家，确保所有人都能看到尸兄状态
+                                                    PacketDistributor.sendToAllPlayers(packet);
 
                                                     player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                                                             "§c§l你已成为尸兄！§r\n" +
@@ -88,8 +88,8 @@ public class CorpsePlayerCommand {
                                                             player.getId(), true, PlayerCorpseData.getCorpseType(player),
                                                             PlayerCorpseData.getCorpseData(player)
                                                     );
-                                                    PacketDistributor.sendToPlayer(player, packet);
-                                                    PacketDistributor.sendToPlayersTrackingEntity(player, packet);
+                                                    // 发送给所有在线玩家
+                                                    PacketDistributor.sendToAllPlayers(packet);
 
                                                     context.getSource().sendSuccess(
                                                             () -> net.minecraft.network.chat.Component.literal(
@@ -406,8 +406,8 @@ public class CorpsePlayerCommand {
                                             PlayerCorpseSyncPacket packet = new PlayerCorpseSyncPacket(
                                                     player.getId(), false, 0, PlayerCorpseData.getCorpseData(player)
                                             );
-                                            PacketDistributor.sendToPlayer(player, packet);
-                                            PacketDistributor.sendToPlayersTrackingEntity(player, packet);
+                                            // 发送给所有在线玩家
+                                            PacketDistributor.sendToAllPlayers(packet);
 
                                             context.getSource().sendSuccess(
                                                     () -> net.minecraft.network.chat.Component.literal(

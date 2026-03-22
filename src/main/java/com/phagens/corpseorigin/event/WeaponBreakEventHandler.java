@@ -17,11 +17,39 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerDestroyItemEvent;
 
-// NeoForge 事件注册
+/**
+ * 武器损坏事件处理器 - 处理武器耐久耗尽时的特殊逻辑
+ *
+ * 【功能说明】
+ * 1. 处理自定义武器损坏事件（WeaponBreakEvent）
+ * 2. 特殊处理Point Blank枪械：直接移除并通知玩家
+ * 3. 普通武器耐久归零处理
+ * 4. 播放破损音效和动画
+ *
+ * 【武器类型处理】
+ * - Point Blank枪械：检测到后直接移除，播放音效，发送消息
+ * - 普通武器：耐久归零后播放破损动画，清空装备槽
+ *
+ * 【事件流程】
+ * 1. 监听WeaponBreakEvent
+ * 2. 检查事件是否被取消
+ * 3. 空指针和客户端防护
+ * 4. 检测武器类型并执行对应处理
+ * 5. 播放破损音效和动画
+ * 6. 触发NeoForge内置的PlayerDestroyItemEvent
+ *
+ * 【关联系统】
+ * - WeaponBreakEvent: 自定义武器损坏事件
+ * - Point Blank模组: 枪械检测和处理
+ * - PlayerDestroyItemEvent: NeoForge内置事件
+ *
+ * @author Phagens
+ * @version 1.0
+ */
 @EventBusSubscriber(modid = CorpseOrigin.MODID)
 public class WeaponBreakEventHandler {
 
-    // Point Blank 命名空间
+    /** Point Blank模组命名空间 */
     private static final String POINT_BLANK_NAMESPACE = "pointblank";
 
     // 订阅自定义事件

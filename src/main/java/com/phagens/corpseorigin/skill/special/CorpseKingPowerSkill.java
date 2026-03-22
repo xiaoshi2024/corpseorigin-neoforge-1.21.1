@@ -22,30 +22,64 @@ import net.minecraft.world.phys.Vec3;
 import java.util.*;
 
 /**
- * 尸王之力技能 - 模拟龙右感染和控制能力
- * 主动技能：激活后5秒内攻击目标可触发效果
- * 攻击玩家可控制3秒（可强制定身）
- * 攻击尸兄NPC可永久收为手下（宠物逻辑）
- * 攻击村民可转化为尸兄手下
+ * 尸王之力技能 - 模拟龙右的感染和控制能力
+ *
+ * 【功能说明】
+ * 1. 主动技能：激活后5秒内攻击目标可触发特殊效果
+ * 2. 控制玩家：攻击玩家可控制3秒（可强制定身）
+ * 3. 收服尸兄：攻击尸兄NPC可永久收为手下
+ * 4. 感染转化：攻击村民可转化为尸兄手下
+ *
+ * 【技能参数】
+ * - CONTROL_RANGE: 16格控制范围
+ * - PLAYER_CONTROL_DURATION: 60 tick = 3秒控制时间
+ * - SKILL_COOLDOWN: 300 tick = 15秒冷却时间
+ * - SKILL_ACTIVE_DURATION: 100 tick = 5秒激活持续时间
+ *
+ * 【控制效果】
+ * - 被控制玩家获得发光、虚弱、缓慢效果
+ * - 被控制玩家强制看向控制者方向
+ * - 可切换定身状态（完全锁定移动）
+ * - 控制结束后自动清除所有效果
+ *
+ * 【数据管理】
+ * - activeSkillPlayers: 记录技能处于激活状态的玩家
+ * - controlledPlayers: 记录被控制的玩家信息
+ * - zombieMinions: 记录尸王的手下集合
+ * - CorpseKingData: 持久化存储控制关系
+ *
+ * 【关联系统】
+ * - CorpseKingControlHandler: 处理被控制玩家的tick逻辑
+ * - CorpseKingData: 数据持久化
+ * - BYeffect: 村民感染转化
+ * - LowerLevelZbEntity: 尸兄手下实体
+ *
+ * @author Phagens
+ * @version 1.0
  */
 public class CorpseKingPowerSkill extends BaseSkill {
 
-    // 控制范围
+    /** 控制范围（格） */
     private static final double CONTROL_RANGE = 16.0D;
-    // 玩家控制持续时间（tick）- 3秒
+    /** 玩家控制持续时间（tick）- 3秒 */
     private static final int PLAYER_CONTROL_DURATION = 60;
-    // 技能冷却时间（tick）- 15秒
+    /** 技能冷却时间（tick）- 15秒 */
     private static final int SKILL_COOLDOWN = 300;
-    // 技能激活持续时间（tick）- 5秒
+    /** 技能激活持续时间（tick）- 5秒 */
     private static final int SKILL_ACTIVE_DURATION = 100;
 
-    // 存储技能激活状态的玩家：玩家UUID -> 激活结束时间
+    /** 存储技能激活状态的玩家：玩家UUID -> 激活结束时间 */
     private static final Map<UUID, Long> activeSkillPlayers = new HashMap<>();
-    // 存储被控制的玩家信息：被控制者UUID -> 控制信息
+    /** 存储被控制的玩家信息：被控制者UUID -> 控制信息 */
     private static final Map<UUID, PlayerControlInfo> controlledPlayers = new HashMap<>();
-    // 存储尸王的手下：尸王UUID -> 手下UUID集合
+    /** 存储尸王的手下：尸王UUID -> 手下UUID集合 */
     private static final Map<UUID, Set<UUID>> zombieMinions = new HashMap<>();
 
+    /**
+     * 构造函数
+     *
+     * @param builder 技能构建器
+     */
     public CorpseKingPowerSkill(Builder builder) {
         super(builder);
     }

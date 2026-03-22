@@ -15,8 +15,32 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.item.ItemTossEvent;
 
 /**
- * 七星棺丢弃处理器
- * 当玩家将七星棺丢弃到水中时，自动放置为方块
+ * 七星棺丢弃处理器 - 处理七星棺物品丢弃到水中的自动放置
+ *
+ * 【功能说明】
+ * 1. 监听玩家丢弃物品事件（ItemTossEvent）
+ * 2. 检测丢弃的物品是否为七星棺
+ * 3. 延迟检查物品是否落入水中
+ * 4. 自动将七星棺放置为方块
+ *
+ * 【工作流程】
+ * 1. 玩家丢弃七星棺物品
+ * 2. 事件处理器捕获ItemTossEvent
+ * 3. 延迟5tick后检查物品位置
+ * 4. 如果物品在水中且位置可放置，则放置方块
+ * 5. 移除物品实体
+ *
+ * 【放置条件】
+ * - 物品位置的水源被感染
+ * - 目标位置是空气或水源
+ * - 物品实体仍然存在且未被拾取
+ *
+ * 【关联系统】
+ * - BlockRegistry.QI_XING_GUAN: 七星棺方块
+ * - QiXingGuan: 方块放置后的感染逻辑
+ *
+ * @author Phagens
+ * @version 1.0
  */
 @EventBusSubscriber(modid = CorpseOrigin.MODID)
 public class QiXingGuanDropHandler {

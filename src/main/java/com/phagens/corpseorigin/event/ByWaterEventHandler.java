@@ -1,3 +1,34 @@
+/**
+ * 被污染的水源事件处理器 - 处理玩家和实体接触感染水源时的感染效果
+ *
+ * 【功能说明】
+ * 1. 检测玩家是否接触到被七星棺感染的水源
+ * 2. 根据水源能量值决定是否施加中毒效果（玩家）
+ * 3. 检测村民接触感染水源并施加感染效果
+ * 4. 支持水源感染的扩散（放置水源时检查相邻感染水源）
+ * 5. 冷却机制防止效果频繁触发
+ *
+ * 【工作原理】
+ * - 每500毫秒检查一次玩家位置
+ * - 每500毫秒检查一次村民位置
+ * - 检查实体所在方块是否为感染水源
+ * - 满足条件则施加对应效果
+ * - 中毒效果有3000毫秒冷却时间
+ *
+ * 【感染条件】
+ * 1. 实体所在位置的水源被感染（InfectionData中记录）
+ * 2. 水源能量值 > 0
+ * 3. 通过冷却时间检查
+ *
+ * 【关联系统】
+ * - InfectionData: 水源感染数据存储
+ * - EffectRegister.QIANS: 村民感染效果
+ * - MobEffects.POISON: 玩家中毒效果
+ * - BlockEvent.EntityPlaceEvent: 水源放置事件
+ *
+ * @author Phagens
+ * @version 1.0
+ */
 package com.phagens.corpseorigin.event;
 
 import com.phagens.corpseorigin.CorpseOrigin;
@@ -27,11 +58,17 @@ import java.util.UUID;
 
 @EventBusSubscriber(modid = CorpseOrigin.MODID)
 public class ByWaterEventHandler {
+    /** 玩家中毒冷却映射表 - 记录每个玩家上次中毒时间 */
     private static final Map<UUID, Long> playerPoisonCooldowns = new HashMap<>();
+    /** 检查冷却映射表 - 记录每个实体上次检查时间 */
     private static final Map<UUID, Long> playerCheckCooldowns = new HashMap<>();
+    /** 中毒效果冷却时间（毫秒） */
     private static final long POISON_COOLDOWN = 3000;
+    /** 中毒效果持续时间（tick） */
     private static final int POISON_DURATION = 60;
+    /** 中毒效果等级 */
     private static final int POISON_AMPLIFIER = 0;
+    /** 位置检查间隔（毫秒） */
     private static final long CHECK_INTERVAL = 500;
 
     @SubscribeEvent
