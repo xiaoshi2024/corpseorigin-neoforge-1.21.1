@@ -10,8 +10,13 @@
   "item.corpseorigin.s_agent": "黄色药剂",
   "item.corpseorigin.null_s_agent": "空药剂",
   "item.corpseorigin.lei_xi_gong_fa": "雷系功法",
+  "item.corpseorigin.lower_level_zb_spawn_egg": "尸兄刷怪蛋",
+  "item.corpseorigin.longyou_spawn_egg": "龙右刷怪蛋",
+  "item.corpseorigin.zbr_fish_spawn_egg": "尸兄鱼刷怪蛋",
+  "item.corpseorigin.kaiweinai_spawn_egg": "开胃奶刷怪蛋",
 
   "entity.corpseorigin.zbr_fish": "尸兄鱼",
+  "entity.corpseorigin.kaiweinai": "开胃奶",
   "entity.corpseorigin.lower_level_zb": "尸兄",
   "entity.corpseorigin.lower_level_zb.named": "尸兄-%s",
   "entity.corpseorigin.lower_level_zb.default": "尸兄",

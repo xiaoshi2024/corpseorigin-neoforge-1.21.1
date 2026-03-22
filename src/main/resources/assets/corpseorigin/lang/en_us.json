@@ -10,8 +10,13 @@
   "item.corpseorigin.s_agent": "Yellow Agent",
   "item.corpseorigin.null_s_agent": "Null Agent",
   "item.corpseorigin.lei_xi_gong_fa": "Lightning Skill Book",
+  "item.corpseorigin.lower_level_zb_spawn_egg": "Zombie Brother Spawn Egg",
+  "item.corpseorigin.longyou_spawn_egg": "Long You Spawn Egg",
+  "item.corpseorigin.zbr_fish_spawn_egg": "Zombie Brother Fish Spawn Egg",
+  "item.corpseorigin.kaiweinai_spawn_egg": "Kai Wei Nai Spawn Egg",
 
   "entity.corpseorigin.zbr_fish": "Zombie Brother Fish",
+  "entity.corpseorigin.kaiweinai": "Kai Wei Nai",
   "entity.corpseorigin.lower_level_zb": "Zombie Brothers",
   "entity.corpseorigin.lower_level_zb.named": "Zombie Brothers-%s",
   "entity.corpseorigin.lower_level_zb.default": "Zombie Brothers",

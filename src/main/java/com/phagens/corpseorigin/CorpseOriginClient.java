@@ -1,6 +1,7 @@
 package com.phagens.corpseorigin;
 
 import com.phagens.corpseorigin.client.Renderer.block.QiXingGuanRenderer;
+import com.phagens.corpseorigin.client.Renderer.entity.KaiWeiNaiRenderer;
 import com.phagens.corpseorigin.client.Renderer.entity.LowerLevelZbRenderer;
 import com.phagens.corpseorigin.client.Renderer.entity.LongyouRenderer;
 import com.phagens.corpseorigin.client.Renderer.entity.ZbrFishRenderer;
@@ -43,5 +44,6 @@ public class CorpseOriginClient {
         event.registerEntityRenderer((EntityType<com.phagens.corpseorigin.Entity.ZbrFishEntity>) EntityRegistry.ZBR_FISH.get(), ZbrFishRenderer::new);
         event.registerEntityRenderer((EntityType<com.phagens.corpseorigin.Entity.LowerLevelZbEntity>) EntityRegistry.LOWER_LEVEL_ZB.get(), LowerLevelZbRenderer::new);
         event.registerEntityRenderer((EntityType<com.phagens.corpseorigin.Entity.LongyouEntity>) EntityRegistry.LONGYOU.get(), LongyouRenderer::new);
+        event.registerEntityRenderer((EntityType<com.phagens.corpseorigin.Entity.npc.KaiWeiNaiEntity>) EntityRegistry.KAIWEINAI.get(), KaiWeiNaiRenderer::new);
     }
 }

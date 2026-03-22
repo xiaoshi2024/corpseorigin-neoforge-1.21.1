@@ -12,6 +12,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.SpawnEggItem;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -49,6 +50,20 @@ public class Moditems {
     //功法暂时
     public static final DeferredItem<Item> LEI_XI_GONG_FA = ITEMS.register("lei_xi_gong_fa",
             () -> new LieGongFa(new Item.Properties(), "REX"));
+
+    // 刷怪蛋
+    public static final DeferredItem<Item> LOWER_LEVEL_ZB_SPAWN_EGG = ITEMS.register("lower_level_zb_spawn_egg",
+            () -> new SpawnEggItem(EntityRegistry.LOWER_LEVEL_ZB.get(), 0x8B4513, 0xFF0000, new Item.Properties()));
+
+    public static final DeferredItem<Item> LONGYOU_SPAWN_EGG = ITEMS.register("longyou_spawn_egg",
+            () -> new SpawnEggItem(EntityRegistry.LONGYOU.get(), 0x000000, 0xFFD700, new Item.Properties()));
+
+    public static final DeferredItem<Item> ZBR_FISH_SPAWN_EGG = ITEMS.register("zbr_fish_spawn_egg",
+            () -> new SpawnEggItem(EntityRegistry.ZBR_FISH.get(), 0x4682B4, 0x8B0000, new Item.Properties()));
+
+    // 开胃奶刷怪蛋
+    public static final DeferredItem<Item> KAIWEINAI_SPAWN_EGG = ITEMS.register("kaiweinai_spawn_egg",
+            () -> new SpawnEggItem(EntityRegistry.KAIWEINAI.get(), 0xFF0000, 0x8B0000, new Item.Properties()));
 }
 
 

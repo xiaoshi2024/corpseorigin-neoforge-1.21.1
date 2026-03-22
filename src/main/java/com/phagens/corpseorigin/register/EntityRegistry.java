@@ -3,6 +3,7 @@ package com.phagens.corpseorigin.register;
 import com.phagens.corpseorigin.Entity.LowerLevelZbEntity;
 import com.phagens.corpseorigin.Entity.LongyouEntity;
 import com.phagens.corpseorigin.Entity.ZbrFishEntity;
+import com.phagens.corpseorigin.Entity.npc.KaiWeiNaiEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -29,4 +30,10 @@ public class EntityRegistry {
             () -> EntityType.Builder.<LongyouEntity>of(LongyouEntity::new, MobCategory.MONSTER)
                     .sized(0.8F, 2.5F)
                     .build("longyou"));
+
+    // 开胃奶NPC
+    public static final DeferredHolder<EntityType<?>, EntityType<KaiWeiNaiEntity>> KAIWEINAI = ENTITIES.register("kaiweinai",
+            () -> EntityType.Builder.<KaiWeiNaiEntity>of(KaiWeiNaiEntity::new, MobCategory.CREATURE)
+                    .sized(0.6F, 1.8F)
+                    .build("kaiweinai"));
 }

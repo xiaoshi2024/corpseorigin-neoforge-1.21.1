@@ -9,13 +9,14 @@
  * - ZBR_FISH: 尸兄鱼（水下敌对生物）
  * - LOWER_LEVEL_ZB: 低级尸兄（基础敌对生物）
  * - LONGYOU: 龙右（Boss级实体）
+ * - KAIWEINAI: 开胃奶（NPC）
  *
  * 【属性定义】
  * 各实体的属性定义在对应实体类的createAttributes()方法中
  *
  * 【关联系统】
  * - EntityRegistry: 实体注册
- * - ZbrFishEntity/LowerLevelZbEntity/LongyouEntity: 实体类
+ * - ZbrFishEntity/LowerLevelZbEntity/LongyouEntity/KaiWeiNaiEntity: 实体类
  *
  * @author Phagens
  * @version 1.0
@@ -26,6 +27,7 @@ import com.phagens.corpseorigin.CorpseOrigin;
 import com.phagens.corpseorigin.Entity.LongyouEntity;
 import com.phagens.corpseorigin.Entity.LowerLevelZbEntity;
 import com.phagens.corpseorigin.Entity.ZbrFishEntity;
+import com.phagens.corpseorigin.Entity.npc.KaiWeiNaiEntity;
 import com.phagens.corpseorigin.register.EntityRegistry;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -48,5 +50,7 @@ public class ModEventBusSubscriber {
         event.put(EntityRegistry.LOWER_LEVEL_ZB.get(), LowerLevelZbEntity.createAttributes().build());
         // 注册龙右的属性
         event.put(EntityRegistry.LONGYOU.get(), LongyouEntity.createAttributes().build());
+        // 注册开胃奶的属性
+        event.put(EntityRegistry.KAIWEINAI.get(), KaiWeiNaiEntity.createAttributes().build());
     }
 }

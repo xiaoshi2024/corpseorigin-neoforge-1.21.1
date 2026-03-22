@@ -82,7 +82,15 @@ public class CorpseOrigin {
                 output.accept(QI_XING_GUAN_ITEM.get());
                 output.accept(Moditems.BYWATER_BUCKET.get());
                 output.accept(Moditems.BYWATER_BOTTLE.get());
-                output.accept(Moditems.S_AGENT.get());output.accept(Moditems.NULL_S_AGENT.get());
+                output.accept(Moditems.S_AGENT.get());
+                output.accept(Moditems.NULL_S_AGENT.get());
+
+                // 添加刷怪蛋
+                output.accept(Moditems.LOWER_LEVEL_ZB_SPAWN_EGG.get());
+                output.accept(Moditems.LONGYOU_SPAWN_EGG.get());
+                output.accept(Moditems.ZBR_FISH_SPAWN_EGG.get());
+                output.accept(Moditems.KAIWEINAI_SPAWN_EGG.get());
+
                 addGongFaItemsToCreativeTab(output);
 
             }).build());
