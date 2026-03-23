@@ -3,10 +3,6 @@
     "corpseorigin:lower_level_zb": {
       "blood": 25,
       "saturation": 0.8
-    },
-    "corpseorigin:longyou": {
-      "blood": 100,
-      "saturation": 1.5
     }
   }
 }

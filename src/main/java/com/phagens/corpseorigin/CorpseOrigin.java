@@ -7,6 +7,8 @@ import com.phagens.corpseorigin.GongFU.GongFaZL.GongFaDataFactory;
 import com.phagens.corpseorigin.GongFU.JsonLoader.GongFaJsonLoader;
 import com.phagens.corpseorigin.GongFU.MenuTypeRegister;
 import com.phagens.corpseorigin.GongFU.PackGongFu.NetworkPaketGL;
+import com.phagens.corpseorigin.advancement.AdvancementEventHandler;
+import com.phagens.corpseorigin.advancement.CriterionTriggerRegister;
 import com.phagens.corpseorigin.event.player.playerDie;
 import com.phagens.corpseorigin.player.CorpsePlayerAttachment;
 import com.phagens.corpseorigin.register.*;
@@ -16,7 +18,6 @@ import com.phagens.corpseorigin.skill.CorpseSkills;
 import com.phagens.corpseorigin.skill.SkillAttachment;
 import com.phagens.corpseorigin.skill.SkillEventHandler;
 import com.phagens.corpseorigin.voice.VoiceCommandRegistration;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.minecraft.core.registries.Registries;
@@ -24,8 +25,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Blocks;
-import net.neoforged.bus.api.Event;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -53,21 +52,7 @@ public class CorpseOrigin {
     public static final String MODID = "corpseorigin";
     // Directly reference a slf4j logger
     public static final Logger LOGGER = LogUtils.getLogger();
-   /*
-   // Create a Deferred Register to hold Blocks which will all be registered under the "corpseorigin" namespace
-    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
-    // Create a Deferred Register to hold Items which will all be registered under the "corpseorigin" namespace
-    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
 
-    // Creates a new Block with the id "corpseorigin:example_block", combining the namespace and path
-    public static final DeferredBlock<Block> EXAMPLE_BLOCK = BLOCKS.registerSimpleBlock("example_block", BlockBehaviour.Properties.of().mapColor(MapColor.STONE));
-    // Creates a new BlockItem with the id "corpseorigin:example_block", combining the namespace and path
-    public static final DeferredItem<BlockItem> EXAMPLE_BLOCK_ITEM = ITEMS.registerSimpleBlockItem("example_block", EXAMPLE_BLOCK);
-
-    // Creates a new food item with the id "corpseorigin:example_id", nutrition 1 and saturation 2
-    public static final DeferredItem<Item> EXAMPLE_ITEM = ITEMS.registerSimpleItem("example_item", new Item.Properties().food(new FoodProperties.Builder()
-            .alwaysEdible().nutrition(1).saturationModifier(2f).build()));
-*/
    // Create a Deferred Register to hold CreativeModeTabs which will all be registered under the "corpseorigin" namespace
    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
 
@@ -84,6 +69,7 @@ public class CorpseOrigin {
                 output.accept(Moditems.BYWATER_BOTTLE.get());
                 output.accept(Moditems.S_AGENT.get());
                 output.accept(Moditems.NULL_S_AGENT.get());
+                output.accept(Moditems.MING_JUQUE.get());
 
                 // 添加刷怪蛋
                 output.accept(Moditems.LOWER_LEVEL_ZB_SPAWN_EGG.get());
@@ -139,10 +125,16 @@ public class CorpseOrigin {
         // 先注册附件系统 - 重要！
         SkillAttachment.ATTACHMENT_TYPES.register(modEventBus);
 
+        // 注册成就触发器
+        CriterionTriggerRegister.TRIGGER_TYPES.register(modEventBus);
+
         Moditems.ITEMS.register(modEventBus);
+
+        // 先注册实体，因为方块可能依赖实体
+        EntityRegistry.ENTITIES.register(modEventBus);
+
         BlockRegistry.Blocks.register(modEventBus);
         BlockEntityRegistry.BLOCK_ENTITIES.register(modEventBus);
-        EntityRegistry.ENTITIES.register(modEventBus);
         EffectRegister.MOB_EFFECTS.register(modEventBus);
         MenuTypeRegister.MENUS.register(modEventBus);
         CorpsePlayerAttachment.ATTACHMENT_TYPES.register(modEventBus);
@@ -165,6 +157,9 @@ public class CorpseOrigin {
 
         // 注册技能事件处理器
         NeoForge.EVENT_BUS.register(SkillEventHandler.class);
+
+        // 注册成就事件处理器
+        NeoForge.EVENT_BUS.register(AdvancementEventHandler.class);
 
         // 注册语音命令
         NeoForge.EVENT_BUS.register(VoiceCommandRegistration.class);
@@ -189,15 +184,12 @@ public class CorpseOrigin {
         // Some common setup code
         LOGGER.info("HELLO FROM COMMON SETUP");
 
-        if (Config.LOG_DIRT_BLOCK.getAsBoolean()) {
-            LOGGER.info("DIRT BLOCK >> {}", BuiltInRegistries.BLOCK.getKey(Blocks.DIRT));
-        }
-
-        LOGGER.info("{}{}", Config.MAGIC_NUMBER_INTRODUCTION.get(), Config.MAGIC_NUMBER.getAsInt());
-
-        Config.ITEM_STRINGS.get().forEach((item) -> LOGGER.info("ITEM >> {}", item));
-
-
+        // Config fields removed - add them back in Config.java if needed
+        // if (Config.LOG_DIRT_BLOCK.getAsBoolean()) {
+        //     LOGGER.info("DIRT BLOCK >> {}", BuiltInRegistries.BLOCK.getKey(Blocks.DIRT));
+        // }
+        // LOGGER.info("{}{}", Config.MAGIC_NUMBER_INTRODUCTION.get(), Config.MAGIC_NUMBER.getAsInt());
+        // Config.ITEM_STRINGS.get().forEach((item) -> LOGGER.info("ITEM >> {}", item));
     }
 
 

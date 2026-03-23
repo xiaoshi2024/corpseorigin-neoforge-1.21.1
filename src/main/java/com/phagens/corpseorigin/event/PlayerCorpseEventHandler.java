@@ -17,11 +17,8 @@ import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerXpEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
-
-import static net.minecraft.core.registries.Registries.ENTITY_TYPE;
 
 /**
  * 尸兄玩家事件处理器 - 处理尸兄玩家的特殊行为和属性
@@ -379,7 +376,7 @@ public class PlayerCorpseEventHandler {
         }
         
         // 检查是否是龙右（尸族高阶生物）
-        if (entity instanceof com.phagens.corpseorigin.Entity.LongyouEntity) {
+        if (entity instanceof com.phagens.corpseorigin.entity.LongyouEntity) {
             return true;
         }
         

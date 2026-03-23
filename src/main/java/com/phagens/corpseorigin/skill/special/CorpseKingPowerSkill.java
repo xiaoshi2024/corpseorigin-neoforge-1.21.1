@@ -1,7 +1,7 @@
 package com.phagens.corpseorigin.skill.special;
 
 import com.phagens.corpseorigin.CorpseOrigin;
-import com.phagens.corpseorigin.Entity.LowerLevelZbEntity;
+import com.phagens.corpseorigin.entity.LowerLevelZbEntity;
 import com.phagens.corpseorigin.data.CorpseKingData;
 import com.phagens.corpseorigin.player.PlayerCorpseData;
 import com.phagens.corpseorigin.skill.BaseSkill;
@@ -17,7 +17,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
 
@@ -255,7 +254,7 @@ public class CorpseKingPowerSkill extends BaseSkill {
 
         // 使用BYeffect的感染方法，传递尸王UUID作为感染源
         // 这样转化后的尸兄会自动成为尸王的手下
-        com.phagens.corpseorigin.Effect.BYeffect.applyInfection(
+        com.phagens.corpseorigin.effect.BYeffect.applyInfection(
                 villager,
                 level,
                 100, // 5秒

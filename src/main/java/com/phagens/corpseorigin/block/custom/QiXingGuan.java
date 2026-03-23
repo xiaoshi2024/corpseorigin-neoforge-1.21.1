@@ -26,19 +26,18 @@
  * @author Phagens
  * @version 1.0
  */
-package com.phagens.corpseorigin.Block.custom;
+package com.phagens.corpseorigin.block.custom;
 
 
-import com.phagens.corpseorigin.Block.entity.QiXingGuanBlockEntity;
+import com.phagens.corpseorigin.block.entity.QiXingGuanBlockEntity;
 import com.phagens.corpseorigin.CorpseOrigin;
-import com.phagens.corpseorigin.Entity.LowerLevelZbEntity;
+import com.phagens.corpseorigin.entity.LowerLevelZbEntity;
 import com.phagens.corpseorigin.data.InfectionData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.BlockGetter;

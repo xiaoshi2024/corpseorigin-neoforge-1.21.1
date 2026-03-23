@@ -1,6 +1,6 @@
 package com.phagens.corpseorigin.client.Models.entity;
 
-import com.phagens.corpseorigin.Entity.ZbrFishEntity;
+import com.phagens.corpseorigin.entity.ZbrFishEntity;
 import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 

@@ -2,10 +2,9 @@ package com.phagens.corpseorigin.client.Renderer.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.phagens.corpseorigin.Entity.LowerLevelZbEntity;
+import com.phagens.corpseorigin.entity.LowerLevelZbEntity;
 import com.phagens.corpseorigin.client.Models.entity.LowerLevelZbModel;
 import com.phagens.corpseorigin.client.skin.ZbSkinState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -14,7 +13,6 @@ import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
-import software.bernie.geckolib.util.Color;
 
 import java.util.UUID;
 
@@ -62,7 +60,7 @@ public class LowerLevelZbRenderer extends GeoEntityRenderer<LowerLevelZbEntity> 
                     0xFFFFFFFF); // 白色，完全不透明
 
             // 叠加尸化骨骼纹理 - 80% 透明度
-            ResourceLocation overlayTexture = animatable.getVariant() == com.phagens.corpseorigin.Entity.LowerLevelZbEntity.Variant.CRACKED ? 
+            ResourceLocation overlayTexture = animatable.getVariant() == com.phagens.corpseorigin.entity.LowerLevelZbEntity.Variant.CRACKED ?
                     CRACKED_SKELETON_OVERLAY : SKELETON_OVERLAY;
             RenderType skeletonRenderType = RenderType.entityTranslucent(overlayTexture);
             VertexConsumer skeletonConsumer = bufferSource.getBuffer(skeletonRenderType);

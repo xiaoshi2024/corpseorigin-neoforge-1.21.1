@@ -1,7 +1,7 @@
 package com.phagens.corpseorigin.client.Models.entity;
 
 import com.phagens.corpseorigin.CorpseOrigin;
-import com.phagens.corpseorigin.Entity.npc.KaiWeiNaiEntity;
+import com.phagens.corpseorigin.entity.npc.KaiWeiNaiEntity;
 import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib.model.GeoModel;
 

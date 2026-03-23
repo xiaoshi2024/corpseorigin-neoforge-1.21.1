@@ -4,14 +4,12 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.phagens.corpseorigin.CorpseOrigin;
-import com.phagens.corpseorigin.Entity.LowerLevelZbEntity;
+import com.phagens.corpseorigin.entity.LowerLevelZbEntity;
 import com.phagens.corpseorigin.register.EntityRegistry;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
 public class SummonZbCommand {

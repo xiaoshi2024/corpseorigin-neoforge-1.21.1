@@ -1,7 +1,7 @@
 package com.phagens.corpseorigin.event;
 
 import com.phagens.corpseorigin.CorpseOrigin;
-import com.phagens.corpseorigin.Entity.LongyouEntity;
+import com.phagens.corpseorigin.entity.LongyouEntity;
 import com.phagens.corpseorigin.event.custom.WeaponBreakEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;

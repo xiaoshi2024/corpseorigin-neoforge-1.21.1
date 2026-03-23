@@ -7,8 +7,11 @@
   "item.corpseorigin.bywater_bucket": "尸水桶",
   "item.corpseorigin.bywater_bottle": "尸水瓶",
   "item.corpseorigin.ming_juque": "巨阙剑",
-  "item.corpseorigin.s_agent": "黄色药剂",
+  "item.corpseorigin.s_agent": "黄色强化剂",
+  "item.corpseorigin.blue_agent": "蓝色中和剂",
   "item.corpseorigin.null_s_agent": "空药剂",
+
+  "effect.corpseorigin.side_effect": "药剂副作用",
   "item.corpseorigin.lei_xi_gong_fa": "雷系功法",
   "item.corpseorigin.lower_level_zb_spawn_egg": "尸兄刷怪蛋",
   "item.corpseorigin.longyou_spawn_egg": "龙右刷怪蛋",
@@ -58,6 +61,9 @@
   "tooltip.corpseorigin.bywater_bottle": "喝下它会中毒...",
   "tooltip.corpseorigin.bywater_bucket": "放置后会污染水源",
   "tooltip.corpseorigin.ming_juque": "巨阙神兵，可斩杀残血之敌",
+  "tooltip.corpseorigin.s_agent": "§e初期不稳定的实验药剂，直接使用会对身体造成负担",
+  "tooltip.corpseorigin.s_agent.warning": "§c§l警告：需要配合蓝色中和剂使用，否则可能暴毙！",
+  "tooltip.corpseorigin.blue_agent": "§b用于中和黄色强化剂的副作用，稳定身体状态",
   "tooltip.corpseorigin.gongfa.rarity": "品级: %s",
   "tooltip.corpseorigin.gongfa.ceng": "功法层级: %s",
   "tooltip.corpseorigin.gongfa.attribute": "武学加持:",
@@ -76,6 +82,7 @@
 
   "death.attack.corpse_water": "%1$s 在尸水中溺亡",
   "death.attack.zombie_brother": "%1$s 被尸兄杀死了",
+  "death.attack.side_effect": "%1$s 因强化剂副作用暴毙",
 
   "message.corpseorigin.cultivation_opened": "修行界面已打开",
   "message.corpseorigin.water_infected": "这片水已被尸水污染！",
@@ -193,5 +200,20 @@
   "skilltype.corpseorigin.agility_mutation": "敏捷变异",
   "skilltype.corpseorigin.special_mutation": "特殊变异",
   "skilltype.corpseorigin.divine_ability": "神级能力",
-  "skilltype.corpseorigin.supreme_ability": "超神能力"
+  "skilltype.corpseorigin.supreme_ability": "超神能力",
+
+  "advancements.corpseorigin.root.title": "尸兄起源",
+  "advancements.corpseorigin.root.description": "欢迎来到尸兄的世界",
+
+  "advancements.corpseorigin.become_corpse.title": "尸兄降临",
+  "advancements.corpseorigin.become_corpse.description": "你已被尸水感染，成为了尸兄的一员",
+
+  "advancements.corpseorigin.meet_corpse_king.title": "初见尸王",
+  "advancements.corpseorigin.meet_corpse_king.description": "你遇见了传说中的尸王龙右",
+
+  "advancements.corpseorigin.weapon_shattered.title": "相鼠有皮",
+  "advancements.corpseorigin.weapon_shattered.description": "远程攻击尸王，武器被其强大的力量震坏",
+
+  "advancements.corpseorigin.cannibalism_discovery.title": "吞噬本能",
+  "advancements.corpseorigin.cannibalism_discovery.description": "你目睹了尸兄之间弱肉强食的残酷法则"
 }

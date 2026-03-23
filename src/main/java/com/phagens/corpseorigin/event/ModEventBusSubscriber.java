@@ -24,10 +24,10 @@
 package com.phagens.corpseorigin.event;
 
 import com.phagens.corpseorigin.CorpseOrigin;
-import com.phagens.corpseorigin.Entity.LongyouEntity;
-import com.phagens.corpseorigin.Entity.LowerLevelZbEntity;
-import com.phagens.corpseorigin.Entity.ZbrFishEntity;
-import com.phagens.corpseorigin.Entity.npc.KaiWeiNaiEntity;
+import com.phagens.corpseorigin.entity.LongyouEntity;
+import com.phagens.corpseorigin.entity.LowerLevelZbEntity;
+import com.phagens.corpseorigin.entity.ZbrFishEntity;
+import com.phagens.corpseorigin.entity.npc.KaiWeiNaiEntity;
 import com.phagens.corpseorigin.register.EntityRegistry;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;

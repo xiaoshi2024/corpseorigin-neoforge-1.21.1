@@ -27,10 +27,10 @@
  * @author Phagens
  * @version 1.0
  */
-package com.phagens.corpseorigin.Effect;
+package com.phagens.corpseorigin.effect;
 
 import com.phagens.corpseorigin.CorpseOrigin;
-import com.phagens.corpseorigin.Entity.LowerLevelZbEntity;
+import com.phagens.corpseorigin.entity.LowerLevelZbEntity;
 import com.phagens.corpseorigin.data.CorpseKingData;
 import com.phagens.corpseorigin.network.PlayerCorpseSyncPacket;
 import com.phagens.corpseorigin.player.PlayerCorpseData;

@@ -1,9 +1,7 @@
 package com.phagens.corpseorigin.Item;
 
-import com.phagens.corpseorigin.Effect.BYeffect;
 import com.phagens.corpseorigin.register.EffectRegister;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;

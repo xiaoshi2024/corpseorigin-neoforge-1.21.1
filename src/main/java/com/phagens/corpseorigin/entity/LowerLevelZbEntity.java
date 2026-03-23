@@ -1,10 +1,9 @@
-package com.phagens.corpseorigin.Entity;
+package com.phagens.corpseorigin.entity;
 
 import com.phagens.corpseorigin.CorpseOrigin;
-import com.phagens.corpseorigin.Entity.EntityAI.Vibrationsys.ModVibrationUser;
+import com.phagens.corpseorigin.entity.EntityAI.Vibrationsys.ModVibrationUser;
 import com.phagens.corpseorigin.client.skin.ZbSkinLoader;
 import com.phagens.corpseorigin.client.skin.ZbSkinState;
-import com.phagens.corpseorigin.compat.vampirism.IVampirismCompat;
 import com.phagens.corpseorigin.network.ZbSkinUpdatePacket;
 import com.phagens.corpseorigin.register.ModSounds;
 import net.minecraft.nbt.CompoundTag;
@@ -22,6 +21,9 @@ import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.gameevent.DynamicGameEventListener;
 import net.minecraft.world.level.gameevent.vibrations.VibrationSystem;
 import net.neoforged.api.distmarker.Dist;
@@ -624,6 +626,27 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
         if (!this.level().isClientSide) {
             tickImmobilizedEntities();
         }
+
+        // 服务端：高阶尸兄自动开门
+        if (!this.level().isClientSide) {
+            tickDoorInteraction();
+        }
+    }
+
+    /**
+     * 检查尸兄是否可以开门
+     * 只有进化等级≥3的高阶尸兄才能打开铁门
+     */
+    public boolean canOpenDoors() {
+        return this.evolutionLevel >= 3;
+    }
+
+    /**
+     * 检查尸兄是否可以破坏门
+     * 只有进化等级≥4的尸兄才能破坏门
+     */
+    public boolean canBreakDoors() {
+        return this.evolutionLevel >= 4;
     }
 
     /**
@@ -837,7 +860,7 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
         if (!(this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
         
         // 使用 BYeffect 来感染村民（3-15秒随机延迟后变异）
-        com.phagens.corpseorigin.Effect.BYeffect.applyInfection(villager, serverLevel);
+        com.phagens.corpseorigin.effect.BYeffect.applyInfection(villager, serverLevel);
     }
     
     /**
@@ -1642,5 +1665,71 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
         ));
 
         return net.minecraft.world.InteractionResult.SUCCESS;
+    }
+
+    // ==================== 开门系统（高阶尸兄更聪明） ====================
+
+    /**
+     * 处理开门逻辑
+     * 当尸兄路径中包含门时调用
+     */
+    public void setDoorToOpen(BlockState state, BlockPos pos, boolean open) {
+        if (!this.canOpenDoors()) {
+            return;
+        }
+
+        if (state.getBlock() instanceof DoorBlock doorBlock) {
+            // 检查门是否已经是目标状态
+            boolean isCurrentlyOpen = state.getValue(DoorBlock.OPEN);
+            if (isCurrentlyOpen != open) {
+                // 切换门的状态
+                this.level().setBlock(pos, state.cycle(DoorBlock.OPEN), 10);
+                
+                // 播放开门/关门音效
+                this.level().levelEvent(null, open ? 1005 : 1011, pos, 0);
+                
+                CorpseOrigin.LOGGER.debug("高阶尸兄（等级{}）{}了门 at {}", 
+                    this.evolutionLevel, open ? "打开" : "关闭", pos);
+            }
+        }
+    }
+
+    /**
+     * 在tick中检查并处理路径上的门
+     * 高阶尸兄会自动打开路径上的门
+     */
+    private void tickDoorInteraction() {
+        if (!this.canOpenDoors()) {
+            return;
+        }
+
+        // 获取当前路径
+        var path = this.getNavigation().getPath();
+        if (path == null || path.isDone()) {
+            return;
+        }
+
+        // 获取下一个路径节点
+        var nextNode = path.getNextNode();
+        if (nextNode == null) {
+            return;
+        }
+
+        BlockPos pos = nextNode.asBlockPos();
+        BlockState state = this.level().getBlockState(pos);
+
+        // 检查是否是门
+        if (state.getBlock() instanceof DoorBlock) {
+            // 检查门是否关闭
+            if (!state.getValue(DoorBlock.OPEN)) {
+                // 计算距离
+                double distance = this.distanceToSqr(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
+                
+                // 距离门2格以内时开门
+                if (distance < 4.0D) {
+                    setDoorToOpen(state, pos, true);
+                }
+            }
+        }
     }
 }

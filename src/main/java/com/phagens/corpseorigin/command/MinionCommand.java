@@ -1,16 +1,12 @@
 package com.phagens.corpseorigin.command;
 
-import com.phagens.corpseorigin.CorpseOrigin;
-import com.phagens.corpseorigin.Entity.LowerLevelZbEntity;
-import com.phagens.corpseorigin.skill.special.CorpseKingPowerSkill;
+import com.phagens.corpseorigin.entity.LowerLevelZbEntity;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 
 import java.util.List;

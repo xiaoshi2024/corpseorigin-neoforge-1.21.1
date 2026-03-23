@@ -17,9 +17,9 @@
  * @author Phagens
  * @version 1.0
  */
-package com.phagens.corpseorigin.Block.entity;
+package com.phagens.corpseorigin.block.entity;
 
-import com.phagens.corpseorigin.Block.custom.QiXingGuan;
+import com.phagens.corpseorigin.block.custom.QiXingGuan;
 import com.phagens.corpseorigin.register.BlockEntityRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntity;

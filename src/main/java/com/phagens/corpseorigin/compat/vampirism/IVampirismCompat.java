@@ -44,7 +44,7 @@ public class IVampirismCompat {
      */
     public static int getBlood(PathfinderMob entity) {
         // 尸兄的血液值基于等级
-        if (entity instanceof com.phagens.corpseorigin.Entity.LowerLevelZbEntity zb) {
+        if (entity instanceof com.phagens.corpseorigin.entity.LowerLevelZbEntity zb) {
             return 15 + zb.getEvolutionLevel() * 5;
         }
         return 20;
@@ -56,7 +56,7 @@ public class IVampirismCompat {
      * @return 最大血液值
      */
     public static int getMaxBlood(PathfinderMob entity) {
-        if (entity instanceof com.phagens.corpseorigin.Entity.LowerLevelZbEntity zb) {
+        if (entity instanceof com.phagens.corpseorigin.entity.LowerLevelZbEntity zb) {
             return 15 + zb.getEvolutionLevel() * 5;
         }
         return 20;
@@ -69,7 +69,7 @@ public class IVampirismCompat {
      * @return 吸食的血液量
      */
     public static int onBite(PathfinderMob entity, Object biter) {
-        if (!(entity instanceof com.phagens.corpseorigin.Entity.LowerLevelZbEntity zb)) {
+        if (!(entity instanceof com.phagens.corpseorigin.entity.LowerLevelZbEntity zb)) {
             return 0;
         }
 
@@ -97,7 +97,7 @@ public class IVampirismCompat {
      * @return 是否可以被吸食
      */
     public static boolean canBeBitten(PathfinderMob entity, Object biter) {
-        if (!(entity instanceof com.phagens.corpseorigin.Entity.LowerLevelZbEntity)) {
+        if (!(entity instanceof com.phagens.corpseorigin.entity.LowerLevelZbEntity)) {
             return false;
         }
         // 尸兄总是可以被吸食（只要有血）

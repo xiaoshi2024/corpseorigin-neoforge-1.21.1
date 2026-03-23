@@ -1,13 +1,12 @@
 package com.phagens.corpseorigin.register;
 
-import com.phagens.corpseorigin.Entity.LowerLevelZbEntity;
-import com.phagens.corpseorigin.Entity.LongyouEntity;
-import com.phagens.corpseorigin.Entity.ZbrFishEntity;
-import com.phagens.corpseorigin.Entity.npc.KaiWeiNaiEntity;
+import com.phagens.corpseorigin.entity.LowerLevelZbEntity;
+import com.phagens.corpseorigin.entity.LongyouEntity;
+import com.phagens.corpseorigin.entity.ZbrFishEntity;
+import com.phagens.corpseorigin.entity.npc.KaiWeiNaiEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.entity.PathfinderMob;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 

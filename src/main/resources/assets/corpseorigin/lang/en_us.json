@@ -7,8 +7,11 @@
   "item.corpseorigin.bywater_bucket": "Corpse Water Bucket",
   "item.corpseorigin.bywater_bottle": "Corpse Water Bottle",
   "item.corpseorigin.ming_juque": "Juque Sword",
-  "item.corpseorigin.s_agent": "Yellow Agent",
+  "item.corpseorigin.s_agent": "Yellow Strengthening Agent",
+  "item.corpseorigin.blue_agent": "Blue Neutralizing Agent",
   "item.corpseorigin.null_s_agent": "Null Agent",
+
+  "effect.corpseorigin.side_effect": "Agent Side Effect",
   "item.corpseorigin.lei_xi_gong_fa": "Lightning Skill Book",
   "item.corpseorigin.lower_level_zb_spawn_egg": "Zombie Brother Spawn Egg",
   "item.corpseorigin.longyou_spawn_egg": "Long You Spawn Egg",
@@ -58,6 +61,9 @@
   "tooltip.corpseorigin.bywater_bottle": "Drinking it will poison you...",
   "tooltip.corpseorigin.bywater_bucket": "Placing it will contaminate water sources",
   "tooltip.corpseorigin.ming_juque": "A divine sword that can execute weakened enemies",
+  "tooltip.corpseorigin.s_agent": "§eAn unstable experimental agent in its early stage, direct use will burden the body",
+  "tooltip.corpseorigin.s_agent.warning": "§c§lWarning: Must be used with Blue Neutralizing Agent, or you may die!",
+  "tooltip.corpseorigin.blue_agent": "§bUsed to neutralize the side effects of the Yellow Strengthening Agent and stabilize the body",
   "tooltip.corpseorigin.gongfa.rarity": "Rarity: %s",
   "tooltip.corpseorigin.gongfa.ceng": "Cultivation Layer: %s",
   "tooltip.corpseorigin.gongfa.attribute": "Blessings:",
@@ -76,6 +82,7 @@
 
   "death.attack.corpse_water": "%1$s died in corpse water",
   "death.attack.zombie_brother": "%1$s was killed by Zombie Brother",
+  "death.attack.side_effect": "%1$s died from agent side effects",
 
   "message.corpseorigin.cultivation_opened": "Cultivation interface opened",
   "message.corpseorigin.water_infected": "This water is contaminated with corpse water!",
@@ -193,5 +200,20 @@
   "skilltype.corpseorigin.agility_mutation": "Agility Mutation",
   "skilltype.corpseorigin.special_mutation": "Special Mutation",
   "skilltype.corpseorigin.divine_ability": "Divine Ability",
-  "skilltype.corpseorigin.supreme_ability": "Supreme Ability"
+  "skilltype.corpseorigin.supreme_ability": "Supreme Ability",
+
+  "advancements.corpseorigin.root.title": "Corpse Origin",
+  "advancements.corpseorigin.root.description": "Welcome to the world of Corpse Brothers",
+
+  "advancements.corpseorigin.become_corpse.title": "Corpse Arrival",
+  "advancements.corpseorigin.become_corpse.description": "You have been infected by corpse water and become one of the zombie brothers",
+
+  "advancements.corpseorigin.meet_corpse_king.title": "First Encounter with Corpse King",
+  "advancements.corpseorigin.meet_corpse_king.description": "You met the legendary Corpse King Long You",
+
+  "advancements.corpseorigin.weapon_shattered.title": "The Rat Has Skin",
+  "advancements.corpseorigin.weapon_shattered.description": "Attacked the Corpse King from a distance and your weapon was shattered by his power",
+
+  "advancements.corpseorigin.cannibalism_discovery.title": "Devouring Instinct",
+  "advancements.corpseorigin.cannibalism_discovery.description": "You witnessed the cruel law of survival among zombie brothers"
 }

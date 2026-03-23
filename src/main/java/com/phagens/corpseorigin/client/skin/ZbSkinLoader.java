@@ -1,7 +1,7 @@
 package com.phagens.corpseorigin.client.skin;
 
 import com.mojang.logging.LogUtils;
-import com.phagens.corpseorigin.Entity.LowerLevelZbEntity;
+import com.phagens.corpseorigin.entity.LowerLevelZbEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;

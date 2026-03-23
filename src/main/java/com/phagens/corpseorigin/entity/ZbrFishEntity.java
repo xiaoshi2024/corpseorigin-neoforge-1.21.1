@@ -1,8 +1,7 @@
-package com.phagens.corpseorigin.Entity;
+package com.phagens.corpseorigin.entity;
 
-import com.phagens.corpseorigin.Entity.EntityAI.JLAI.ModFollow;
-import com.phagens.corpseorigin.Entity.EntityAI.Vibrationsys.ModVibrationUser;
-import com.phagens.corpseorigin.register.EntityRegistry;
+import com.phagens.corpseorigin.entity.EntityAI.JLAI.ModFollow;
+import com.phagens.corpseorigin.entity.EntityAI.Vibrationsys.ModVibrationUser;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -330,6 +329,6 @@ public class ZbrFishEntity extends AbstractFish implements GeoEntity, VibrationS
         if (!(this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
         
         // 使用 BYeffect 来感染村民（3-15秒随机延迟后变异）
-        com.phagens.corpseorigin.Effect.BYeffect.applyInfection(villager, serverLevel);
+        com.phagens.corpseorigin.effect.BYeffect.applyInfection(villager, serverLevel);
     }
 }

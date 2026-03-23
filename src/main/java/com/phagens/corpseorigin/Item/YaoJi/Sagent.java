@@ -2,9 +2,11 @@ package com.phagens.corpseorigin.Item.YaoJi;
 
 import com.phagens.corpseorigin.CorpseOrigin;
 import com.phagens.corpseorigin.client.Renderer.item.SagentRenderer;
+import com.phagens.corpseorigin.effect.SideEffect;
 import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
@@ -16,6 +18,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
@@ -97,6 +100,23 @@ public class Sagent extends Item implements GeoItem {
             // 应用属性效果
             appAttrid(player);
             saveModifiersToPlayerData(player);
+
+            // 黄色强化剂添加副作用
+            if (this.variant.equals("yellow")) {
+                SideEffect.applySideEffect(player, 1);
+                CorpseOrigin.LOGGER.info("玩家 {} 使用了黄色强化剂，获得副作用", player.getName().getString());
+            }
+
+            // 蓝色中和剂清除副作用
+            if (this.variant.equals("blue")) {
+                SideEffect.clearSideEffect(player);
+                CorpseOrigin.LOGGER.info("玩家 {} 使用了蓝色中和剂", player.getName().getString());
+            }
+
+            // 消耗物品
+            if (!player.isCreative()) {
+                itemStack.shrink(1);
+            }
         }
 
         return InteractionResultHolder.sidedSuccess(itemStack, level.isClientSide());
@@ -134,6 +154,22 @@ public class Sagent extends Item implements GeoItem {
 
     public int getDefaultAnimationSpeed() {
         return 30;
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
+
+        // 黄色强化剂显示警告
+        if (this.variant.equals("yellow")) {
+            tooltipComponents.add(Component.translatable("tooltip.corpseorigin.s_agent"));
+            tooltipComponents.add(Component.translatable("tooltip.corpseorigin.s_agent.warning"));
+        }
+
+        // 蓝色中和剂显示说明
+        if (this.variant.equals("blue")) {
+            tooltipComponents.add(Component.translatable("tooltip.corpseorigin.blue_agent"));
+        }
     }
 
     private void appAttrid(Player player){

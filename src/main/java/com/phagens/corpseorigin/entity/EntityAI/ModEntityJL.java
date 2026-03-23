@@ -1,7 +1,7 @@
-package com.phagens.corpseorigin.Entity.EntityAI;
+package com.phagens.corpseorigin.entity.EntityAI;
 
-import com.phagens.corpseorigin.Entity.EntityAI.JLAI.ModFollow;
-import com.phagens.corpseorigin.Entity.EntityAI.Vibrationsys.ModVibrationUser;
+import com.phagens.corpseorigin.entity.EntityAI.JLAI.ModFollow;
+import com.phagens.corpseorigin.entity.EntityAI.Vibrationsys.ModVibrationUser;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;

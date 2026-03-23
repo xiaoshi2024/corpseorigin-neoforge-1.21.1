@@ -1,9 +1,8 @@
-package com.phagens.corpseorigin.Entity;
+package com.phagens.corpseorigin.entity;
 
 import com.phagens.corpseorigin.CorpseOrigin;
-import com.phagens.corpseorigin.Effect.BYeffect;
+import com.phagens.corpseorigin.effect.BYeffect;
 import com.phagens.corpseorigin.event.custom.WeaponBreakEvent;
-import com.phagens.corpseorigin.register.EntityRegistry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -24,6 +23,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ProjectileWeaponItem;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import software.bernie.geckolib.animatable.GeoEntity;
@@ -325,6 +327,11 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
                 intelligenceCheckCooldown = INTELLIGENCE_CHECK_INTERVAL;
                 performIntelligenceCheck();
             }
+        }
+
+        // 服务端：龙右自动开门
+        if (!this.level().isClientSide) {
+            tickDoorInteraction();
         }
     }
 
@@ -877,5 +884,76 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
     private enum PlayerValue {
         INFECT, // 有潜力，感染为尸兄
         FOOD    // 作为食物消耗
+    }
+
+    // ==================== 开门系统（龙右作为尸王更聪明） ====================
+
+    /**
+     * 龙右作为尸王，可以打开所有门
+     */
+    public boolean canOpenDoors() {
+        return true;
+    }
+
+    /**
+     * 龙右作为尸王，可以破坏门
+     */
+    public boolean canBreakDoors() {
+        return true;
+    }
+
+    /**
+     * 处理开门逻辑
+     * 当龙右路径中包含门时调用
+     */
+    public void setDoorToOpen(BlockState state, BlockPos pos, boolean open) {
+        if (state.getBlock() instanceof DoorBlock doorBlock) {
+            // 检查门是否已经是目标状态
+            boolean isCurrentlyOpen = state.getValue(DoorBlock.OPEN);
+            if (isCurrentlyOpen != open) {
+                // 切换门的状态
+                this.level().setBlock(pos, state.cycle(DoorBlock.OPEN), 10);
+                
+                // 播放开门/关门音效
+                this.level().levelEvent(null, open ? 1005 : 1011, pos, 0);
+                
+                CorpseOrigin.LOGGER.debug("龙右{}了门 at {}", open ? "打开" : "关闭", pos);
+            }
+        }
+    }
+
+    /**
+     * 在tick中检查并处理路径上的门
+     * 龙右会自动打开路径上的门
+     */
+    private void tickDoorInteraction() {
+        // 获取当前路径
+        var path = this.getNavigation().getPath();
+        if (path == null || path.isDone()) {
+            return;
+        }
+
+        // 获取下一个路径节点
+        var nextNode = path.getNextNode();
+        if (nextNode == null) {
+            return;
+        }
+
+        BlockPos pos = nextNode.asBlockPos();
+        BlockState state = this.level().getBlockState(pos);
+
+        // 检查是否是门
+        if (state.getBlock() instanceof DoorBlock) {
+            // 检查门是否关闭
+            if (!state.getValue(DoorBlock.OPEN)) {
+                // 计算距离
+                double distance = this.distanceToSqr(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
+                
+                // 距离门2格以内时开门
+                if (distance < 4.0D) {
+                    setDoorToOpen(state, pos, true);
+                }
+            }
+        }
     }
 }

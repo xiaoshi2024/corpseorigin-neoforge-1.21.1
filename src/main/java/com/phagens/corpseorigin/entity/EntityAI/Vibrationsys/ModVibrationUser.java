@@ -1,4 +1,4 @@
-package com.phagens.corpseorigin.Entity.EntityAI.Vibrationsys;
+package com.phagens.corpseorigin.entity.EntityAI.Vibrationsys;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;

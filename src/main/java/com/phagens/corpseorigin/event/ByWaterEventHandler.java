@@ -32,10 +32,8 @@
 package com.phagens.corpseorigin.event;
 
 import com.phagens.corpseorigin.CorpseOrigin;
-import com.phagens.corpseorigin.Entity.LowerLevelZbEntity;
 import com.phagens.corpseorigin.data.InfectionData;
 import com.phagens.corpseorigin.register.EffectRegister;
-import com.phagens.corpseorigin.register.EntityRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;

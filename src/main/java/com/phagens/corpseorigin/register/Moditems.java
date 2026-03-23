@@ -30,12 +30,16 @@ public class Moditems {
 
     public static final DeferredItem<Item> BYWATER_BOTTLE = ITEMS.register("bywater_bottle",
             () -> new ByWaterBottleItem(new Item.Properties().stacksTo(1)));
-    //药剂
+    // 黄色强化剂 - 有副作用，需要蓝色中和剂
     public static final DeferredItem<Item> S_AGENT= ITEMS.register("s_agent",
             () -> new Sagent(new Item.Properties(), "yellow")
                     .addAttributeModifier(Attributes.MAX_HEALTH,
                             AttributeModifier.Operation.ADD_MULTIPLIED_BASE
                     , 0.5,"yellow"));
+
+    // 蓝色中和剂 - 用于清除黄色强化剂的副作用
+    public static final DeferredItem<Item> BLUE_AGENT= ITEMS.register("blue_agent",
+            () -> new Sagent(new Item.Properties(), "blue"));
 
     // 其他变种药剂
     public static final DeferredItem<Item> NULL_S_AGENT= ITEMS.register("null_s_agent",

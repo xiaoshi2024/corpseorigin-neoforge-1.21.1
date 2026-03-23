@@ -1,6 +1,6 @@
 package com.phagens.corpseorigin.client.Models.entity;
 
-import com.phagens.corpseorigin.Entity.LongyouEntity;
+import com.phagens.corpseorigin.entity.LongyouEntity;
 import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib.model.GeoModel;
 

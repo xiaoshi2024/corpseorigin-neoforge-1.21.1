@@ -1,7 +1,8 @@
 package com.phagens.corpseorigin.register;
 
 import com.phagens.corpseorigin.CorpseOrigin;
-import com.phagens.corpseorigin.Effect.BYeffect;
+import com.phagens.corpseorigin.effect.BYeffect;
+import com.phagens.corpseorigin.effect.SideEffect;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.effect.MobEffect;
@@ -16,6 +17,12 @@ public class EffectRegister {
     public static final Holder<MobEffect> QIANS = MOB_EFFECTS.register("by", () -> new BYeffect(
             MobEffectCategory.HARMFUL,
             0xffffff
+    ));
+
+    // 黄色强化剂副作用效果
+    public static final Holder<MobEffect> SIDE_EFFECT = MOB_EFFECTS.register("side_effect", () -> new SideEffect(
+            MobEffectCategory.HARMFUL,
+            0xFFAA00 // 橙黄色，表示危险
     ));
 
 

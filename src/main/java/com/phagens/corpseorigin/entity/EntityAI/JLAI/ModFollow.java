@@ -26,7 +26,7 @@
  * @author Phagens
  * @version 1.0
  */
-package com.phagens.corpseorigin.Entity.EntityAI.JLAI;
+package com.phagens.corpseorigin.entity.EntityAI.JLAI;
 
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.LivingEntity;
