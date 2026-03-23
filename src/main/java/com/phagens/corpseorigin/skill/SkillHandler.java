@@ -604,26 +604,15 @@ public class SkillHandler implements ISkillHandler {
             int newCooldown = entry.getValue() - 1;
             if (newCooldown <= 0) {
                 iterator.remove();
-                dirty = true;
                 hasChanges = true;
             } else {
                 entry.setValue(newCooldown);
-                hasChanges = true;
             }
         }
         if (hasChanges) {
             dirty = true;
-        }
-        if (player != null && player.tickCount % 20 == 0 && !cooldowns.isEmpty()) {
+            // 只有冷却实际发生变化（有冷却结束）时才同步
             syncToClient();
-
-//            // 每 5 秒打印一次调试信息
-//            if (player.tickCount % 20 == 0) {
-//                CorpseOrigin.LOGGER.info("【冷却同步】玩家 {}: {} 个技能在冷却",
-//                        player.getName().getString(), cooldowns.size());
-//                cooldowns.forEach((id, time) ->
-//                        CorpseOrigin.LOGGER.info("  - {}: {} tick", id, time,(time + 19) / 20));
-//            }
         }
     }
 
