@@ -38,7 +38,7 @@ public class Moditems {
                     , 0.5,"yellow"));
 
     // 蓝色中和剂 - 用于清除黄色强化剂的副作用
-    public static final DeferredItem<Item> BLUE_AGENT= ITEMS.register("blue_agent",
+    public static final DeferredItem<Item> BLUE_AGENT= ITEMS.register("blue_s_agent",
             () -> new Sagent(new Item.Properties(), "blue"));
 
     // 其他变种药剂

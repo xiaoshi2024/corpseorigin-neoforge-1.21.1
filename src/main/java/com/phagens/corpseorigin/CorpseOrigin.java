@@ -68,6 +68,7 @@ public class CorpseOrigin {
                 output.accept(Moditems.BYWATER_BUCKET.get());
                 output.accept(Moditems.BYWATER_BOTTLE.get());
                 output.accept(Moditems.S_AGENT.get());
+                output.accept(Moditems.BLUE_AGENT.get());
                 output.accept(Moditems.NULL_S_AGENT.get());
                 output.accept(Moditems.MING_JUQUE.get());
 
