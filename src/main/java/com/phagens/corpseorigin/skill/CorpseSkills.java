@@ -1,6 +1,7 @@
 package com.phagens.corpseorigin.skill;
 
 import com.phagens.corpseorigin.CorpseOrigin;
+import com.phagens.corpseorigin.player.PlayerCorpseData;
 import com.phagens.corpseorigin.skill.special.CorpseKingPowerSkill;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
@@ -413,6 +414,52 @@ public class CorpseSkills {
                         target.hurt(player.damageSources().playerAttack(player), 8.0f);
                     }
                 });
+            }
+        }
+    });
+    
+    /**
+     * 伪装 - 隐藏尸兄骨骼
+     * 类型：主动技能
+     * 效果：隐藏外骨骼、羽翼和鱼尾
+     * 消耗：2进化点
+     * 冷却：30秒
+     * 持续时间：60秒
+     */
+    public static final ISkill DISGUISE = register(new SimpleSkill(
+            new BaseSkill.Builder(id("disguise"))
+                    .name(Component.translatable("skill.corpseorigin.disguise"))
+                    .description(Component.translatable("skill.corpseorigin.disguise.desc"))
+                    .cost(2)
+                    .skillType(ISkill.SkillType.SPECIAL_MUTATION)
+                    .requiredLevel(3)
+                    .cooldown(600) // 30秒冷却
+                    .duration(1200) // 60秒持续时间
+    ) {
+        @Override
+        public void onActivate(Player player) {
+            if (!player.level().isClientSide) {
+                // 切换伪装状态
+                boolean isDisguised = !PlayerCorpseData.isDisguised(player);
+                PlayerCorpseData.setDisguised(player, isDisguised);
+                
+                // 同步到客户端
+                if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                    com.phagens.corpseorigin.network.PlayerCorpseSyncPacket packet = new com.phagens.corpseorigin.network.PlayerCorpseSyncPacket(
+                            serverPlayer.getId(),
+                            PlayerCorpseData.isCorpse(serverPlayer),
+                            PlayerCorpseData.getCorpseType(serverPlayer),
+                            PlayerCorpseData.getCorpseData(serverPlayer)
+                    );
+                    net.neoforged.neoforge.network.PacketDistributor.sendToAllPlayers(packet);
+                }
+                
+                // 发送提示
+                if (isDisguised) {
+                    player.sendSystemMessage(Component.literal("§a你激活了伪装技能，骨骼已隐藏！"));
+                } else {
+                    player.sendSystemMessage(Component.literal("§a你解除了伪装，骨骼已显现！"));
+                }
             }
         }
     });

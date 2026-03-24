@@ -2,8 +2,12 @@ package com.phagens.corpseorigin.client.event;
 
 import com.phagens.corpseorigin.CorpseOrigin;
 import com.phagens.corpseorigin.client.Renderer.layer.ExoskeletonRenderLayer;
+import com.phagens.corpseorigin.client.Renderer.layer.WingRenderLayer;
+import com.phagens.corpseorigin.client.Renderer.layer.TailRenderLayer;
 import com.phagens.corpseorigin.client.model.CorpsemoldelRegister;
 import com.phagens.corpseorigin.client.model.ExoskeletonModel;
+import com.phagens.corpseorigin.client.model.WingModel;
+import com.phagens.corpseorigin.client.model.TailModel;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.resources.PlayerSkin;
@@ -37,10 +41,22 @@ public class CorpsePlayerRenderHandler {
     private static void addExoskeletonLayer(PlayerRenderer renderer, EntityModelSet modelSet) {
         if (renderer == null) return;
 
-        ExoskeletonModel model = new ExoskeletonModel(
+        // 添加外骨骼渲染层
+        ExoskeletonModel exoskeletonModel = new ExoskeletonModel(
                 modelSet.bakeLayer(CorpsemoldelRegister.EXOSKELETON_LAYER)
         );
-
-        renderer.addLayer(new ExoskeletonRenderLayer(renderer, model));
+        renderer.addLayer(new ExoskeletonRenderLayer(renderer, exoskeletonModel));
+        
+        // 添加羽翼渲染层
+        WingModel wingModel = new WingModel(
+                modelSet.bakeLayer(CorpsemoldelRegister.WING_LAYER)
+        );
+        renderer.addLayer(new WingRenderLayer(renderer, wingModel));
+        
+        // 添加鱼尾渲染层
+        TailModel tailModel = new TailModel(
+                modelSet.bakeLayer(CorpsemoldelRegister.TAIL_LAYER)
+        );
+        renderer.addLayer(new TailRenderLayer(renderer, tailModel));
     }
 }

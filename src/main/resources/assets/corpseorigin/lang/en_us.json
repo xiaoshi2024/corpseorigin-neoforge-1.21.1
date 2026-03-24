@@ -8,7 +8,7 @@
   "item.corpseorigin.bywater_bottle": "Corpse Water Bottle",
   "item.corpseorigin.ming_juque": "Juque Sword",
   "item.corpseorigin.s_agent": "Yellow Strengthening Agent",
-  "item.corpseorigin.blue_agent": "Blue Neutralizing Agent",
+  "item.corpseorigin.blue_s_agent": "Blue Neutralizing Agent",
   "item.corpseorigin.null_s_agent": "Null Agent",
 
   "effect.corpseorigin.side_effect": "Agent Side Effect",
@@ -63,7 +63,7 @@
   "tooltip.corpseorigin.ming_juque": "A divine sword that can execute weakened enemies",
   "tooltip.corpseorigin.s_agent": "§eAn unstable experimental agent in its early stage, direct use will burden the body",
   "tooltip.corpseorigin.s_agent.warning": "§c§lWarning: Must be used with Blue Neutralizing Agent, or you may die!",
-  "tooltip.corpseorigin.blue_agent": "§bUsed to neutralize the side effects of the Yellow Strengthening Agent and stabilize the body",
+  "tooltip.corpseorigin.blue_s_agent": "§bUsed to neutralize the side effects of the Yellow Strengthening Agent and stabilize the body",
   "tooltip.corpseorigin.gongfa.rarity": "Rarity: %s",
   "tooltip.corpseorigin.gongfa.ceng": "Cultivation Layer: %s",
   "tooltip.corpseorigin.gongfa.attribute": "Blessings:",
@@ -215,5 +215,7 @@
   "advancements.corpseorigin.weapon_shattered.description": "Attacked the Corpse King from a distance and your weapon was shattered by his power",
 
   "advancements.corpseorigin.cannibalism_discovery.title": "Devouring Instinct",
-  "advancements.corpseorigin.cannibalism_discovery.description": "You witnessed the cruel law of survival among zombie brothers"
+  "advancements.corpseorigin.cannibalism_discovery.description": "You witnessed the cruel law of survival among zombie brothers",
+  "skill.corpseorigin.disguise": "disguise",
+  "skill.corpseorigin.disguise.desc": "Make you look like an ordinary human being!"
 }

@@ -8,7 +8,7 @@
   "item.corpseorigin.bywater_bottle": "尸水瓶",
   "item.corpseorigin.ming_juque": "巨阙剑",
   "item.corpseorigin.s_agent": "黄色强化剂",
-  "item.corpseorigin.blue_agent": "蓝色中和剂",
+  "item.corpseorigin.blue_s_agent": "蓝色中和剂",
   "item.corpseorigin.null_s_agent": "空药剂",
 
   "effect.corpseorigin.side_effect": "药剂副作用",
@@ -63,7 +63,7 @@
   "tooltip.corpseorigin.ming_juque": "巨阙神兵，可斩杀残血之敌",
   "tooltip.corpseorigin.s_agent": "§e初期不稳定的实验药剂，直接使用会对身体造成负担",
   "tooltip.corpseorigin.s_agent.warning": "§c§l警告：需要配合蓝色中和剂使用，否则可能暴毙！",
-  "tooltip.corpseorigin.blue_agent": "§b用于中和黄色强化剂的副作用，稳定身体状态",
+  "tooltip.corpseorigin.blue_s_agent": "§b用于中和黄色强化剂的副作用，稳定身体状态",
   "tooltip.corpseorigin.gongfa.rarity": "品级: %s",
   "tooltip.corpseorigin.gongfa.ceng": "功法层级: %s",
   "tooltip.corpseorigin.gongfa.attribute": "武学加持:",
@@ -215,5 +215,7 @@
   "advancements.corpseorigin.weapon_shattered.description": "远程攻击尸王，武器被其强大的力量震坏",
 
   "advancements.corpseorigin.cannibalism_discovery.title": "吞噬本能",
-  "advancements.corpseorigin.cannibalism_discovery.description": "你目睹了尸兄之间弱肉强食的残酷法则"
+  "advancements.corpseorigin.cannibalism_discovery.description": "你目睹了尸兄之间弱肉强食的残酷法则",
+  "skill.corpseorigin.disguise": "伪装",
+  "skill.corpseorigin.disguise.desc": "我看起来像人类？"
 }

@@ -168,7 +168,7 @@ public class Sagent extends Item implements GeoItem {
 
         // 蓝色中和剂显示说明
         if (this.variant.equals("blue")) {
-            tooltipComponents.add(Component.translatable("tooltip.corpseorigin.blue_agent"));
+            tooltipComponents.add(Component.translatable("tooltip.corpseorigin.blue_s_agent"));
         }
     }
 

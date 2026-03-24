@@ -65,6 +65,8 @@ public class PlayerCorpseEventHandler {
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer serverPlayer) {
             syncCorpseStateToClient(serverPlayer);
+            // 恢复飞行能力
+            restoreFlightAbility(serverPlayer);
         }
     }
 
@@ -72,6 +74,8 @@ public class PlayerCorpseEventHandler {
     public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (event.getEntity() instanceof ServerPlayer serverPlayer) {
             syncCorpseStateToClient(serverPlayer);
+            // 恢复飞行能力
+            restoreFlightAbility(serverPlayer);
         }
     }
 
@@ -79,6 +83,8 @@ public class PlayerCorpseEventHandler {
     public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
         if (event.getEntity() instanceof ServerPlayer serverPlayer) {
             syncCorpseStateToClient(serverPlayer);
+            // 恢复飞行能力
+            restoreFlightAbility(serverPlayer);
         }
     }
 
@@ -107,6 +113,7 @@ public class PlayerCorpseEventHandler {
         if (player instanceof ServerPlayer serverPlayer) {
             if (PlayerCorpseData.isCorpse(player)) {
                 updateCorpseBehavior(serverPlayer);
+                updateCorpseMovement(serverPlayer); // 添加移动能力更新
             }
         }
     }
@@ -124,6 +131,21 @@ public class PlayerCorpseEventHandler {
         PacketDistributor.sendToAllPlayers(packet);
     }
 
+    /**
+     * 恢复飞行能力（登录、重生、切换维度时调用）
+     */
+    private static void restoreFlightAbility(ServerPlayer player) {
+        if (!PlayerCorpseData.isCorpse(player)) return;
+
+        // 如果有翅膀且未伪装，给予飞行权限
+        if (PlayerCorpseData.hasWing(player) && !PlayerCorpseData.isDisguised(player)) {
+            if (!player.getAbilities().mayfly) {
+                player.getAbilities().mayfly = true;
+                player.onUpdateAbilities();
+            }
+        }
+    }
+
     private static void updateCorpseBehavior(ServerPlayer player) {
         // 每5秒减少1点饥饿度
         if (player.tickCount % 100 == 0) {
@@ -138,14 +160,14 @@ public class PlayerCorpseEventHandler {
             // 基础生命恢复
             if (player.getHealth() < player.getMaxHealth()) {
                 float healAmount = 0.5f; // 基础恢复
-                
+
                 // 根据进化等级增加恢复量
                 int evolutionLevel = PlayerCorpseData.getEvolutionLevel(player);
                 healAmount += evolutionLevel * 0.3f; // 每级增加0.3恢复
-                
+
                 player.heal(healAmount);
             }
-            
+
             // 高等级尸族获得力量效果
             int evolutionLevel = PlayerCorpseData.getEvolutionLevel(player);
             if (evolutionLevel >= 3) {
@@ -156,7 +178,7 @@ public class PlayerCorpseEventHandler {
                 // 5级获得力量II（覆盖力量I）
                 player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 300, 1, false, false));
             }
-            
+
             // 高等级尸族获得夜视能力（3级以上）
             if (evolutionLevel >= 3) {
                 player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 400, 0, false, false));
@@ -167,17 +189,89 @@ public class PlayerCorpseEventHandler {
         if (player.tickCount % 200 == 0 && PlayerCorpseData.hasSentient(player)) {
             if (player.getRandom().nextFloat() < 0.3f) {
                 String[] phrases = {
-                    "救...救我...",
-                    "好饿...",
-                    "我...我怎么了...",
-                    "不要...不要杀我...",
-                    "肉...肉...",
-                    "谁来...救救我...",
-                    "好疼...好疼...",
-                    "我不想死..."
+                        "救...救我...",
+                        "好饿...",
+                        "我...我怎么了...",
+                        "不要...不要杀我...",
+                        "肉...肉...",
+                        "谁来...救救我...",
+                        "好疼...好疼...",
+                        "我不想死..."
                 };
                 String phrase = phrases[player.getRandom().nextInt(phrases.length)];
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(phrase));
+            }
+        }
+    }
+
+    /**
+     * 更新尸族玩家的移动能力（翅膀飞行和鱼尾游泳）
+     */
+    private static void updateCorpseMovement(ServerPlayer player) {
+        // 翅膀飞行能力 - 简化版，像创造模式一样直接飞行
+        if (PlayerCorpseData.hasWing(player) && !PlayerCorpseData.isDisguised(player)) {
+            handleWingFlight(player);
+        } else {
+            // 没有翅膀或伪装时禁用飞行能力
+            if (player.getAbilities().mayfly) {
+                player.getAbilities().mayfly = false;
+                player.getAbilities().flying = false;
+                player.onUpdateAbilities();
+            }
+        }
+
+        // 鱼尾游泳功能
+        if (PlayerCorpseData.hasTail(player) && !PlayerCorpseData.isDisguised(player)) {
+            handleTailSwimming(player);
+        }
+    }
+
+    /**
+     * 处理翅膀飞行 - 简化版，直接给予飞行能力
+     */
+    private static void handleWingFlight(ServerPlayer player) {
+        // 允许玩家飞行（像创造模式一样）
+        if (!player.getAbilities().mayfly) {
+            player.getAbilities().mayfly = true;
+            player.onUpdateAbilities();
+        }
+
+        // 飞行时消耗饥饿度
+        if (player.getAbilities().flying) {
+            // 每20tick（1秒）消耗1点饥饿值
+            if (player.tickCount % 20 == 0) {
+                int hunger = PlayerCorpseData.getHunger(player);
+                if (hunger > 0) {
+                    PlayerCorpseData.setHunger(player, hunger - 1);
+                } else {
+                    // 饥饿值为0时强制落地
+                    player.getAbilities().flying = false;
+                    player.onUpdateAbilities();
+                    player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§c饥饿值耗尽，无法继续飞行！"));
+                }
+            }
+        }
+    }
+
+    /**
+     * 处理鱼尾游泳功能
+     */
+    private static void handleTailSwimming(ServerPlayer player) {
+        // 检查玩家是否在水中
+        if (player.isInFluidType()) {
+            // 消耗尸兄饥饿值
+            int hunger = PlayerCorpseData.getHunger(player);
+            if (hunger > 0) {
+                // 每20tick消耗1点饥饿值
+                if (player.tickCount % 20 == 0) {
+                    PlayerCorpseData.setHunger(player, hunger - 1);
+                }
+
+                // 给予水下呼吸效果
+                player.addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, 200, 0, false, false));
+
+                // 给予游泳速度提升效果
+                player.addEffect(new MobEffectInstance(MobEffects.DOLPHINS_GRACE, 200, 1, false, false));
             }
         }
     }
@@ -190,21 +284,21 @@ public class PlayerCorpseEventHandler {
         if (event.getSource().getEntity() instanceof ServerPlayer player) {
             if (PlayerCorpseData.isCorpse(player)) {
                 LivingEntity target = event.getEntity();
-                
+
                 // 只有攻击活物（非亡灵、非机械）才恢复
                 if (isLivingCreature(target)) {
                     // 恢复饥饿度（饱食度）
                     int currentHunger = PlayerCorpseData.getHunger(player);
                     int newHunger = Math.min(100, currentHunger + 5); // 攻击一次恢复5点
                     PlayerCorpseData.setHunger(player, newHunger);
-                    
+
                     // 恢复生命值
                     float healAmount = 1.0f; // 基础恢复
                     int evolutionLevel = PlayerCorpseData.getEvolutionLevel(player);
                     healAmount += evolutionLevel * 0.5f; // 每级增加0.5恢复
-                    
+
                     player.heal(healAmount);
-                    
+
                     // 攻击村民时有概率获得进化点
                     if (target instanceof net.minecraft.world.entity.npc.AbstractVillager) {
                         // 0.05%的概率获得1点进化点
@@ -218,15 +312,15 @@ public class PlayerCorpseEventHandler {
                             }
                         }
                     }
-                    
+
                     CorpseOrigin.LOGGER.debug("尸族玩家 {} 攻击 {} 恢复 {} 饥饿度和 {} 生命值",
-                            player.getName().getString(), target.getName().getString(), 
+                            player.getName().getString(), target.getName().getString(),
                             newHunger - currentHunger, healAmount);
                 }
             }
         }
     }
-    
+
     /**
      * 判断目标是否是活物（可以被"吃"）
      */
@@ -236,11 +330,12 @@ public class PlayerCorpseEventHandler {
             // 尸兄可以吞噬其他怪物
             return true;
         }
-        // 动物和村民都是活物
+        // 动物、水生生物、村民都是活物
         return entity.getType().getCategory() == net.minecraft.world.entity.MobCategory.CREATURE ||
-               entity.getType().getCategory() == net.minecraft.world.entity.MobCategory.AMBIENT ||
-               entity instanceof net.minecraft.world.entity.npc.AbstractVillager ||
-               entity instanceof Player;
+                entity.getType().getCategory() == net.minecraft.world.entity.MobCategory.AMBIENT ||
+                entity.getType().getCategory() == net.minecraft.world.entity.MobCategory.WATER_AMBIENT ||
+                entity instanceof net.minecraft.world.entity.npc.AbstractVillager ||
+                entity instanceof Player;
     }
 
     /**
@@ -259,24 +354,22 @@ public class PlayerCorpseEventHandler {
             }
         }
     }
-    
 
-    
     /**
      * 判断是否是毒素效果
      */
     private static boolean isPoisonEffect(MobEffectInstance effect) {
         if (effect == null) return false;
-        
+
         // 获取效果实例（解包 Holder）
         MobEffect mobEffect = effect.getEffect().value();
-        
+
         // 原版毒素效果
         return mobEffect == MobEffects.POISON.value() ||
-               mobEffect == MobEffects.HUNGER.value() ||
-               mobEffect.getCategory() == net.minecraft.world.effect.MobEffectCategory.HARMFUL;
+                mobEffect == MobEffects.HUNGER.value() ||
+                mobEffect.getCategory() == net.minecraft.world.effect.MobEffectCategory.HARMFUL;
     }
-    
+
     /**
      * 尸族玩家击杀生物时增加击杀数并检查进化等级
      */
@@ -285,27 +378,27 @@ public class PlayerCorpseEventHandler {
         if (event.getSource().getEntity() instanceof ServerPlayer player) {
             if (PlayerCorpseData.isCorpse(player)) {
                 LivingEntity target = event.getEntity();
-                
+
                 // 只有击杀活物（非亡灵、非机械）才增加击杀数
                 if (isLivingCreature(target)) {
                     // 增加击杀数
                     PlayerCorpseData.addKill(player);
-                    
+
                     // 检查是否是高阶生物
                     if (isHighLevelCreature(target)) {
                         int currentLevel = PlayerCorpseData.getEvolutionLevel(player);
                         int newLevel = currentLevel + 1;
-                        
+
                         // 确保进化等级不超过5级
                         if (newLevel <= 5) {
                             PlayerCorpseData.setEvolutionLevel(player, newLevel);
                             syncCorpseStateToClient(player);
-                            
+
                             // 发送进化等级提升提示
                             player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                                     "§a你吞噬了高阶生物！进化等级提升至 " + newLevel + " 级！"
                             ));
-                            
+
                             CorpseOrigin.LOGGER.info("尸族玩家 {} 吞噬了高阶生物，进化等级提升至 {} 级",
                                     player.getName().getString(), newLevel);
                         }
@@ -313,15 +406,60 @@ public class PlayerCorpseEventHandler {
                         // 检查是否需要基于击杀数提升进化等级
                         checkEvolutionLevel(player);
                     }
-                    
+
+                    // 检查是否击杀鸟类/鸡，有概率长出羽翼
+                    if (isBirdOrChicken(target) && !PlayerCorpseData.hasWing(player)) {
+                        if (player.getRandom().nextFloat() < 0.3f) { // 30%概率
+                            PlayerCorpseData.setHasWing(player, true);
+                            syncCorpseStateToClient(player);
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                                    "§a你吞噬了鸟类！长出了羽翼！"
+                            ));
+                            CorpseOrigin.LOGGER.info("尸族玩家 {} 击杀鸟类后长出了羽翼",
+                                    player.getName().getString());
+                        }
+                    }
+
+                    // 检查是否击杀鱼类，有概率长出鱼尾
+                    if (isFish(target) && !PlayerCorpseData.hasTail(player)) {
+                        if (player.getRandom().nextFloat() < 0.3f) { // 30%概率
+                            PlayerCorpseData.setHasTail(player, true);
+                            syncCorpseStateToClient(player);
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                                    "§a你吞噬了鱼类！长出了鱼尾！"
+                            ));
+                            CorpseOrigin.LOGGER.info("尸族玩家 {} 击杀鱼类后长出了鱼尾",
+                                    player.getName().getString());
+                        }
+                    }
+
                     CorpseOrigin.LOGGER.debug("尸族玩家 {} 击杀 {}，当前击杀数: {}",
-                            player.getName().getString(), target.getName().getString(), 
+                            player.getName().getString(), target.getName().getString(),
                             PlayerCorpseData.getKills(player));
                 }
             }
         }
     }
-    
+
+    /**
+     * 判断是否是鸟类或鸡
+     */
+    private static boolean isBirdOrChicken(LivingEntity entity) {
+        return entity instanceof net.minecraft.world.entity.animal.Chicken ||
+                entity instanceof net.minecraft.world.entity.animal.Parrot;
+    }
+
+    /**
+     * 判断是否是鱼类
+     */
+    private static boolean isFish(LivingEntity entity) {
+        boolean isFish = entity.getType().getCategory() == net.minecraft.world.entity.MobCategory.WATER_AMBIENT;
+        if (isFish) {
+            CorpseOrigin.LOGGER.info("识别到鱼类生物: {}", entity.getName().getString());
+        }
+        return isFish;
+    }
+
     /**
      * 检查并提升进化等级
      */
@@ -329,7 +467,7 @@ public class PlayerCorpseEventHandler {
         int kills = PlayerCorpseData.getKills(player);
         int currentLevel = PlayerCorpseData.getEvolutionLevel(player);
         int newLevel = currentLevel;
-        
+
         // 根据击杀数判断进化等级
         if (kills >= 400 && currentLevel < 5) {
             newLevel = 5;
@@ -340,22 +478,22 @@ public class PlayerCorpseEventHandler {
         } else if (kills >= 50 && currentLevel < 2) {
             newLevel = 2;
         }
-        
+
         // 如果进化等级发生变化，更新等级并发送提示
         if (newLevel > currentLevel) {
             PlayerCorpseData.setEvolutionLevel(player, newLevel);
             syncCorpseStateToClient(player);
-            
+
             // 发送进化等级提升提示
             player.sendSystemMessage(net.minecraft.network.chat.Component.translatable(
                     "message.corpseorigin.evolution_level_up", newLevel
             ));
-            
+
             CorpseOrigin.LOGGER.info("尸族玩家 {} 进化等级提升至 {} 级，当前击杀数: {}",
                     player.getName().getString(), newLevel, kills);
         }
     }
-    
+
     /**
      * 判断是否是高阶生物
      */
@@ -364,22 +502,22 @@ public class PlayerCorpseEventHandler {
         if (entity instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon) {
             return true;
         }
-        
+
         // 检查是否是凋灵
         if (entity instanceof net.minecraft.world.entity.boss.wither.WitherBoss) {
             return true;
         }
-        
+
         // 检查是否是监守者
         if (entity instanceof net.minecraft.world.entity.monster.warden.Warden) {
             return true;
         }
-        
+
         // 检查是否是龙右（尸族高阶生物）
         if (entity instanceof com.phagens.corpseorigin.entity.LongyouEntity) {
             return true;
         }
-        
+
         // 检查实体等级（如果有）
         if (entity instanceof net.minecraft.world.entity.monster.Enemy) {
             // 对于敌人实体，检查其生命值
@@ -387,7 +525,7 @@ public class PlayerCorpseEventHandler {
                 return true;
             }
         }
-        
+
         return false;
     }
 }

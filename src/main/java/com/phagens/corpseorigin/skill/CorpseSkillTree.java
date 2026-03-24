@@ -172,6 +172,14 @@ public class CorpseSkillTree {
                 .parent(venomNode.getId())
                 .build();
         
+        // 特殊 - 伪装
+        SkillNode disguiseNode = new SkillNode.Builder(id("node_disguise"))
+                .tier(3)
+                .position(4, 3)
+                .skill(CorpseSkills.DISGUISE)
+                .parent(rootNode.getId())
+                .build();
+        
         // ==================== 第4层：神级能力 ====================
         // 不死之身
         SkillNode immortalNode = new SkillNode.Builder(id("node_immortal"))
@@ -214,6 +222,7 @@ public class CorpseSkillTree {
                 .node(leapNode)
                 .node(evasionNode)
                 .node(fearNode)
+                .node(disguiseNode)
                 .node(immortalNode)
                 .node(corpseKingNode)
                 .node(shadowNode);
