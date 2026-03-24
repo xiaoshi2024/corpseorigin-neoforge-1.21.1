@@ -50,7 +50,9 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
     // 变种类型枚举
     public enum Variant {
         NORMAL(0),
-        CRACKED(1); // 裂口尸兄
+        CRACKED(1), // 裂口尸兄
+        WINGS(2), // 翅膀尸兄
+        WINGS_CRACKED(3); // 裂口翅膀尸兄
 
         private final int code;
 
@@ -78,6 +80,7 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
     protected static final RawAnimation ATTACK_ANIM = RawAnimation.begin().thenPlay("attack");
     protected static final RawAnimation SHIEYE_ANIM = RawAnimation.begin().thenPlay("shieye");
     protected static final RawAnimation SPECIAL_ANIM = RawAnimation.begin().thenPlay("special");
+    protected static final RawAnimation FLY_ANIM = RawAnimation.begin().thenLoop("fly");
 
     // 同步数据
     private static final EntityDataAccessor<String> DATA_PLAYER_NAME =
@@ -90,12 +93,18 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
             SynchedEntityData.defineId(LowerLevelZbEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(LowerLevelZbEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Boolean> DATA_PLAYING_SPECIAL =
+    private static final EntityDataAccessor<Boolean> DATA_PLAYING_SPECIAL = 
             SynchedEntityData.defineId(LowerLevelZbEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Integer> DATA_SPECIAL_TICKS =
+    private static final EntityDataAccessor<Integer> DATA_SPECIAL_TICKS = 
             SynchedEntityData.defineId(LowerLevelZbEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Integer> DATA_COMMAND_STATE =
+    private static final EntityDataAccessor<Integer> DATA_COMMAND_STATE = 
             SynchedEntityData.defineId(LowerLevelZbEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_HAS_WING = 
+            SynchedEntityData.defineId(LowerLevelZbEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_HAS_TAIL = 
+            SynchedEntityData.defineId(LowerLevelZbEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_IS_FLYING = 
+            SynchedEntityData.defineId(LowerLevelZbEntity.class, EntityDataSerializers.BOOLEAN);
 
     private UUID playerSkinId;
     private String playerSkinName;
@@ -126,6 +135,10 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
     // 贪婪系统
     private boolean isGreedy = false; // 是否贪婪
     private int greedCooldown = 0; // 贪婪行为冷却时间
+    
+    // 器官系统
+    private boolean hasWing = false; // 是否有翅膀
+    private boolean hasTail = false; // 是否有鱼尾
     
     // 被攻击记忆系统（用于反击）
     private int lastHurtTick = -1000; // 上次被攻击的游戏刻
@@ -255,6 +268,9 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
         builder.define(DATA_PLAYING_SPECIAL, false);
         builder.define(DATA_SPECIAL_TICKS, 0);
         builder.define(DATA_COMMAND_STATE, CommandState.FOLLOW.getCode());
+        builder.define(DATA_HAS_WING, false);
+        builder.define(DATA_HAS_TAIL, false);
+        builder.define(DATA_IS_FLYING, false);
     }
 
     @Override
@@ -315,27 +331,65 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
             }
         }
 
-        // 检查目标是否已成为尸兄的玩家（同类）
-        if (entity instanceof Player player) {
-            if (com.phagens.corpseorigin.player.PlayerCorpseData.isCorpse(player)) {
-                // 如果被攻击了，允许反击
-                boolean wasRecentlyHurt = (this.tickCount - lastHurtTick) < HURT_MEMORY_DURATION;
-                if (wasRecentlyHurt) {
-                    return true; // 被攻击时反击同类玩家
-                }
+        // 检查目标是否是同类（尸兄玩家或其他尸兄）
+        boolean isZombie = false;
+        if (entity instanceof LowerLevelZbEntity) {
+            isZombie = true;
+        } else if (entity instanceof Player player) {
+            isZombie = com.phagens.corpseorigin.player.PlayerCorpseData.isCorpse(player);
+        }
 
-                // 同类尸兄玩家，只有在极度饥饿时才攻击
-                boolean isHungry = this.hunger <= HUNGER_THRESHOLD_FOR_CANNIBALISM;
-                boolean notUnderKing = !isUnderZombieKingLeadership();
+        // 如果是同类目标
+        if (isZombie) {
+            // 如果被攻击了，允许反击
+            boolean wasRecentlyHurt = (this.tickCount - lastHurtTick) < HURT_MEMORY_DURATION;
+            if (wasRecentlyHurt) {
+                return true; // 被攻击时反击同类
+            }
 
-                // 只有在满足吞噬条件时才攻击同类玩家
-                if (!isHungry || !notUnderKing) {
-                    return false; // 不饥饿或有尸王领导时不攻击同类
-                }
+            // 检查是否有非同类目标存在
+            if (hasNonZombieTargets()) {
+                return false; // 有非同类目标时不攻击同类
+            }
+
+            // 同类目标，只有在极度饥饿时才攻击
+            boolean isHungry = this.hunger <= HUNGER_THRESHOLD_FOR_CANNIBALISM;
+            boolean notUnderKing = !isUnderZombieKingLeadership();
+
+            // 只有在满足吞噬条件时才攻击同类
+            if (!isHungry || !notUnderKing) {
+                return false; // 不饥饿或有尸王领导时不攻击同类
             }
         }
 
         return true;
+    }
+    
+    /**
+     * 检查周围是否存在非同类目标
+     */
+    private boolean hasNonZombieTargets() {
+        if (!(this.level() instanceof ServerLevel level)) return false;
+        
+        // 检查周围16格内是否有非同类目标
+        return level.getEntitiesOfClass(
+                net.minecraft.world.entity.LivingEntity.class,
+                this.getBoundingBox().inflate(16.0D),
+                entity -> {
+                    if (entity == this) return false;
+                    if (entity instanceof LowerLevelZbEntity) return false; // 排除其他尸兄
+                    if (entity instanceof Player player) {
+                        // 排除主人和同类尸兄玩家
+                        if (this.masterUUID != null && player.getUUID().equals(this.masterUUID)) {
+                            return false;
+                        }
+                        if (com.phagens.corpseorigin.player.PlayerCorpseData.isCorpse(player)) {
+                            return false;
+                        }
+                    }
+                    return shouldAttackMob(entity);
+                }
+        ).size() > 0;
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -379,6 +433,11 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
                 return event.setAndContinue(SHIEYE_ANIM);
             }
             return event.setAndContinue(ATTACK_ANIM);
+        }
+
+        // 如果正在飞行，播放飞行动画
+        if (this.entityData.get(DATA_IS_FLYING)) {
+            return event.setAndContinue(FLY_ANIM);
         }
 
         // 移动时播放行走动画
@@ -463,6 +522,11 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
         compound.putInt("SpeechCooldown", this.speechCooldown);
         compound.putBoolean("IsGreedy", this.isGreedy);
         compound.putInt("GreedCooldown", this.greedCooldown);
+        
+        // 保存器官系统数据
+        compound.putBoolean("HasWing", this.entityData.get(DATA_HAS_WING));
+        compound.putBoolean("HasTail", this.entityData.get(DATA_HAS_TAIL));
+        compound.putBoolean("IsFlying", this.entityData.get(DATA_IS_FLYING));
 
         // 保存被攻击记忆
         compound.putInt("LastHurtTick", this.lastHurtTick);
@@ -526,6 +590,17 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
             this.greedCooldown = compound.getInt("GreedCooldown");
         }
         
+        // 读取器官系统数据
+        if (compound.contains("HasWing")) {
+            this.entityData.set(DATA_HAS_WING, compound.getBoolean("HasWing"));
+        }
+        if (compound.contains("HasTail")) {
+            this.entityData.set(DATA_HAS_TAIL, compound.getBoolean("HasTail"));
+        }
+        if (compound.contains("IsFlying")) {
+            this.entityData.set(DATA_IS_FLYING, compound.getBoolean("IsFlying"));
+        }
+        
         // 读取被攻击记忆
         if (compound.contains("LastHurtTick")) {
             this.lastHurtTick = compound.getInt("LastHurtTick");
@@ -570,10 +645,20 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
             }
         }
 
+        // 处理飞行状态
+        if (this.entityData.get(DATA_HAS_WING)) {
+            handleFlight();
+        }
+
         // 服务端：饥饿度系统
         if (!this.level().isClientSide) {
             // 每100 tick（5秒）减少1点饥饿度
             if (this.tickCount % 100 == 0 && hunger > 0) {
+                hunger--;
+            }
+            
+            // 飞行时消耗更多饥饿度
+            if (this.entityData.get(DATA_IS_FLYING) && this.tickCount % 20 == 0 && hunger > 0) {
                 hunger--;
             }
             
@@ -630,6 +715,35 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
         // 服务端：高阶尸兄自动开门
         if (!this.level().isClientSide) {
             tickDoorInteraction();
+        }
+    }
+
+    /**
+     * 处理飞行逻辑
+     */
+    private void handleFlight() {
+        // 检查是否在地面上
+        boolean onGround = this.onGround();
+        
+        // 如果在地面上且饥饿度足够，有概率起飞
+        if (onGround && hunger > 20 && this.random.nextFloat() < 0.05F) {
+            setFlying(true);
+        }
+        
+        // 如果在空中且饥饿度不足，降落
+        if (!onGround && hunger <= 0) {
+            setFlying(false);
+        }
+        
+        // 飞行时的移动逻辑
+        if (this.entityData.get(DATA_IS_FLYING)) {
+            // 增加飞行速度
+            this.setDeltaMovement(this.getDeltaMovement().add(0, 0.05, 0));
+            
+            // 限制飞行高度
+            if (this.getY() > 128) {
+                this.setDeltaMovement(this.getDeltaMovement().add(0, -0.1, 0));
+            }
         }
     }
 
@@ -893,6 +1007,29 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
         
         // 播放吞噬效果
         this.playSound(net.minecraft.sounds.SoundEvents.GENERIC_EAT, 1.0F, 1.0F);
+        
+        // 检查是否击杀鸟类/鸡，有概率长出羽翼
+        if (isBirdOrChicken(target) && !hasWing()) {
+            if (this.random.nextFloat() < 0.3f) { // 30%概率
+                setHasWing(true);
+                // 根据当前变种类型切换到对应的翅膀变种
+                Variant currentVariant = getVariant();
+                Variant newVariant = switch (currentVariant) {
+                    case CRACKED -> Variant.WINGS_CRACKED;
+                    default -> Variant.WINGS;
+                };
+                setVariant(newVariant);
+                CorpseOrigin.LOGGER.info("尸兄 {} 击杀鸟类后长出了羽翼，变种变为: {}", this.getId(), newVariant.name());
+            }
+        }
+        
+        // 检查是否击杀鱼类，有概率长出鱼尾
+        if (isFish(target) && !hasTail()) {
+            if (this.random.nextFloat() < 0.3f) { // 30%概率
+                setHasTail(true);
+                CorpseOrigin.LOGGER.info("尸兄 {} 击杀鱼类后长出了鱼尾", this.getId());
+            }
+        }
         
         // 检查是否可以进化
         checkEvolution();
@@ -1192,6 +1329,36 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
     
     public void setKills(int kills) {
         this.kills = Math.max(0, kills);
+    }
+    
+    /**
+     * 器官系统方法
+     */
+    public boolean hasWing() {
+        return this.entityData.get(DATA_HAS_WING);
+    }
+    
+    public boolean hasTail() {
+        return this.entityData.get(DATA_HAS_TAIL);
+    }
+    
+    public void setHasWing(boolean hasWing) {
+        this.entityData.set(DATA_HAS_WING, hasWing);
+    }
+    
+    public void setHasTail(boolean hasTail) {
+        this.entityData.set(DATA_HAS_TAIL, hasTail);
+    }
+    
+    /**
+     * 飞行状态方法
+     */
+    public boolean isFlying() {
+        return this.entityData.get(DATA_IS_FLYING);
+    }
+    
+    public void setFlying(boolean flying) {
+        this.entityData.set(DATA_IS_FLYING, flying);
     }
     
     /**
@@ -1579,13 +1746,12 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
     private void findAndAttackTarget() {
         if (!(this.level() instanceof ServerLevel level)) return;
 
-        // 寻找最近的敌对生物或玩家
-        var nearbyEntities = level.getEntitiesOfClass(
+        // 寻找所有可能的目标
+        var allEntities = level.getEntitiesOfClass(
                 net.minecraft.world.entity.LivingEntity.class,
                 this.getBoundingBox().inflate(16.0D),
                 entity -> {
                     if (entity == this) return false;
-                    if (entity instanceof LowerLevelZbEntity) return false;
                     if (entity instanceof Player player) {
                         // 不攻击主人
                         if (this.masterUUID != null && player.getUUID().equals(this.masterUUID)) {
@@ -1596,18 +1762,48 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
                 }
         );
 
-        if (!nearbyEntities.isEmpty()) {
-            // 设置最近的目标
-            net.minecraft.world.entity.LivingEntity closest = nearbyEntities.get(0);
-            double minDistance = this.distanceToSqr(closest);
-            for (var entity : nearbyEntities) {
-                double dist = this.distanceToSqr(entity);
-                if (dist < minDistance) {
-                    minDistance = dist;
-                    closest = entity;
+        if (!allEntities.isEmpty()) {
+            // 优先选择非同类目标（非尸兄玩家和非尸兄生物）
+            net.minecraft.world.entity.LivingEntity closestNonZombie = null;
+            double minDistanceNonZombie = Double.MAX_VALUE;
+            
+            // 其次选择同类目标（尸兄玩家和其他尸兄）
+            net.minecraft.world.entity.LivingEntity closestZombie = null;
+            double minDistanceZombie = Double.MAX_VALUE;
+
+            for (var entity : allEntities) {
+                // 检查是否是同类
+                boolean isZombie = false;
+                if (entity instanceof LowerLevelZbEntity) {
+                    isZombie = true;
+                } else if (entity instanceof Player player) {
+                    isZombie = com.phagens.corpseorigin.player.PlayerCorpseData.isCorpse(player);
+                }
+
+                double distance = this.distanceToSqr(entity);
+                
+                if (isZombie) {
+                    // 同类目标
+                    if (distance < minDistanceZombie) {
+                        minDistanceZombie = distance;
+                        closestZombie = entity;
+                    }
+                } else {
+                    // 非同类目标
+                    if (distance < minDistanceNonZombie) {
+                        minDistanceNonZombie = distance;
+                        closestNonZombie = entity;
+                    }
                 }
             }
-            this.setTarget(closest);
+
+            // 优先攻击非同类目标
+            if (closestNonZombie != null) {
+                this.setTarget(closestNonZombie);
+            } else if (closestZombie != null) {
+                // 只有在没有非同类目标时才攻击同类
+                this.setTarget(closestZombie);
+            }
         }
     }
 
@@ -1731,5 +1927,20 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
                 }
             }
         }
+    }
+
+    /**
+     * 判断是否是鸟类或鸡
+     */
+    private static boolean isBirdOrChicken(net.minecraft.world.entity.Entity entity) {
+        return entity instanceof net.minecraft.world.entity.animal.Chicken ||
+                entity instanceof net.minecraft.world.entity.animal.Parrot;
+    }
+
+    /**
+     * 判断是否是鱼类
+     */
+    private static boolean isFish(net.minecraft.world.entity.Entity entity) {
+        return entity instanceof net.minecraft.world.entity.animal.AbstractFish;
     }
 }

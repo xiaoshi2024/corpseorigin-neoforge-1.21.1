@@ -137,11 +137,21 @@ public class PlayerCorpseEventHandler {
     private static void restoreFlightAbility(ServerPlayer player) {
         if (!PlayerCorpseData.isCorpse(player)) return;
 
-        // 如果有翅膀且未伪装，给予飞行权限
-        if (PlayerCorpseData.hasWing(player) && !PlayerCorpseData.isDisguised(player)) {
-            if (!player.getAbilities().mayfly) {
-                player.getAbilities().mayfly = true;
-                player.onUpdateAbilities();
+        // 只对生存模式玩家应用飞行能力，创造模式玩家不受影响
+        if (player.gameMode.getGameModeForPlayer().isSurvival()) {
+            // 如果有翅膀且未伪装，给予飞行权限
+            if (PlayerCorpseData.hasWing(player) && !PlayerCorpseData.isDisguised(player)) {
+                if (!player.getAbilities().mayfly) {
+                    player.getAbilities().mayfly = true;
+                    player.onUpdateAbilities();
+                }
+            } else {
+                // 没有翅膀或伪装时禁用飞行能力
+                if (player.getAbilities().mayfly) {
+                    player.getAbilities().mayfly = false;
+                    player.getAbilities().flying = false;
+                    player.onUpdateAbilities();
+                }
             }
         }
     }
@@ -208,15 +218,18 @@ public class PlayerCorpseEventHandler {
      * 更新尸族玩家的移动能力（翅膀飞行和鱼尾游泳）
      */
     private static void updateCorpseMovement(ServerPlayer player) {
-        // 翅膀飞行能力 - 简化版，像创造模式一样直接飞行
-        if (PlayerCorpseData.hasWing(player) && !PlayerCorpseData.isDisguised(player)) {
-            handleWingFlight(player);
-        } else {
-            // 没有翅膀或伪装时禁用飞行能力
-            if (player.getAbilities().mayfly) {
-                player.getAbilities().mayfly = false;
-                player.getAbilities().flying = false;
-                player.onUpdateAbilities();
+        // 只对生存模式玩家应用飞行能力，创造模式玩家不受影响
+        if (player.gameMode.getGameModeForPlayer().isSurvival()) {
+            // 翅膀飞行能力 - 简化版，像创造模式一样直接飞行
+            if (PlayerCorpseData.hasWing(player) && !PlayerCorpseData.isDisguised(player)) {
+                handleWingFlight(player);
+            } else {
+                // 没有翅膀或伪装时禁用飞行能力
+                if (player.getAbilities().mayfly) {
+                    player.getAbilities().mayfly = false;
+                    player.getAbilities().flying = false;
+                    player.onUpdateAbilities();
+                }
             }
         }
 
@@ -230,24 +243,27 @@ public class PlayerCorpseEventHandler {
      * 处理翅膀飞行 - 简化版，直接给予飞行能力
      */
     private static void handleWingFlight(ServerPlayer player) {
-        // 允许玩家飞行（像创造模式一样）
-        if (!player.getAbilities().mayfly) {
-            player.getAbilities().mayfly = true;
-            player.onUpdateAbilities();
-        }
+        // 只对生存模式玩家应用飞行能力，创造模式玩家不受影响
+        if (player.gameMode.getGameModeForPlayer().isSurvival()) {
+            // 允许玩家飞行（像创造模式一样）
+            if (!player.getAbilities().mayfly) {
+                player.getAbilities().mayfly = true;
+                player.onUpdateAbilities();
+            }
 
-        // 飞行时消耗饥饿度
-        if (player.getAbilities().flying) {
-            // 每20tick（1秒）消耗1点饥饿值
-            if (player.tickCount % 20 == 0) {
-                int hunger = PlayerCorpseData.getHunger(player);
-                if (hunger > 0) {
-                    PlayerCorpseData.setHunger(player, hunger - 1);
-                } else {
-                    // 饥饿值为0时强制落地
-                    player.getAbilities().flying = false;
-                    player.onUpdateAbilities();
-                    player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§c饥饿值耗尽，无法继续飞行！"));
+            // 飞行时消耗饥饿度
+            if (player.getAbilities().flying) {
+                // 每20tick（1秒）消耗1点饥饿值
+                if (player.tickCount % 20 == 0) {
+                    int hunger = PlayerCorpseData.getHunger(player);
+                    if (hunger > 0) {
+                        PlayerCorpseData.setHunger(player, hunger - 1);
+                    } else {
+                        // 饥饿值为0时强制落地
+                        player.getAbilities().flying = false;
+                        player.onUpdateAbilities();
+                        player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§c饥饿值耗尽，无法继续飞行！"));
+                    }
                 }
             }
         }

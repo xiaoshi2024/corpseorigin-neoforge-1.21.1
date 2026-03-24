@@ -38,6 +38,10 @@ public class LowerLevelZbModel extends GeoModel<LowerLevelZbEntity> {
         switch (object.getVariant()) {
             case CRACKED:
                 return ResourceLocation.fromNamespaceAndPath(MODID, "geo/entity/lower_level_zb_rendering.geo.json");
+            case WINGS:
+                return ResourceLocation.fromNamespaceAndPath(MODID, "geo/entity/hybrid/lower_level_zb_wings.geo.json");
+            case WINGS_CRACKED:
+                return ResourceLocation.fromNamespaceAndPath(MODID, "geo/entity/hybrid/lower_level_zb_rendering_wings.geo.json");
             default:
                 return ResourceLocation.fromNamespaceAndPath(MODID, "geo/entity/lower_level_zb.geo.json");
         }
@@ -48,6 +52,10 @@ public class LowerLevelZbModel extends GeoModel<LowerLevelZbEntity> {
         switch (object.getVariant()) {
             case CRACKED:
                 return ResourceLocation.fromNamespaceAndPath(MODID, "textures/entity/lower_level_zb_rendering.png");
+            case WINGS:
+                return ResourceLocation.fromNamespaceAndPath(MODID, "textures/entity/hybrid/lower_level_zb_wings.png");
+            case WINGS_CRACKED:
+                return ResourceLocation.fromNamespaceAndPath(MODID, "textures/entity/hybrid/lower_level_zb_rendering_wings.png");
             default:
                 return ResourceLocation.fromNamespaceAndPath(MODID, "textures/entity/lower_level_zb_render.png");
         }
@@ -58,6 +66,9 @@ public class LowerLevelZbModel extends GeoModel<LowerLevelZbEntity> {
         switch (animatable.getVariant()) {
             case CRACKED:
                 return ResourceLocation.fromNamespaceAndPath(MODID, "animations/entity/lower_level_zb_rendering.animation.json");
+            case WINGS:
+            case WINGS_CRACKED:
+                return ResourceLocation.fromNamespaceAndPath(MODID, "animations/entity/hybrid/lower_level_zb_wings.animation.json");
             default:
                 return ResourceLocation.fromNamespaceAndPath(MODID, "animations/entity/lower_level_zb.animation.json");
         }
