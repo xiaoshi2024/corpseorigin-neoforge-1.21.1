@@ -56,7 +56,7 @@ public class JSSkillEngine {
     /**
      * 执行功法技能脚本
      *
-     * @param skillName 技能名称（如"奥特曼"）
+     * @param skillName 技能名称（如"shi_xian_jian"）
      * @param player 施法玩家
      * @param gongFaData 功法数据
      * @return 是否成功执行

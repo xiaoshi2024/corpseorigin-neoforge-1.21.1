@@ -3,6 +3,7 @@ package com.phagens.corpseorigin.GongFU.GongFaZL;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import com.phagens.corpseorigin.GongFU.JsonLoader.GongFaJsonLoader;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -17,6 +18,36 @@ public class BaseGongFaItem extends Item {
     public BaseGongFaItem(Properties properties, String type) {
         super(properties);
         this.gongFaType = type;
+    }
+    
+    /**
+     * 创建带有默认数据的功法物品
+     */
+    public static ItemStack createGongFaItem(String typeId, int rarity, String ceng) {
+        // 从 JSON 加载器获取功法数据
+        GongFaData data = GongFaJsonLoader.getGongFaData(typeId, rarity, ceng);
+        if (data == null) {
+            throw new IllegalArgumentException("找不到功法数据: " + typeId + "_" + rarity + "_" + ceng);
+        }
+        
+        // 创建物品堆栈
+        ItemStack stack = new ItemStack(getGongFaItemByType(typeId));
+        
+        // 设置功法数据到物品
+        if (stack.getItem() instanceof BaseGongFaItem gongFaItem) {
+            gongFaItem.setDataToItem(stack, data);
+        }
+        
+        return stack;
+    }
+    
+    /**
+     * 根据类型ID获取对应的功法物品实例
+     */
+    private static Item getGongFaItemByType(String typeId) {
+        // 这里需要根据类型ID返回对应的功法物品实例
+        // 暂时返回一个默认实例，实际使用时需要根据类型ID创建对应的物品
+        return new BaseGongFaItem(new Properties().stacksTo(1), typeId);
     }
 
     @Override

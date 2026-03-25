@@ -116,12 +116,10 @@ public class SkillRadialScreen extends GuiRadialMenu<ISkill> {
 
         for (ISkill skill : handler.getLearnedSkills()) {
             if (skill.isActivatable()) {
-                if (!isCorpse) {
-                    // 检查是否是功法技能（ID 以 gongfu_开头）
-                    if (skill.getId().getPath().startsWith("gongfu_")) {
-                        skills.add(skill);
-                    }
-                } else {
+                // 功法技能始终显示，其他技能只有僵尸状态显示
+                if (skill.getId().getPath().startsWith("gongfu_")) {
+                    skills.add(skill);
+                } else if (isCorpse) {
                     skills.add(skill);
                 }
             }

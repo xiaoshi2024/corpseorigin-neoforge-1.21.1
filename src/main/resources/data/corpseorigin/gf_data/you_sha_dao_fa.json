@@ -1,0 +1,15 @@
+{
+  "type_id": "YOU_SHA_DAO_FA",
+  "name": "游鲨刀法",
+  "rarity": 4,
+  "ceng": "copy_1",
+  "cooldown": 90,
+  "attributes": {
+    "attack_damage": 15.0,
+    "movement_speed": 0.3,
+    "max_health": 18.0
+  },
+  "skills": [
+    "you_sha_dao_fa"
+  ]
+}

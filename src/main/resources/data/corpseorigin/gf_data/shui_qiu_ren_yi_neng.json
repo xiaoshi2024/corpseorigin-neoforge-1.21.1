@@ -1,0 +1,15 @@
+{
+  "type_id": "SHUI_QIU_REN_YI_NENG",
+  "name": "水球人异能",
+  "rarity": 6,
+  "ceng": "copy_1",
+  "cooldown": 180,
+  "attributes": {
+    "attack_damage": 25.0,
+    "max_health": 30.0,
+    "movement_speed": 0.2
+  },
+  "skills": [
+    "shui_qiu_ren_yi_neng"
+  ]
+}

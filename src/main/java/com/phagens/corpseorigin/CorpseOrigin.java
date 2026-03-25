@@ -63,7 +63,6 @@ public class CorpseOrigin {
             .withTabsBefore(CreativeModeTabs.COMBAT)
             .icon(() -> QI_XING_GUAN_ITEM.get().getDefaultInstance())
             .displayItems((parameters, output) -> {
-                BaseGongFaItem leiXi = (BaseGongFaItem) Moditems.LEI_XI_GONG_FA.get();
                 output.accept(QI_XING_GUAN_ITEM.get());
                 output.accept(Moditems.BYWATER_BUCKET.get());
                 output.accept(Moditems.BYWATER_BOTTLE.get());
@@ -78,40 +77,49 @@ public class CorpseOrigin {
                 output.accept(Moditems.ZBR_FISH_SPAWN_EGG.get());
                 output.accept(Moditems.KAIWEINAI_SPAWN_EGG.get());
 
-                addGongFaItemsToCreativeTab(output);
-
             }).build());
-    /**
-     * 将 JSON 加载的所有功法物品添加到创造标签页
-     */
+
+    // 新增：功法专属标签页
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> GONG_FA_TAB =
+            CREATIVE_MODE_TABS.register("gong_fa_tab", () -> CreativeModeTab.builder()
+                    .title(Component.translatable("itemGroup.corpseorigin.gongfa"))
+                    .withTabsBefore(CorpseOrigin.CORPSE_ORIGIN_TAB.getKey())
+                    .icon(() -> {
+                        // 延迟获取，避免类加载时出错
+                        try {
+                            return Moditems.BASE_GONG_FA.get().getDefaultInstance();
+                        } catch (Exception e) {
+                            CorpseOrigin.LOGGER.error("无法获取功法标签页图标", e);
+                            // 返回一个备用图标
+                            return Moditems.QI_XING_GUAN_ITEM.get().getDefaultInstance();
+                        }
+                    })
+                    .displayItems((parameters, output) -> {
+                        // 添加所有功法物品，同样使用 try-catch
+                        addGongFaItemsToCreativeTab(output);
+                    })
+                    .build());
+
+    // 单独提取方法，便于管理
     private static void addGongFaItemsToCreativeTab(CreativeModeTab.Output output) {
-        BaseGongFaItem leiXi = (BaseGongFaItem) Moditems.LEI_XI_GONG_FA.get();
+        // 使用 BASE_GONG_FA
+        BaseGongFaItem baseItem = (BaseGongFaItem) Moditems.BASE_GONG_FA.get();
 
-        // 获取所有加载的功法数据
         Map<String, GongFaData> allData = GongFaJsonLoader.getAllGongFaData();
-        if (allData.isEmpty()) {
-            // 如果 JSON 还没加载，使用默认数据（向后兼容）
-            CorpseOrigin.LOGGER.warn("JSON 功法数据为空");
-        }
 
-        // 按稀有度和层数排序，确保显示顺序一致
         List<GongFaData> sortedData = new ArrayList<>(allData.values());
-        // 先按稀有度排序
-        // 稀有度相同按层数排序
-        sortedData.sort(Comparator.comparingInt(GongFaData::getRarity).thenComparing(GongFaData::getCeng));
+        sortedData.sort(Comparator.comparingInt(GongFaData::getRarity)
+                .thenComparing(GongFaData::getCeng));
 
-        // 添加所有功法物品到创造标签页
         for (GongFaData data : sortedData) {
             try {
-                ItemStack stack = GongFaDataFactory.createGongFaItem(leiXi, data.getRarity(), data.getCeng());
+                ItemStack stack = new ItemStack(baseItem);
+                baseItem.setDataToItem(stack, data);
                 output.accept(stack);
-                CorpseOrigin.LOGGER.debug("添加功法物品到创造标签页：{} (稀有度：{}, 层数：{})",
-                        data.getTypeId(), data.getRarity(), data.getCeng());
             } catch (Exception e) {
                 CorpseOrigin.LOGGER.error("创建功法物品失败：{}", data.getTypeId(), e);
             }
         }
-        CorpseOrigin.LOGGER.info("已从 JSON 加载 {} 个功法物品到创造标签页", sortedData.size());
     }
 
     // The constructor for the mod class is the first code that is run when your mod is loaded.

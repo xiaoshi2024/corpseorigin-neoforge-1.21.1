@@ -1,0 +1,15 @@
+{
+  "type_id": "SHA_LU_XUE_MAI",
+  "name": "杀戮血脉",
+  "rarity": 7,
+  "ceng": "copy_1",
+  "cooldown": 300,
+  "attributes": {
+    "attack_damage": 35.0,
+    "max_health": 40.0,
+    "movement_speed": 0.4
+  },
+  "skills": [
+    "sha_lu_xue_mai"
+  ]
+}

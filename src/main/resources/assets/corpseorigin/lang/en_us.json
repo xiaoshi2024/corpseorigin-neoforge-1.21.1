@@ -217,5 +217,6 @@
   "advancements.corpseorigin.cannibalism_discovery.title": "Devouring Instinct",
   "advancements.corpseorigin.cannibalism_discovery.description": "You witnessed the cruel law of survival among zombie brothers",
   "skill.corpseorigin.disguise": "disguise",
-  "skill.corpseorigin.disguise.desc": "Make you look like an ordinary human being!"
+  "skill.corpseorigin.disguise.desc": "Make you look like an ordinary human being!",
+  "itemGroup.corpseorigin.gongfa": "Gong Fa"
 }

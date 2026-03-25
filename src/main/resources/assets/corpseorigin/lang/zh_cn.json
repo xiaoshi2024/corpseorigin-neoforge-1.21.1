@@ -217,5 +217,6 @@
   "advancements.corpseorigin.cannibalism_discovery.title": "吞噬本能",
   "advancements.corpseorigin.cannibalism_discovery.description": "你目睹了尸兄之间弱肉强食的残酷法则",
   "skill.corpseorigin.disguise": "伪装",
-  "skill.corpseorigin.disguise.desc": "我看起来像人类？"
+  "skill.corpseorigin.disguise.desc": "我看起来像人类？",
+  "itemGroup.corpseorigin.gongfa": "功法技能"
 }

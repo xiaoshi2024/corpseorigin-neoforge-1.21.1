@@ -1,0 +1,15 @@
+{
+  "type_id": "XUAN_KONG_QUAN",
+  "name": "玄空拳",
+  "rarity": 3,
+  "ceng": "copy_1",
+  "cooldown": 150,
+  "attributes": {
+    "attack_damage": 10.0,
+    "movement_speed": 0.15,
+    "knockback_resistance": 0.2
+  },
+  "skills": [
+    "xuan_kong_quan"
+  ]
+}

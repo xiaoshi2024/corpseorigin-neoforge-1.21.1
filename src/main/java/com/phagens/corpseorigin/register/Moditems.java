@@ -4,7 +4,7 @@ import com.phagens.corpseorigin.CorpseOrigin;
 import com.phagens.corpseorigin.Item.ByWaterBottleItem;
 import com.phagens.corpseorigin.Item.ByWaterBucketItem;
 import com.phagens.corpseorigin.Item.JuQue;
-import com.phagens.corpseorigin.Item.LieGongFa;
+import com.phagens.corpseorigin.Item.*;
 import com.phagens.corpseorigin.Item.YaoJi.Sagent;
 import com.phagens.corpseorigin.Item.tier.Modtiers;
 import net.minecraft.resources.ResourceLocation;
@@ -51,9 +51,9 @@ public class Moditems {
 
 
 
-    //功法暂时
-    public static final DeferredItem<Item> LEI_XI_GONG_FA = ITEMS.register("lei_xi_gong_fa",
-            () -> new LieGongFa(new Item.Properties(), "REX"));
+    // 原著功法体系
+    public static final DeferredItem<Item> BASE_GONG_FA = ITEMS.register("base_gong_fa",
+            () -> new BaseGongFa(new Item.Properties(), "BASE"));
 
     // 刷怪蛋
     public static final DeferredItem<Item> LOWER_LEVEL_ZB_SPAWN_EGG = ITEMS.register("lower_level_zb_spawn_egg",
