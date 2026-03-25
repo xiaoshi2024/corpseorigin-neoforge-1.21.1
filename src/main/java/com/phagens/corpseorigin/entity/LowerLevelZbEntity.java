@@ -469,8 +469,8 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
             }
         }
 
-        // NORMAL变种在special动画期间防御远程攻击（类似盾牌）
-        if (this.entityData.get(DATA_PLAYING_SPECIAL) && getVariant() == Variant.NORMAL) {
+        // 所有变种在special动画期间防御远程攻击（类似盾牌）
+        if (this.entityData.get(DATA_PLAYING_SPECIAL)) {
             if (source.is(DamageTypeTags.IS_PROJECTILE)) {
                 // 播放防御音效
                 if (this.level() instanceof ServerLevel level) {
@@ -1008,6 +1008,13 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
         // 播放吞噬效果
         this.playSound(net.minecraft.sounds.SoundEvents.GENERIC_EAT, 1.0F, 1.0F);
         
+        // 根据被击杀生物的生命值恢复对应血量
+        if (target instanceof net.minecraft.world.entity.LivingEntity livingEntity) {
+            float targetHealth = livingEntity.getMaxHealth();
+            // 恢复被击杀生物最大生命值的20%
+            this.heal(targetHealth * 0.2F);
+        }
+        
         // 检查是否击杀鸟类/鸡，有概率长出羽翼
         if (isBirdOrChicken(target) && !hasWing()) {
             if (this.random.nextFloat() < 0.3f) { // 30%概率
@@ -1120,7 +1127,7 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
     }
     
     private void checkEvolution() {
-        int requiredKills = this.evolutionLevel * 3; // 每个等级需要3次击杀
+        int requiredKills = this.evolutionLevel * 6; // 每个等级需要6次击杀，需要多吃些生物才会进阶
         
         if (this.kills >= requiredKills && this.evolutionLevel < 5) {
             evolve();
@@ -1393,14 +1400,14 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
     }
 
     /**
-     * CRACKED变种的特殊效果：定身附近2格内的敌人
+     * CRACKED变种的特殊效果：定身附近4格内的敌人
      * 真正的定身：禁止移动、禁止跳跃、锁定位置
      */
     private void applyCrackedSpecialEffect() {
         if (!(this.level() instanceof ServerLevel level)) return;
 
-        // 获取附近的目标（2格范围内）
-        double range = 2.0D;
+        // 获取附近的目标（4格范围内）
+        double range = 4.0D;
         var nearbyEntities = level.getEntitiesOfClass(
                 net.minecraft.world.entity.LivingEntity.class,
                 this.getBoundingBox().inflate(range),
@@ -1420,11 +1427,11 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
 
             // 施加缓慢效果（禁止移动）
             entity.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                    net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, 60, 10, false, true
+                    net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, 100, 10, false, true
             ));
 
-            // 记录定身状态：锁定3秒（60 tick）
-            immobilizedEntities.put(entity.getUUID(), currentTime + 60);
+            // 记录定身状态：锁定5秒（100 tick），与特殊动画持续时间匹配
+            immobilizedEntities.put(entity.getUUID(), currentTime + 100);
 
             // 播放粒子效果
             level.sendParticles(
