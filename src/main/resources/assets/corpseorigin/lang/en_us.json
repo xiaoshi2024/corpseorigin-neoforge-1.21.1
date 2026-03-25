@@ -135,6 +135,14 @@
   "skilltree.corpseorigin.corpse_evolution.desc": "Evolution path of the corpse, gain power through devouring",
   "skilltree.corpseorigin.corpse_evolution.condition": "Automatically unlocked after becoming a corpse",
 
+  "gui.corpseorigin.required_level": "Required Level: %d (Current: %d)",
+  "gui.corpseorigin.skill_need_points": "§cInsufficient evolution points",
+  "gui.corpseorigin.skill_need_level": "§cInsufficient level",
+  "gui.corpseorigin.skill_need_prereq": "§cPrerequisite skill not learned",
+  "gui.corpseorigin.skill_already_learned": "§aLearn learned",
+  "gui.corpseorigin.skill_error": "§cFailed to unlock",
+  "gui.corpseorigin.skill_unknown": "§cUnknown reason",
+
   "command.corpseorigin.voice.enabled": "Voice trigger enabled",
   "command.corpseorigin.voice.disabled": "Voice trigger disabled",
   "command.corpseorigin.voice.threshold_set": "Confidence threshold set to %s",

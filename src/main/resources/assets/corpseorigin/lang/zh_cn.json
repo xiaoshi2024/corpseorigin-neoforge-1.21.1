@@ -135,6 +135,14 @@
   "skilltree.corpseorigin.corpse_evolution.desc": "尸兄的进化路线，通过吞噬获得力量",
   "skilltree.corpseorigin.corpse_evolution.condition": "成为尸兄后自动解锁",
 
+  "gui.corpseorigin.required_level": "需要等级: %d (当前: %d)",
+  "gui.corpseorigin.skill_need_points": "§c进化点不足",
+  "gui.corpseorigin.skill_need_level": "§c尸兄等级不足",
+  "gui.corpseorigin.skill_need_prereq": "§c前置技能未学习",
+  "gui.corpseorigin.skill_already_learned": "§a已学习",
+  "gui.corpseorigin.skill_error": "§c无法解锁",
+  "gui.corpseorigin.skill_unknown": "§c未知原因",
+
   "command.corpseorigin.voice.enabled": "语音触发已启用",
   "command.corpseorigin.voice.disabled": "语音触发已禁用",
   "command.corpseorigin.voice.threshold_set": "置信度阈值已设置为 %s",

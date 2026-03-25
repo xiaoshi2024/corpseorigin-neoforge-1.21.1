@@ -22,6 +22,8 @@ public class SkillDetailsPanel extends AbstractWidget {
     private boolean isLearned;
     private boolean canUnlock;
     private Font font;
+    private String unlockReasonKey = null;
+    private int playerEvolutionLevel = 1;
 
     public SkillDetailsPanel(int x, int y, int width, int height, ResourceLocation texture) {
         super(x, y, width, height, Component.empty());
@@ -33,6 +35,15 @@ public class SkillDetailsPanel extends AbstractWidget {
         this.skill = skill;
         this.isLearned = isLearned;
         this.canUnlock = canUnlock;
+        this.unlockReasonKey = null;
+    }
+
+    public void setSkill(ISkill skill, boolean isLearned, boolean canUnlock, String unlockReasonKey, int playerEvolutionLevel) {
+        this.skill = skill;
+        this.isLearned = isLearned;
+        this.canUnlock = canUnlock;
+        this.unlockReasonKey = unlockReasonKey;
+        this.playerEvolutionLevel = playerEvolutionLevel;
     }
 
     @Override
@@ -83,6 +94,14 @@ public class SkillDetailsPanel extends AbstractWidget {
                 getX() + 5, y, 0xFFD700, true);
         y += 12;
 
+        // 绘制等级要求
+        int requiredLevel = skill.getRequiredLevel();
+        int levelColor = (playerEvolutionLevel >= requiredLevel) ? 0x00FF00 : 0xFF4444;
+        graphics.drawString(font,
+                Component.translatable("gui.corpseorigin.required_level", requiredLevel, playerEvolutionLevel),
+                getX() + 5, y, levelColor, true);
+        y += 12;
+
         // 绘制类型
         String typeKey = "skilltype.corpseorigin." + skill.getSkillType().name().toLowerCase();
         graphics.drawString(font,
@@ -105,6 +124,14 @@ public class SkillDetailsPanel extends AbstractWidget {
             statusColor = 0xFF0000;
         }
         graphics.drawString(font, status, getX() + 5, y, statusColor, true);
+        y += 12;
+
+        // 绘制无法解锁的原因（如果有）
+        if (!isLearned && !canUnlock && unlockReasonKey != null) {
+            graphics.drawString(font,
+                    Component.translatable(unlockReasonKey),
+                    getX() + 5, y, 0xFF6666, true);
+        }
     }
 
     private int getFallbackColor(ISkill.SkillType type) {

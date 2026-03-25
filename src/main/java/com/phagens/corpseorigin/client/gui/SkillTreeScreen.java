@@ -214,9 +214,13 @@ public class SkillTreeScreen extends Screen {
     private void onNodeClicked(ISkill skill) {
         this.selectedSkill = skill;
         if (detailsPanel != null) {
-            detailsPanel.setSkill(skill,
-                    isSkillLearned(skill),
-                    canUnlockSkill(skill));
+            boolean learned = isSkillLearned(skill);
+            boolean canUnlock = canUnlockSkill(skill);
+            int playerLevel = (minecraft != null && minecraft.player != null)
+                    ? com.phagens.corpseorigin.player.PlayerCorpseData.getEvolutionLevel(minecraft.player)
+                    : 1;
+            String reason = canUnlock ? null : getCannotUnlockReason(skill);
+            detailsPanel.setSkill(skill, learned, canUnlock, reason, playerLevel);
         }
         unlockButton.active = canUnlockSkill(skill);
     }
@@ -432,12 +436,47 @@ public class SkillTreeScreen extends Screen {
         if (skillHandler == null || isSkillLearned(skill)) return false;
         if (skillHandler.getEvolutionPoints() < skill.getCost()) return false;
 
+        // 检查尸兄等级要求
+        if (minecraft != null && minecraft.player != null) {
+            int playerEvolutionLevel = com.phagens.corpseorigin.player.PlayerCorpseData.getEvolutionLevel(minecraft.player);
+            if (playerEvolutionLevel < skill.getRequiredLevel()) {
+                return false;
+            }
+        }
+
         for (ResourceLocation prereq : skill.getPrerequisites()) {
             if (!skillHandler.hasLearned(prereq)) {
                 return false;
             }
         }
         return true;
+    }
+
+    /**
+     * 获取技能无法解锁的原因（用于UI显示）
+     */
+    private String getCannotUnlockReason(ISkill skill) {
+        if (skillHandler == null) return "gui.corpseorigin.skill_error";
+        if (isSkillLearned(skill)) return "gui.corpseorigin.skill_already_learned";
+        if (skillHandler.getEvolutionPoints() < skill.getCost()) {
+            return "gui.corpseorigin.skill_need_points";
+        }
+
+        // 检查尸兄等级
+        if (minecraft != null && minecraft.player != null) {
+            int playerEvolutionLevel = com.phagens.corpseorigin.player.PlayerCorpseData.getEvolutionLevel(minecraft.player);
+            if (playerEvolutionLevel < skill.getRequiredLevel()) {
+                return "gui.corpseorigin.skill_need_level";
+            }
+        }
+
+        // 检查前置技能
+        for (ResourceLocation prereq : skill.getPrerequisites()) {
+            if (!skillHandler.hasLearned(prereq)) {
+                return "gui.corpseorigin.skill_need_prereq";
+            }
+        }
+        return "gui.corpseorigin.skill_unknown";
     }
 
     @Override
