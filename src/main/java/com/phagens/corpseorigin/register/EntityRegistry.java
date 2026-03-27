@@ -1,5 +1,6 @@
 package com.phagens.corpseorigin.register;
 
+import com.phagens.corpseorigin.entity.GuigunEntity;
 import com.phagens.corpseorigin.entity.LowerLevelZbEntity;
 import com.phagens.corpseorigin.entity.LongyouEntity;
 import com.phagens.corpseorigin.entity.ZbrFishEntity;
@@ -29,6 +30,12 @@ public class EntityRegistry {
             () -> EntityType.Builder.<LongyouEntity>of(LongyouEntity::new, MobCategory.MONSTER)
                     .sized(0.8F, 2.5F)
                     .build("longyou"));
+
+    // 鬼棍实体
+    public static final DeferredHolder<EntityType<?>, EntityType<GuigunEntity>> GUIGUN = ENTITIES.register("guigun",
+            () -> EntityType.Builder.<GuigunEntity>of(GuigunEntity::new, MobCategory.CREATURE)
+                    .sized(0.6F, 1.8F)
+                    .build("guigun"));
 
     // 开胃奶NPC
     public static final DeferredHolder<EntityType<?>, EntityType<KaiWeiNaiEntity>> KAIWEINAI = ENTITIES.register("kaiweinai",

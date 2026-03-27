@@ -24,6 +24,7 @@
 package com.phagens.corpseorigin.event;
 
 import com.phagens.corpseorigin.CorpseOrigin;
+import com.phagens.corpseorigin.entity.GuigunEntity;
 import com.phagens.corpseorigin.entity.LongyouEntity;
 import com.phagens.corpseorigin.entity.LowerLevelZbEntity;
 import com.phagens.corpseorigin.entity.ZbrFishEntity;
@@ -50,6 +51,8 @@ public class ModEventBusSubscriber {
         event.put(EntityRegistry.LOWER_LEVEL_ZB.get(), LowerLevelZbEntity.createAttributes().build());
         // 注册龙右的属性
         event.put(EntityRegistry.LONGYOU.get(), LongyouEntity.createAttributes().build());
+        // 注册鬼棍的属性
+        event.put(EntityRegistry.GUIGUN.get(), GuigunEntity.createAttributes().build());
         // 注册开胃奶的属性
         event.put(EntityRegistry.KAIWEINAI.get(), KaiWeiNaiEntity.createAttributes().build());
     }
