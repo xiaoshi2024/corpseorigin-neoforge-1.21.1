@@ -27,8 +27,9 @@ public class GongFaData {
     private final int rarity;  // 稀有度 1-9
     private final String Ceng;//层级
     private final int cooldown;
+    private final String iconPath;
 
-    public GongFaData(String typeId, String name, Map<String, Double> attributes, List<String> skills, int rarity, String ceng, int cooldown) {
+    public GongFaData(String typeId, String name, Map<String, Double> attributes, List<String> skills, int rarity, String ceng, int cooldown, String iconPath) {
         this.typeId = typeId;
         this.name = name;
         this.attributes = new HashMap<>(attributes);
@@ -36,6 +37,7 @@ public class GongFaData {
         this.rarity = rarity;
         this.Ceng=ceng ;
         this.cooldown = cooldown > 0 ? cooldown : 300;
+        this.iconPath = iconPath;
     }
 
     public String getTypeId() { return typeId; }
@@ -46,6 +48,7 @@ public class GongFaData {
     public String getCeng() { return Ceng; }
     public String getName() { return name; }
     public int getCooldown() {return cooldown;}
+    public String getIconPath() {return iconPath;}
     //序列化到nbt
     public CompoundTag toNBT() {
         CompoundTag tag = new CompoundTag();
@@ -54,6 +57,7 @@ public class GongFaData {
         tag.putInt("Rarity", rarity);
         tag.putString("Ceng", Ceng);
         tag.putInt("Cooldown", cooldown);
+        tag.putString("icon", iconPath);
         // 保存属性
         CompoundTag attrTag = new CompoundTag();
         attributes.forEach(attrTag::putDouble);
@@ -72,6 +76,7 @@ public class GongFaData {
         int rarity = tag.getInt("Rarity");
         String ceng =tag.getString("Ceng");
         int cooldown = tag.contains("Cooldown") ? tag.getInt("Cooldown") : 300;
+        String icon = tag.getString("icon");
 
 
 
@@ -91,7 +96,7 @@ public class GongFaData {
             }
         }
 
-        return new GongFaData(typeId, name,attributes, skills, rarity,ceng, cooldown);
+        return new GongFaData(typeId, name,attributes, skills, rarity,ceng, cooldown,icon);
     }
 
 

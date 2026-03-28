@@ -88,18 +88,35 @@ public class JSSkillEngine {
             bindings.put("skillName", skillName);
 
             // 执行脚本
-            Object scriptResult = script.eval(bindings);
-            // ⭐ 获取并调用 activate 函数
-            if (engine instanceof javax.script.Invocable) {
-                javax.script.Invocable invocable = (javax.script.Invocable) engine;
+            Object scriptObj = script.eval(bindings);
+            // 脚本应该返回一个包含 activate 方法的对象
+            if (scriptObj instanceof org.openjdk.nashorn.api.scripting.ScriptObjectMirror) {
+                org.openjdk.nashorn.api.scripting.ScriptObjectMirror scriptMirror =
+                        (org.openjdk.nashorn.api.scripting.ScriptObjectMirror) scriptObj;
 
-                // ⭐ 调用 JS 中的 activate(player, world, data) 函数
-                Object result = invocable.invokeFunction("activate", player, player.serverLevel(), gongFaData);
-
-                CorpseOrigin.LOGGER.info("【JS 技能】{} 执行结果：{}", skillName, result);
-                return result instanceof Boolean ? (Boolean) result : true;
+                if (scriptMirror.hasMember("activate")) {
+                    // ✅ 正确方式：从对象中获取 activate 函数成员，然后调用
+                    var activateFunc = scriptMirror.getMember("activate");
+                    if (activateFunc instanceof org.openjdk.nashorn.api.scripting.ScriptObjectMirror) {
+                        try {
+                            Object result = ((org.openjdk.nashorn.api.scripting.ScriptObjectMirror) activateFunc)
+                                    .call(scriptMirror, player, player.serverLevel(), gongFaData);
+                            CorpseOrigin.LOGGER.info("【JS 技能】{} 执行结果：{}", skillName, result);
+                            return result instanceof Boolean ? (Boolean) result : true;
+                        } catch (org.openjdk.nashorn.internal.runtime.ECMAException e) {
+                            CorpseOrigin.LOGGER.error("JS 脚本执行异常：{}", skillName, e);
+                            return false;
+                        }
+                    } else {
+                        CorpseOrigin.LOGGER.error("activate 成员不是函数：{}", skillName);
+                        return false;
+                    }
+                } else {
+                    CorpseOrigin.LOGGER.error("JS 脚本中没有 activate 函数：{}", skillName);
+                    return false;
+                }
             } else {
-                CorpseOrigin.LOGGER.error("Nashorn 引擎不支持 Invocable 接口");
+                CorpseOrigin.LOGGER.error("脚本执行后未返回对象：{}", skillName);
                 return false;
             }
         } catch (Exception e) {

@@ -148,13 +148,24 @@ public class GongFaSkillManager {
                     .skillType(ISkill.SkillType.SPECIAL_MUTATION)
                     .requiredLevel(1)
                     .passive(false)
-                    .cooldown(data.getCooldown()));
+                    .cooldown(data.getCooldown())
+                    .icon(data.getIconPath()!= null?ResourceLocation.parse(data.getIconPath())
+                            : ResourceLocation.fromNamespaceAndPath(
+                            "corpseorigin",
+                            "textures/skills/corpse_king_power.png")));
             this.gongFaData = data;
         }
 
         @Override
         public void onActivate(Player player) {
-            activateGongFuSkills(player, gongFaData);
+            super.onActivate(player);
+
+            CorpseOrigin.LOGGER.info("【功法技能激活】玩家：{}, 功法：{}",
+                    player.getName().getString(), gongFaData.getName());
+
+            if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                activateGongFuSkills(serverPlayer, gongFaData);
+            }
         }
 
         @Override
