@@ -5,6 +5,7 @@ import com.phagens.corpseorigin.entity.LowerLevelZbEntity;
 import com.phagens.corpseorigin.entity.LongyouEntity;
 import com.phagens.corpseorigin.entity.ZbrFishEntity;
 import com.phagens.corpseorigin.entity.npc.KaiWeiNaiEntity;
+import com.phagens.corpseorigin.entity.skills.LongyouEarthquakeEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -42,4 +43,10 @@ public class EntityRegistry {
             () -> EntityType.Builder.<KaiWeiNaiEntity>of(KaiWeiNaiEntity::new, MobCategory.CREATURE)
                     .sized(0.6F, 1.8F)
                     .build("kaiweinai"));
+    
+    // 地震实体
+    public static final DeferredHolder<EntityType<?>, EntityType<LongyouEarthquakeEntity>> LONGYOU_EARTHQUAKE = ENTITIES.register("longyou_earthquake",
+            () -> EntityType.Builder.<LongyouEarthquakeEntity>of(LongyouEarthquakeEntity::new, MobCategory.MISC)
+                    .sized(0.0F, 0.0F)
+                    .build("longyou_earthquake"));
 }

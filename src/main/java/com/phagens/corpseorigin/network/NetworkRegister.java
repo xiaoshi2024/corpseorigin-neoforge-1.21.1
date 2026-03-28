@@ -51,6 +51,13 @@ public class NetworkRegister {
                 SyncGongFuContainerPacket::handleServer
         );
 
+        // ⭐ 新增：注册龙右地震方块翻动包 (服务端 → 客户端)
+        registrar.playToClient(
+                LongyouEarthquakeBlockPacket.TYPE,
+                LongyouEarthquakeBlockPacket.STREAM_CODEC,
+                LongyouEarthquakeBlockPacket::handleClient
+        );
+
         CorpseOrigin.LOGGER.info("NetworkRegister 网络包注册完成 - 共注册了 5 个包");
     }
 }

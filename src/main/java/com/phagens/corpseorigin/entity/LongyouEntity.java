@@ -2,6 +2,7 @@ package com.phagens.corpseorigin.entity;
 
 import com.phagens.corpseorigin.CorpseOrigin;
 import com.phagens.corpseorigin.effect.BYeffect;
+import com.phagens.corpseorigin.entity.skills.LongyouSkills;
 import com.phagens.corpseorigin.event.custom.WeaponBreakEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -51,6 +52,24 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
     private int shieyeCooldown = 0;
     private int shieyeAnimationTicks = 0;
     private int auraSkillTicks = 0;
+    
+    // 技能冷却
+    private int xuanwuBodyCooldown = 0;
+    private int geckoTechniqueCooldown = 0;
+    private int tianGangQiCooldown = 0;
+    private int earthquakeCooldown = 0;
+    private int summonMinionsCooldown = 0;
+    
+    // 天罡气技能冷却
+    private int tianGangQiJiCooldown = 0;
+    private int tianGangQiLiCooldown = 0;
+    private int tianGangQiHuiCooldown = 0;
+    private int tianGangQiMieCooldown = 0;
+    private int tianGangQiWuCooldown = 0;
+    private int tianGangQiShenCooldown = 0;
+    private int niPoQuanCooldown = 0;
+    private int poGangCooldown = 0;
+    private int tianGangPoCooldown = 0;
 
     // 龙右的智能系统
     private int intelligenceCheckCooldown = 0;
@@ -287,6 +306,24 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
         if (villagerConsumeCooldown > 0) {
             villagerConsumeCooldown--;
         }
+        
+        // 技能冷却更新
+        if (xuanwuBodyCooldown > 0) xuanwuBodyCooldown--;
+        if (geckoTechniqueCooldown > 0) geckoTechniqueCooldown--;
+        if (tianGangQiCooldown > 0) tianGangQiCooldown--;
+        if (earthquakeCooldown > 0) earthquakeCooldown--;
+        if (summonMinionsCooldown > 0) summonMinionsCooldown--;
+        
+        // 天罡气技能冷却更新
+        if (tianGangQiJiCooldown > 0) tianGangQiJiCooldown--;
+        if (tianGangQiLiCooldown > 0) tianGangQiLiCooldown--;
+        if (tianGangQiHuiCooldown > 0) tianGangQiHuiCooldown--;
+        if (tianGangQiMieCooldown > 0) tianGangQiMieCooldown--;
+        if (tianGangQiWuCooldown > 0) tianGangQiWuCooldown--;
+        if (tianGangQiShenCooldown > 0) tianGangQiShenCooldown--;
+        if (niPoQuanCooldown > 0) niPoQuanCooldown--;
+        if (poGangCooldown > 0) poGangCooldown--;
+        if (tianGangPoCooldown > 0) tianGangPoCooldown--;
 
         if (!this.level().isClientSide && this.entityData.get(DATA_PLAYING_SHIEYE)) {
             shieyeAnimationTicks--;
@@ -301,6 +338,11 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
             if (auraSkillTicks <= 0) {
                 this.entityData.set(DATA_PLAYING_AURA_SKILL, false);
             }
+        }
+        
+        // 服务端：技能触发逻辑
+        if (!this.level().isClientSide && this.isAlive()) {
+            useSkills();
         }
 
         // 服务端：状态系统更新
@@ -774,6 +816,24 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
         compound.putBoolean("PlayingShieye", this.entityData.get(DATA_PLAYING_SHIEYE));
         compound.putInt("ShieyeCooldown", this.shieyeCooldown);
         
+        // 保存技能冷却
+        compound.putInt("XuanwuBodyCooldown", this.xuanwuBodyCooldown);
+        compound.putInt("GeckoTechniqueCooldown", this.geckoTechniqueCooldown);
+        compound.putInt("TianGangQiCooldown", this.tianGangQiCooldown);
+        compound.putInt("EarthquakeCooldown", this.earthquakeCooldown);
+        compound.putInt("SummonMinionsCooldown", this.summonMinionsCooldown);
+        
+        // 保存天罡气技能冷却
+        compound.putInt("TianGangQiJiCooldown", this.tianGangQiJiCooldown);
+        compound.putInt("TianGangQiLiCooldown", this.tianGangQiLiCooldown);
+        compound.putInt("TianGangQiHuiCooldown", this.tianGangQiHuiCooldown);
+        compound.putInt("TianGangQiMieCooldown", this.tianGangQiMieCooldown);
+        compound.putInt("TianGangQiWuCooldown", this.tianGangQiWuCooldown);
+        compound.putInt("TianGangQiShenCooldown", this.tianGangQiShenCooldown);
+        compound.putInt("NiPoQuanCooldown", this.niPoQuanCooldown);
+        compound.putInt("PoGangCooldown", this.poGangCooldown);
+        compound.putInt("TianGangPoCooldown", this.tianGangPoCooldown);
+        
         // 保存状态系统数据
         compound.putInt("Hunger", this.hunger);
         compound.putInt("Mood", this.mood);
@@ -808,6 +868,52 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
         }
         if (compound.contains("ShieyeCooldown")) {
             this.shieyeCooldown = compound.getInt("ShieyeCooldown");
+        }
+        
+        // 读取技能冷却
+        if (compound.contains("XuanwuBodyCooldown")) {
+            this.xuanwuBodyCooldown = compound.getInt("XuanwuBodyCooldown");
+        }
+        if (compound.contains("GeckoTechniqueCooldown")) {
+            this.geckoTechniqueCooldown = compound.getInt("GeckoTechniqueCooldown");
+        }
+        if (compound.contains("TianGangQiCooldown")) {
+            this.tianGangQiCooldown = compound.getInt("TianGangQiCooldown");
+        }
+        if (compound.contains("EarthquakeCooldown")) {
+            this.earthquakeCooldown = compound.getInt("EarthquakeCooldown");
+        }
+        if (compound.contains("SummonMinionsCooldown")) {
+            this.summonMinionsCooldown = compound.getInt("SummonMinionsCooldown");
+        }
+        
+        // 读取天罡气技能冷却
+        if (compound.contains("TianGangQiJiCooldown")) {
+            this.tianGangQiJiCooldown = compound.getInt("TianGangQiJiCooldown");
+        }
+        if (compound.contains("TianGangQiLiCooldown")) {
+            this.tianGangQiLiCooldown = compound.getInt("TianGangQiLiCooldown");
+        }
+        if (compound.contains("TianGangQiHuiCooldown")) {
+            this.tianGangQiHuiCooldown = compound.getInt("TianGangQiHuiCooldown");
+        }
+        if (compound.contains("TianGangQiMieCooldown")) {
+            this.tianGangQiMieCooldown = compound.getInt("TianGangQiMieCooldown");
+        }
+        if (compound.contains("TianGangQiWuCooldown")) {
+            this.tianGangQiWuCooldown = compound.getInt("TianGangQiWuCooldown");
+        }
+        if (compound.contains("TianGangQiShenCooldown")) {
+            this.tianGangQiShenCooldown = compound.getInt("TianGangQiShenCooldown");
+        }
+        if (compound.contains("NiPoQuanCooldown")) {
+            this.niPoQuanCooldown = compound.getInt("NiPoQuanCooldown");
+        }
+        if (compound.contains("PoGangCooldown")) {
+            this.poGangCooldown = compound.getInt("PoGangCooldown");
+        }
+        if (compound.contains("TianGangPoCooldown")) {
+            this.tianGangPoCooldown = compound.getInt("TianGangPoCooldown");
         }
         
         // 读取状态系统数据
@@ -902,6 +1008,103 @@ public class LongyouEntity extends PathfinderMob implements GeoEntity {
         return true;
     }
 
+    /**
+     * 技能触发逻辑
+     */
+    private void useSkills() {
+        // 玄武体 - 当生命值低于50%时使用
+        if (this.getHealth() < this.getMaxHealth() * 0.5 && xuanwuBodyCooldown <= 0) {
+            LongyouSkills.useXuanwuBody(this);
+            xuanwuBodyCooldown = 600; // 30秒冷却
+        }
+        
+        // 壁虎功 - 当生命值低于30%时使用
+        if (this.getHealth() < this.getMaxHealth() * 0.3 && geckoTechniqueCooldown <= 0) {
+            LongyouSkills.useGeckoTechnique(this);
+            geckoTechniqueCooldown = 300; // 15秒冷却
+        }
+        
+        // 天罡气 - 有目标时使用
+        if (this.getTarget() != null && tianGangQiCooldown <= 0 && this.random.nextFloat() < 0.1F) {
+            LongyouSkills.useTianGangQi(this);
+            tianGangQiCooldown = 200; // 10秒冷却
+        }
+        
+        // 地震 - 随机使用
+        if (earthquakeCooldown <= 0 && this.random.nextFloat() < 0.05F) {
+            LongyouSkills.useEarthquake(this);
+            earthquakeCooldown = 400; // 20秒冷却
+        }
+        
+        // 召唤手下 - 当手下数量较少时使用
+        if (summonMinionsCooldown <= 0 && this.getMinionCount() < 5 && this.random.nextFloat() < 0.03F) {
+            LongyouSkills.useSummonMinions(this);
+            summonMinionsCooldown = 600; // 30秒冷却
+        }
+        
+        // 天罡气技能
+        useTianGangQiSkills();
+    }
+    
+    /**
+     * 天罡气技能触发逻辑
+     */
+    private void useTianGangQiSkills() {
+        // 天罡气二重·疾 - 追击目标时使用
+        if (this.getTarget() != null && !this.isWithinMeleeAttackRange(this.getTarget()) && tianGangQiJiCooldown <= 0 && this.random.nextFloat() < 0.15F) {
+            com.phagens.corpseorigin.entity.skills.LongyouTianGangQi.useTianGangQiJi(this);
+            tianGangQiJiCooldown = 600; // 30秒冷却
+        }
+        
+        // 天罡气三重·力 - 近距离战斗时使用
+        if (this.getTarget() != null && this.isWithinMeleeAttackRange(this.getTarget()) && tianGangQiLiCooldown <= 0 && this.random.nextFloat() < 0.1F) {
+            com.phagens.corpseorigin.entity.skills.LongyouTianGangQi.useTianGangQiLi(this);
+            tianGangQiLiCooldown = 600; // 30秒冷却
+        }
+        
+        // 天罡气六重·毁 - 随机使用，造成大范围破坏
+        if (tianGangQiHuiCooldown <= 0 && this.random.nextFloat() < 0.05F) {
+            com.phagens.corpseorigin.entity.skills.LongyouTianGangQi.useTianGangQiHui(this);
+            tianGangQiHuiCooldown = 800; // 40秒冷却
+        }
+        
+        // 天罡气七重·灭 - 有目标时使用，发出红色冲击波
+        if (this.getTarget() != null && tianGangQiMieCooldown <= 0 && this.random.nextFloat() < 0.1F) {
+            com.phagens.corpseorigin.entity.skills.LongyouTianGangQi.useTianGangQiMie(this);
+            tianGangQiMieCooldown = 300; // 15秒冷却
+        }
+        
+        // 天罡气八重·无 - 随机使用，可破除防御
+        if (tianGangQiWuCooldown <= 0 && this.random.nextFloat() < 0.08F) {
+            com.phagens.corpseorigin.entity.skills.LongyouTianGangQi.useTianGangQiWu(this);
+            tianGangQiWuCooldown = 400; // 20秒冷却
+        }
+        
+        // 天罡气九重·神 - 当生命值低于20%时使用，增强所有属性
+        if (this.getHealth() < this.getMaxHealth() * 0.2 && tianGangQiShenCooldown <= 0) {
+            com.phagens.corpseorigin.entity.skills.LongyouTianGangQi.useTianGangQiShen(this);
+            tianGangQiShenCooldown = 1200; // 60秒冷却
+        }
+        
+        // 逆破拳 - 近距离战斗时使用，连续拳击
+        if (this.getTarget() != null && this.isWithinMeleeAttackRange(this.getTarget()) && niPoQuanCooldown <= 0 && this.random.nextFloat() < 0.12F) {
+            com.phagens.corpseorigin.entity.skills.LongyouTianGangQi.useNiPoQuan(this);
+            niPoQuanCooldown = 200; // 10秒冷却
+        }
+        
+        // 破罡 - 有目标时使用，可击破防御
+        if (this.getTarget() != null && poGangCooldown <= 0 && this.random.nextFloat() < 0.08F) {
+            com.phagens.corpseorigin.entity.skills.LongyouTianGangQi.usePoGang(this);
+            poGangCooldown = 300; // 15秒冷却
+        }
+        
+        // 天罡破 - 随机使用，从空中向下进攻
+        if (tianGangPoCooldown <= 0 && this.random.nextFloat() < 0.05F) {
+            com.phagens.corpseorigin.entity.skills.LongyouTianGangQi.useTianGangPo(this);
+            tianGangPoCooldown = 1000; // 50秒冷却
+        }
+    }
+    
     /**
      * 处理开门逻辑
      * 当龙右路径中包含门时调用
