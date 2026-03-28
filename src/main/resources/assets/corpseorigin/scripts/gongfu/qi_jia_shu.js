@@ -27,7 +27,7 @@
 
                 return true;
             } catch (e) {
-                java.lang.System.out.println("气甲术执行失败：" + e);
+                java.lang.System.out.println("气甲术执行失败了：" + e);
 
                                 throw e;
             }
