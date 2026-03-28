@@ -57,7 +57,7 @@ public class GongFaData {
         tag.putInt("Rarity", rarity);
         tag.putString("Ceng", Ceng);
         tag.putInt("Cooldown", cooldown);
-        tag.putString("icon", iconPath);
+        tag.putString("icon", iconPath != null ? iconPath : "");
         // 保存属性
         CompoundTag attrTag = new CompoundTag();
         attributes.forEach(attrTag::putDouble);
