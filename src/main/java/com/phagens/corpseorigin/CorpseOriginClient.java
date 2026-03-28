@@ -6,6 +6,7 @@ import com.phagens.corpseorigin.client.Renderer.entity.KaiWeiNaiRenderer;
 import com.phagens.corpseorigin.client.Renderer.entity.LowerLevelZbRenderer;
 import com.phagens.corpseorigin.client.Renderer.entity.LongyouRenderer;
 import com.phagens.corpseorigin.client.Renderer.entity.ZbrFishRenderer;
+import com.phagens.corpseorigin.entity.skills.LongyouEarthquakeRenderer;
 import com.phagens.corpseorigin.register.BlockEntityRegistry;
 import com.phagens.corpseorigin.register.EntityRegistry;
 import net.minecraft.client.Minecraft;
@@ -47,5 +48,6 @@ public class CorpseOriginClient {
         event.registerEntityRenderer((EntityType<com.phagens.corpseorigin.entity.LongyouEntity>) EntityRegistry.LONGYOU.get(), LongyouRenderer::new);
         event.registerEntityRenderer((EntityType<com.phagens.corpseorigin.entity.GuigunEntity>) EntityRegistry.GUIGUN.get(), GuigunRenderer::new);
         event.registerEntityRenderer((EntityType<com.phagens.corpseorigin.entity.npc.KaiWeiNaiEntity>) EntityRegistry.KAIWEINAI.get(), KaiWeiNaiRenderer::new);
+        event.registerEntityRenderer((EntityType<com.phagens.corpseorigin.entity.skills.LongyouEarthquakeEntity>) EntityRegistry.LONGYOU_EARTHQUAKE.get(), LongyouEarthquakeRenderer::new);
     }
 }
