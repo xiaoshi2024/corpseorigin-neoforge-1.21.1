@@ -226,5 +226,31 @@
   "advancements.corpseorigin.cannibalism_discovery.description": "You witnessed the cruel law of survival among zombie brothers",
   "skill.corpseorigin.disguise": "disguise",
   "skill.corpseorigin.disguise.desc": "Make you look like an ordinary human being!",
-  "itemGroup.corpseorigin.gongfa": "Gong Fa"
+  "itemGroup.corpseorigin.gongfa": "Gong Fa",
+
+  "item.corpseorigin.ordinary_zb_eye": "Ordinary Zombie Eye",
+  "item.corpseorigin.guigun_spawn_egg": "Gui Gun Spawn Egg",
+
+  "item.corpseorigin.organ.type": "Organ Type: %s",
+  "item.corpseorigin.organ.evolution_chance": "Evolution Chance: %d%%",
+  "item.corpseorigin.organ.required_amount": "Required Amount: %d",
+  "item.corpseorigin.organ.corpse_only": "§cOnly corpses can digest this",
+  "item.corpseorigin.organ.not_corpse_warning": "§cYou are not a corpse, eating organs will poison you!",
+
+  "item.corpseorigin.ordinary_zb_eye.effect1": "§7Consumption Effects:",
+  "item.corpseorigin.ordinary_zb_eye.effect2": "  §a• %d%% chance for permanent night vision (need %d)",
+  "item.corpseorigin.ordinary_zb_eye.effect3": "  §a• %d%% chance to grow extra eyes (need %d)",
+  "item.corpseorigin.ordinary_zb_eye.evolution_success": "§a§lYou feel the power of evolution!",
+  "item.corpseorigin.ordinary_zb_eye.consumed": "§7Eyes consumed: %d/%d",
+  "item.corpseorigin.ordinary_zb_eye.night_vision_unlocked": "§6You have evolved permanent night vision!",
+  "item.corpseorigin.ordinary_zb_eye.extra_eye_grown": "§cYou have grown %d extra eye(s)!",
+  "item.corpseorigin.ordinary_zb_eye.multi_eye_evolved": "§c§lYou have evolved multi-eye form! All 9 eyes awakened!",
+
+  "skill.corpseorigin.multi_eye_perception": "Multi-Eye Perception",
+  "skill.corpseorigin.multi_eye_perception.desc": "Activate the power of multiple eyes to detect hostile entities within 32 blocks, highlighting enemies within 24 blocks",
+  "skill.corpseorigin.multi_eye.activated": "§c§lMulti-Eye Perception activated! You sense hostility around you!",
+  "skill.corpseorigin.multi_eye.ended": "§7Multi-Eye Perception effect has ended",
+  "skill.corpseorigin.multi_eye.cooldown": "§cSkill on cooldown, %d seconds remaining",
+  "skill.corpseorigin.multi_eye.detected": "§eDetected %d hostile targets",
+  "skill.corpseorigin.multi_eye.auto_learned": "§c§lYour multiple eyes have awakened! Gained Multi-Eye Perception ability!"
 }

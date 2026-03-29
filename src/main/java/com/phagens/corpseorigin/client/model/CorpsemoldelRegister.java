@@ -26,6 +26,10 @@ public class CorpsemoldelRegister {
     public static final ModelLayerLocation TAIL_LAYER = new ModelLayerLocation(
             ResourceLocation.fromNamespaceAndPath(CorpseOrigin.MODID, "corpse_tail"), "main");
 
+    // 多眼模型层位置
+    public static final ModelLayerLocation MULTI_EYE_LAYER = new ModelLayerLocation(
+            ResourceLocation.fromNamespaceAndPath(CorpseOrigin.MODID, "multi_eye"), "main");
+
     /**
      * 注册模型层定义
      */
@@ -37,6 +41,8 @@ public class CorpsemoldelRegister {
         event.registerLayerDefinition(WING_LAYER, CorpseExoskeletonLayerDefinitions::createWingLayer);
         // 注册鱼尾模型层
         event.registerLayerDefinition(TAIL_LAYER, CorpseExoskeletonLayerDefinitions::createTailLayer);
+        // 注册多眼模型层
+        event.registerLayerDefinition(MULTI_EYE_LAYER, MultiEyeLayerDefinitions::createMultiEyeLayer);
 
         CorpseOrigin.LOGGER.info("Registered exoskeleton layer definitions");
     }

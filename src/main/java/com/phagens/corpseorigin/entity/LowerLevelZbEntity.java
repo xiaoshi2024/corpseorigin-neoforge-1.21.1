@@ -5,6 +5,7 @@ import com.phagens.corpseorigin.entity.EntityAI.Vibrationsys.ModVibrationUser;
 import com.phagens.corpseorigin.client.skin.ZbSkinLoader;
 import com.phagens.corpseorigin.client.skin.ZbSkinState;
 import com.phagens.corpseorigin.network.ZbSkinUpdatePacket;
+import com.phagens.corpseorigin.register.Moditems;
 import com.phagens.corpseorigin.register.ModSounds;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -1949,5 +1950,74 @@ public class LowerLevelZbEntity extends PathfinderMob implements GeoEntity, Vibr
      */
     private static boolean isFish(net.minecraft.world.entity.Entity entity) {
         return entity instanceof net.minecraft.world.entity.animal.AbstractFish;
+    }
+
+    // ==================== 死亡掉落系统 ====================
+
+    /**
+     * 死亡时掉落器官
+     * 尸兄死亡时有概率掉落各种器官
+     */
+    @Override
+    protected void dropCustomDeathLoot(net.minecraft.server.level.ServerLevel level, net.minecraft.world.damagesource.DamageSource source, boolean recentlyHit) {
+        super.dropCustomDeathLoot(level, source, recentlyHit);
+        
+        // 基础掉落概率 30%
+        float baseDropChance = 0.30f;
+        
+        // 根据进化等级增加掉落概率
+        float levelBonus = this.evolutionLevel * 0.05f;
+        
+        // 最终掉落概率
+        float finalDropChance = baseDropChance + levelBonus;
+        
+        // 检查是否掉落
+        if (this.random.nextFloat() < finalDropChance) {
+            dropOrgan(level);
+        }
+    }
+    
+    /**
+     * 掉落器官
+     */
+    private void dropOrgan(net.minecraft.server.level.ServerLevel level) {
+        // 根据变种类型决定掉落什么器官
+        Variant variant = getVariant();
+        
+        // 所有变种都有概率掉落普通尸眼
+        if (this.random.nextFloat() < 0.6f) {
+            // 掉落普通尸眼
+            spawnAtLocation(new net.minecraft.world.item.ItemStack(Moditems.ORDINARY_ZB_EYE.get()), 0.0f);
+            CorpseOrigin.LOGGER.debug("尸兄 {} 掉落了普通尸眼", this.getId());
+        }
+        
+        // 根据变种额外掉落
+        switch (variant) {
+            case CRACKED -> {
+                // 裂口变种有更高概率掉落眼睛
+                if (this.random.nextFloat() < 0.3f) {
+                    spawnAtLocation(new net.minecraft.world.item.ItemStack(Moditems.ORDINARY_ZB_EYE.get()), 0.0f);
+                }
+            }
+            case WINGS -> {
+                // 翅膀变种有概率掉落翅膀（未来实现）
+                // spawnAtLocation(new net.minecraft.world.item.ItemStack(Moditems.ZB_WING.get()), 0.0f);
+            }
+            case WINGS_CRACKED -> {
+                // 翅膀裂口变种既有裂口特性又有翅膀特性
+                if (this.random.nextFloat() < 0.3f) {
+                    spawnAtLocation(new net.minecraft.world.item.ItemStack(Moditems.ORDINARY_ZB_EYE.get()), 0.0f);
+                }
+                // spawnAtLocation(new net.minecraft.world.item.ItemStack(Moditems.ZB_WING.get()), 0.0f);
+            }
+            default -> {
+                // 普通变种无额外掉落
+            }
+        }
+        
+        // 高等级尸兄有概率掉落多个器官
+        if (this.evolutionLevel >= 3 && this.random.nextFloat() < 0.2f) {
+            spawnAtLocation(new net.minecraft.world.item.ItemStack(Moditems.ORDINARY_ZB_EYE.get()), 0.0f);
+        }
     }
 }

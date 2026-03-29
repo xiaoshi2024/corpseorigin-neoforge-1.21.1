@@ -18,6 +18,7 @@ public class PlayerCorpseData {
     private static final String KEY_HAS_WING = "has_wing";
     private static final String KEY_HAS_TAIL = "has_tail";
     private static final String KEY_IS_DISGUISED = "is_disguised";
+    private static final String KEY_EXTRA_EYE_COUNT = "extra_eye_count";
 
     public static void setPlayerAsCorpse(Player player, int corpseType) {
         player.setData(CorpsePlayerAttachment.IS_CORPSE, true);
@@ -35,6 +36,7 @@ public class PlayerCorpseData {
         data.putBoolean(KEY_HAS_WING, false);
         data.putBoolean(KEY_HAS_TAIL, false);
         data.putBoolean(KEY_IS_DISGUISED, false);
+        data.putInt(KEY_EXTRA_EYE_COUNT, 0);
 
         player.setData(CorpsePlayerAttachment.CORPSE_DATA, data);
         syncToClient(player);
@@ -143,6 +145,32 @@ public class PlayerCorpseData {
         data.putBoolean(KEY_IS_DISGUISED, isDisguised);
         player.setData(CorpsePlayerAttachment.CORPSE_DATA, data);
         syncToClient(player);
+    }
+
+    public static int getExtraEyeCount(Player player) {
+        return getCorpseData(player).getInt(KEY_EXTRA_EYE_COUNT);
+    }
+
+    public static void setExtraEyeCount(Player player, int count) {
+        CompoundTag data = getCorpseData(player);
+        data.putInt(KEY_EXTRA_EYE_COUNT, Math.max(0, Math.min(9, count)));
+        player.setData(CorpsePlayerAttachment.CORPSE_DATA, data);
+        syncToClient(player);
+    }
+
+    public static void addExtraEye(Player player) {
+        int currentCount = getExtraEyeCount(player);
+        if (currentCount < 9) {
+            setExtraEyeCount(player, currentCount + 1);
+        }
+    }
+
+    /**
+     * 检查是否进化出多眼形态
+     * 当额外眼睛数量大于0时返回true
+     */
+    public static boolean hasMultiEye(Player player) {
+        return getExtraEyeCount(player) > 0;
     }
 
     private static void syncToClient(Player player) {

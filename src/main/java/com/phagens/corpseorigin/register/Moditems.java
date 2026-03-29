@@ -5,6 +5,7 @@ import com.phagens.corpseorigin.Item.ByWaterBottleItem;
 import com.phagens.corpseorigin.Item.ByWaterBucketItem;
 import com.phagens.corpseorigin.Item.JuQue;
 import com.phagens.corpseorigin.Item.*;
+import com.phagens.corpseorigin.Item.Organic.OrdinaryZbEyeItem;
 import com.phagens.corpseorigin.Item.YaoJi.Sagent;
 import com.phagens.corpseorigin.Item.tier.Modtiers;
 import net.minecraft.resources.ResourceLocation;
@@ -72,6 +73,11 @@ public class Moditems {
     // 鬼棍刷怪蛋
     public static final DeferredItem<Item> GUIGUN_SPAWN_EGG = ITEMS.register("guigun_spawn_egg",
             () -> new SpawnEggItem(EntityRegistry.GUIGUN.get(), 0x800080, 0x00FF00, new Item.Properties()));
+
+    // ========== 尸兄器官掉落物 ==========
+    // 普通尸眼 - 尸兄掉落物，食用可进化夜视能力
+    public static final DeferredItem<Item> ORDINARY_ZB_EYE = ITEMS.register("ordinary_zb_eye",
+            () -> new OrdinaryZbEyeItem());
 }
 
 

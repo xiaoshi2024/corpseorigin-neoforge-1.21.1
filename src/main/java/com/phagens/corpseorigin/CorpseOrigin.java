@@ -78,6 +78,9 @@ public class CorpseOrigin {
                 output.accept(Moditems.KAIWEINAI_SPAWN_EGG.get());
                 output.accept(Moditems.GUIGUN_SPAWN_EGG.get());
 
+                // 添加尸兄器官掉落物
+                output.accept(Moditems.ORDINARY_ZB_EYE.get());
+
             }).build());
 
     // 新增：功法专属标签页

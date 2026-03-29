@@ -226,5 +226,31 @@
   "advancements.corpseorigin.cannibalism_discovery.description": "你目睹了尸兄之间弱肉强食的残酷法则",
   "skill.corpseorigin.disguise": "伪装",
   "skill.corpseorigin.disguise.desc": "我看起来像人类？",
-  "itemGroup.corpseorigin.gongfa": "功法技能"
+  "itemGroup.corpseorigin.gongfa": "功法技能",
+
+  "item.corpseorigin.ordinary_zb_eye": "普通尸眼",
+  "item.corpseorigin.guigun_spawn_egg": "鬼棍刷怪蛋",
+
+  "item.corpseorigin.organ.type": "器官类型: %s",
+  "item.corpseorigin.organ.evolution_chance": "进化概率: %d%%",
+  "item.corpseorigin.organ.required_amount": "需要数量: %d",
+  "item.corpseorigin.organ.corpse_only": "§c只有尸兄才能消化此物",
+  "item.corpseorigin.organ.not_corpse_warning": "§c你不是尸兄，食用器官会让你中毒！",
+
+  "item.corpseorigin.ordinary_zb_eye.effect1": "§7食用效果:",
+  "item.corpseorigin.ordinary_zb_eye.effect2": "  §a• %d%%概率获得永久夜视 (需食用%d个)",
+  "item.corpseorigin.ordinary_zb_eye.effect3": "  §a• %d%%概率长出额外眼睛 (需食用%d个)",
+  "item.corpseorigin.ordinary_zb_eye.evolution_success": "§a§l你感受到了进化的力量！",
+  "item.corpseorigin.ordinary_zb_eye.consumed": "§7已食用尸眼: %d/%d",
+  "item.corpseorigin.ordinary_zb_eye.night_vision_unlocked": "§6你进化出了永久夜视能力！",
+  "item.corpseorigin.ordinary_zb_eye.extra_eye_grown": "§c你长出了第%d只额外眼睛！",
+  "item.corpseorigin.ordinary_zb_eye.multi_eye_evolved": "§c§l你进化出了多眼形态！全部9只眼睛已觉醒！",
+
+  "skill.corpseorigin.multi_eye_perception": "多眼感知",
+  "skill.corpseorigin.multi_eye_perception.desc": "触发多眼的力量，感知周围32格内的敌意生物，高亮显示24格内的敌人",
+  "skill.corpseorigin.multi_eye.activated": "§c§l多眼感知已激活！你感受到了周围的敌意！",
+  "skill.corpseorigin.multi_eye.ended": "§7多眼感知效果已结束",
+  "skill.corpseorigin.multi_eye.cooldown": "§c技能冷却中，还需 %d 秒",
+  "skill.corpseorigin.multi_eye.detected": "§e感知到 %d 个敌意目标",
+  "skill.corpseorigin.multi_eye.auto_learned": "§c§l你的多眼觉醒了！获得了多眼感知能力！"
 }
