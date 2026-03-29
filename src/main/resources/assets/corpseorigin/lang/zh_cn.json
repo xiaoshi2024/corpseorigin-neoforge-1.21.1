@@ -246,6 +246,11 @@
   "item.corpseorigin.ordinary_zb_eye.extra_eye_grown": "§c你长出了第%d只额外眼睛！",
   "item.corpseorigin.ordinary_zb_eye.multi_eye_evolved": "§c§l你进化出了多眼形态！全部9只眼睛已觉醒！",
 
+  "item.corpseorigin.dr_mu_eye": "穆博士的眼睛",
+  "item.corpseorigin.dr_mu_eye.effect1": "§7食用效果:",
+  "item.corpseorigin.dr_mu_eye.effect2": "  §a• 失去意识的尸兄可恢复人类智慧",
+  "item.corpseorigin.dr_mu_eye.effect3": "  §e• 已有意识的尸兄获得智慧增强",
+
   "skill.corpseorigin.multi_eye_perception": "多眼感知",
   "skill.corpseorigin.multi_eye_perception.desc": "触发多眼的力量，感知周围32格内的敌意生物，高亮显示24格内的敌人",
   "skill.corpseorigin.multi_eye.activated": "§c§l多眼感知已激活！你感受到了周围的敌意！",

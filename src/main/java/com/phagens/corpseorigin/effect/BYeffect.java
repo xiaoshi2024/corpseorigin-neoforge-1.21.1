@@ -330,18 +330,22 @@ public class BYeffect extends MobEffect {
      *
      * 【转化过程】
      * 1. 设置玩家为尸族状态
-     * 2. 初始化技能系统
-     * 3. 自动解锁初始技能（硬化皮肤）
-     * 4. 给予5点初始进化点
-     * 5. 同步数据到客户端
-     * 6. 播放转化特效
-     * 7. 发送提示消息
+     * 2. 进行意识判定（5%概率保留意识）
+     * 3. 初始化技能系统
+     * 4. 自动解锁初始技能（硬化皮肤）
+     * 5. 给予5点初始进化点
+     * 6. 同步数据到客户端
+     * 7. 播放转化特效
+     * 8. 发送提示消息（根据意识状态）
      *
      * @param player 要被转化的玩家
      */
     private void convertPlayerToCorpse(ServerPlayer player) {
         // 设置玩家为尸族状态
         PlayerCorpseData.setPlayerAsCorpse(player, 1);
+
+        // 检查是否保留意识
+        boolean hasConsciousness = PlayerCorpseData.hasInnateConsciousness(player);
 
         // 初始化技能系统
         ISkillHandler skillHandler = SkillAttachment.getSkillHandler(player);
@@ -368,14 +372,26 @@ public class BYeffect extends MobEffect {
         // 播放转化特效
         player.level().broadcastEntityEvent(player, (byte) 35);
 
-        // 发送提示消息
-        player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                "§c§l你已被感染成为尸兄！§r\n" +
-                "§7按 §eK§7 打开技能树，按 §eR§7 打开技能轮盘\n" +
-                "§7击杀生物可获得进化点来解锁更多技能！"
-        ));
-
-        CorpseOrigin.LOGGER.info("玩家 {} 已转化为尸族！获得5点初始进化点和硬化皮肤技能", player.getName().getString());
+        // 根据意识状态发送不同的提示消息
+        if (hasConsciousness) {
+            // 保留意识的幸运儿
+            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                    "§c§l你已被感染成为尸兄！§r\n" +
+                    "§a§l幸运的是，你保留了人类的意识！§r\n" +
+                    "§7按 §eK§7 打开技能树，按 §eR§7 打开技能轮盘\n" +
+                    "§7击杀生物可获得进化点来解锁更多技能！"
+            ));
+            CorpseOrigin.LOGGER.info("玩家 {} 已转化为尸族！幸运地保留了意识！", player.getName().getString());
+        } else {
+            // 失去意识的普通尸兄
+            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                    "§c§l你已被感染成为尸兄！§r\n" +
+                    "§4§l你的意识被黑暗吞噬，只剩下本能...§r\n" +
+                    "§7你无法使用工作台、门等复杂物品\n" +
+                    "§7§o寻找穆博士的眼睛 或 进化到3级 可恢复意识"
+            ));
+            CorpseOrigin.LOGGER.info("玩家 {} 已转化为尸族！失去了人类意识...", player.getName().getString());
+        }
     }
 
     /**

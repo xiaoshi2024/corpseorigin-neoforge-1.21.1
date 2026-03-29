@@ -84,6 +84,15 @@ public class CorpsePlayerCommand {
 
                                                     PlayerCorpseData.setEvolutionLevel(player, level);
 
+                                                    // 检查是否达到3级，如果是且失去意识，则恢复意识
+                                                    if (level >= 3 && !PlayerCorpseData.hasConsciousness(player)) {
+                                                        PlayerCorpseData.restoreConsciousness(player);
+                                                        player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                                                                "§a§l你的意识从混沌中苏醒！§r\n" +
+                                                                "§7随着进化的提升，你重新获得了人类的智慧！"
+                                                        ));
+                                                    }
+
                                                     PlayerCorpseSyncPacket packet = new PlayerCorpseSyncPacket(
                                                             player.getId(), true, PlayerCorpseData.getCorpseType(player),
                                                             PlayerCorpseData.getCorpseData(player)
@@ -430,9 +439,11 @@ public class CorpsePlayerCommand {
                                             int hunger = PlayerCorpseData.getHunger(player);
                                             int evolution = PlayerCorpseData.getEvolutionLevel(player);
                                             int kills = PlayerCorpseData.getKills(player);
-                                            boolean hasSentient = PlayerCorpseData.hasSentient(player);
                                             boolean isGreedy = PlayerCorpseData.isGreedy(player);
                                             int variant = PlayerCorpseData.getVariant(player);
+                                            boolean hasConsciousness = PlayerCorpseData.hasConsciousness(player);
+                                            boolean isMindless = PlayerCorpseData.isMindless(player);
+                                            boolean isRestored = PlayerCorpseData.isConsciousnessRestored(player);
 
                                             var skillHandler = SkillAttachment.getSkillHandler(player);
                                             int skillPoints = skillHandler.getEvolutionPoints();
@@ -446,7 +457,8 @@ public class CorpsePlayerCommand {
                                                                     "§e饥饿度: §f" + hunger + "\n" +
                                                                     "§e进化等级: §f" + evolution + "\n" +
                                                                     "§e击杀数: §f" + kills + "\n" +
-                                                                    "§e保留神志: §f" + hasSentient + "\n" +
+                                                                    "§e拥有意识: §f" + hasConsciousness + (isMindless ? " §c(失去意识)" : " §a(有意识)") + "\n" +
+                                                                    "§e意识恢复方式: §f" + (isRestored ? "§a进化/道具恢复" : (hasConsciousness ? "§b天生保留" : "§c无")) + "\n" +
                                                                     "§e贪婪: §f" + isGreedy + "\n" +
                                                                     "§e变种: §f" + (variant == 1 ? "裂口" : "普通") + "\n" +
                                                                     "§e已学习技能: §f" + learnedSkills + " 个\n" +
@@ -461,6 +473,44 @@ public class CorpsePlayerCommand {
                                                 }
                                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(skills.toString()));
                                             }
+
+                                            return 1;
+                                        })
+                                )
+                        )
+
+                        // 恢复意识
+                        .then(Commands.literal("restoreconsciousness")
+                                .then(Commands.argument("player", EntityArgument.player())
+                                        .executes(context -> {
+                                            ServerPlayer player = EntityArgument.getPlayer(context, "player");
+
+                                            if (!PlayerCorpseData.isCorpse(player)) {
+                                                context.getSource().sendFailure(
+                                                        net.minecraft.network.chat.Component.literal("该玩家不是尸兄")
+                                                );
+                                                return 0;
+                                            }
+
+                                            if (PlayerCorpseData.hasConsciousness(player)) {
+                                                context.getSource().sendFailure(
+                                                        net.minecraft.network.chat.Component.literal("该玩家已经拥有意识")
+                                                );
+                                                return 0;
+                                            }
+
+                                            PlayerCorpseData.restoreConsciousness(player);
+
+                                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                                                    "§a§l你的意识被强制恢复！§r\n" +
+                                                    "§7你现在可以使用工作台、门等复杂物品了。"
+                                            ));
+
+                                            context.getSource().sendSuccess(
+                                                    () -> net.minecraft.network.chat.Component.literal(
+                                                            "已恢复玩家 " + player.getName().getString() + " 的意识"
+                                                    ), true
+                                            );
 
                                             return 1;
                                         })

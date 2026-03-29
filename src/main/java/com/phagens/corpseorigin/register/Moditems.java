@@ -5,6 +5,7 @@ import com.phagens.corpseorigin.Item.ByWaterBottleItem;
 import com.phagens.corpseorigin.Item.ByWaterBucketItem;
 import com.phagens.corpseorigin.Item.JuQue;
 import com.phagens.corpseorigin.Item.*;
+import com.phagens.corpseorigin.Item.Organic.DrMuEyeItem;
 import com.phagens.corpseorigin.Item.Organic.OrdinaryZbEyeItem;
 import com.phagens.corpseorigin.Item.YaoJi.Sagent;
 import com.phagens.corpseorigin.Item.tier.Modtiers;
@@ -78,6 +79,10 @@ public class Moditems {
     // 普通尸眼 - 尸兄掉落物，食用可进化夜视能力
     public static final DeferredItem<Item> ORDINARY_ZB_EYE = ITEMS.register("ordinary_zb_eye",
             () -> new OrdinaryZbEyeItem());
+
+    // 穆博士的眼睛 - 稀有掉落物，失去意识的尸兄食用后可恢复人类智慧
+    public static final DeferredItem<Item> DR_MU_EYE = ITEMS.register("dr_mu_eye",
+            () -> new DrMuEyeItem());
 }
 
 

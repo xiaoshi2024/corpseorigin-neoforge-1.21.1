@@ -195,8 +195,8 @@ public class PlayerCorpseEventHandler {
             }
         }
 
-        // 神志系统：随机说话
-        if (player.tickCount % 200 == 0 && PlayerCorpseData.hasSentient(player)) {
+        // 神志系统：随机说话（只有有意识的尸兄才会说话）
+        if (player.tickCount % 200 == 0 && PlayerCorpseData.hasConsciousness(player)) {
             if (player.getRandom().nextFloat() < 0.3f) {
                 String[] phrases = {
                         "救...救我...",
@@ -417,6 +417,16 @@ public class PlayerCorpseEventHandler {
 
                             CorpseOrigin.LOGGER.info("尸族玩家 {} 吞噬了高阶生物，进化等级提升至 {} 级",
                                     player.getName().getString(), newLevel);
+
+                            // 检查是否达到3级，如果是且失去意识，则恢复意识
+                            if (newLevel >= 3 && !PlayerCorpseData.hasConsciousness(player)) {
+                                PlayerCorpseData.restoreConsciousness(player);
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                                        "§a§l你的意识从混沌中苏醒！§r\n" +
+                                        "§7随着进化的提升，你重新获得了人类的智慧！"
+                                ));
+                                CorpseOrigin.LOGGER.info("尸族玩家 {} 进化到3级，恢复了意识！", player.getName().getString());
+                            }
                         }
                     } else {
                         // 检查是否需要基于击杀数提升进化等级
@@ -507,6 +517,16 @@ public class PlayerCorpseEventHandler {
 
             CorpseOrigin.LOGGER.info("尸族玩家 {} 进化等级提升至 {} 级，当前击杀数: {}",
                     player.getName().getString(), newLevel, kills);
+
+            // 检查是否达到3级，如果是且失去意识，则恢复意识
+            if (newLevel >= 3 && !PlayerCorpseData.hasConsciousness(player)) {
+                PlayerCorpseData.restoreConsciousness(player);
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                        "§a§l你的意识从混沌中苏醒！§r\n" +
+                        "§7随着进化的提升，你重新获得了人类的智慧！"
+                ));
+                CorpseOrigin.LOGGER.info("尸族玩家 {} 进化到3级，恢复了意识！", player.getName().getString());
+            }
         }
     }
 

@@ -246,6 +246,11 @@
   "item.corpseorigin.ordinary_zb_eye.extra_eye_grown": "§cYou have grown %d extra eye(s)!",
   "item.corpseorigin.ordinary_zb_eye.multi_eye_evolved": "§c§lYou have evolved multi-eye form! All 9 eyes awakened!",
 
+  "item.corpseorigin.dr_mu_eye": "Dr. Mu's Eye",
+  "item.corpseorigin.dr_mu_eye.effect1": "§7Consumption Effects:",
+  "item.corpseorigin.dr_mu_eye.effect2": "  §a• Mindless corpses can restore human consciousness",
+  "item.corpseorigin.dr_mu_eye.effect3": "  §e• Conscious corpses gain wisdom enhancement",
+
   "skill.corpseorigin.multi_eye_perception": "Multi-Eye Perception",
   "skill.corpseorigin.multi_eye_perception.desc": "Activate the power of multiple eyes to detect hostile entities within 32 blocks, highlighting enemies within 24 blocks",
   "skill.corpseorigin.multi_eye.activated": "§c§lMulti-Eye Perception activated! You sense hostility around you!",

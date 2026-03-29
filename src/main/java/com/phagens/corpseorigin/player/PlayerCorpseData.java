@@ -12,13 +12,17 @@ public class PlayerCorpseData {
     private static final String KEY_EVOLUTION_LEVEL = "evolution_level";
     private static final String KEY_KILLS = "kills";
     private static final String KEY_HUNGER = "hunger";
-    private static final String KEY_HAS_SENTIENT = "has_sentient";
     private static final String KEY_IS_GREEDY = "is_greedy";
     private static final String KEY_VARIANT = "variant";
     private static final String KEY_HAS_WING = "has_wing";
     private static final String KEY_HAS_TAIL = "has_tail";
     private static final String KEY_IS_DISGUISED = "is_disguised";
     private static final String KEY_EXTRA_EYE_COUNT = "extra_eye_count";
+    private static final String KEY_HAS_CONSCIOUSNESS = "has_consciousness"; // 是否有智慧/意识
+    private static final String KEY_CONSCIOUSNESS_RESTORED = "consciousness_restored"; // 意识是否已恢复（通过道具或进化）
+
+    // 保留意识的概率（极低）
+    public static final float CONSCIOUSNESS_RETAIN_CHANCE = 0.05f; // 5%概率保留意识
 
     public static void setPlayerAsCorpse(Player player, int corpseType) {
         player.setData(CorpsePlayerAttachment.IS_CORPSE, true);
@@ -30,13 +34,17 @@ public class PlayerCorpseData {
         data.putInt(KEY_EVOLUTION_LEVEL, 1);
         data.putInt(KEY_KILLS, 0);
         data.putInt(KEY_HUNGER, 100);
-        data.putBoolean(KEY_HAS_SENTIENT, player.getRandom().nextFloat() < 0.3f);
         data.putBoolean(KEY_IS_GREEDY, player.getRandom().nextFloat() < 0.5f);
         data.putInt(KEY_VARIANT, player.getRandom().nextFloat() < 0.3f ? 1 : 0);
         data.putBoolean(KEY_HAS_WING, false);
         data.putBoolean(KEY_HAS_TAIL, false);
         data.putBoolean(KEY_IS_DISGUISED, false);
         data.putInt(KEY_EXTRA_EYE_COUNT, 0);
+
+        // 意识判定：极低概率保留意识（5%），否则失去意识
+        boolean hasConsciousness = player.getRandom().nextFloat() < CONSCIOUSNESS_RETAIN_CHANCE;
+        data.putBoolean(KEY_HAS_CONSCIOUSNESS, hasConsciousness);
+        data.putBoolean(KEY_CONSCIOUSNESS_RESTORED, false);
 
         player.setData(CorpsePlayerAttachment.CORPSE_DATA, data);
         syncToClient(player);
@@ -100,10 +108,6 @@ public class PlayerCorpseData {
         data.putInt(KEY_HUNGER, Math.max(0, Math.min(100, hunger)));
         player.setData(CorpsePlayerAttachment.CORPSE_DATA, data);
         syncToClient(player);
-    }
-
-    public static boolean hasSentient(Player player) {
-        return getCorpseData(player).getBoolean(KEY_HAS_SENTIENT);
     }
 
     public static boolean isGreedy(Player player) {
@@ -171,6 +175,52 @@ public class PlayerCorpseData {
      */
     public static boolean hasMultiEye(Player player) {
         return getExtraEyeCount(player) > 0;
+    }
+
+    /**
+     * 检查玩家是否有智慧/意识
+     * 包括：天生保留意识 或 通过道具/进化恢复意识
+     */
+    public static boolean hasConsciousness(Player player) {
+        CompoundTag data = getCorpseData(player);
+        // 如果意识已恢复，返回true
+        if (data.getBoolean(KEY_CONSCIOUSNESS_RESTORED)) {
+            return true;
+        }
+        // 否则返回天生的意识状态
+        return data.getBoolean(KEY_HAS_CONSCIOUSNESS);
+    }
+
+    /**
+     * 检查玩家是否天生保留意识（初始判定）
+     */
+    public static boolean hasInnateConsciousness(Player player) {
+        return getCorpseData(player).getBoolean(KEY_HAS_CONSCIOUSNESS);
+    }
+
+    /**
+     * 检查意识是否已通过道具或进化恢复
+     */
+    public static boolean isConsciousnessRestored(Player player) {
+        return getCorpseData(player).getBoolean(KEY_CONSCIOUSNESS_RESTORED);
+    }
+
+    /**
+     * 恢复玩家的意识（通过吃穆博士眼睛等道具）
+     */
+    public static void restoreConsciousness(Player player) {
+        CompoundTag data = getCorpseData(player);
+        data.putBoolean(KEY_CONSCIOUSNESS_RESTORED, true);
+        player.setData(CorpsePlayerAttachment.CORPSE_DATA, data);
+        syncToClient(player);
+    }
+
+    /**
+     * 检查玩家是否因失去意识而无法进行复杂交互
+     * 返回true表示玩家失去意识，无法交互
+     */
+    public static boolean isMindless(Player player) {
+        return isCorpse(player) && !hasConsciousness(player);
     }
 
     private static void syncToClient(Player player) {
